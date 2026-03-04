@@ -1,0 +1,1700 @@
+{
+  "lastUpdated": "2026-03-04T14:20:21.952Z",
+  "tournaments": [
+    {
+      "name": "Play Tennis- Jan-Feb 2026",
+      "dates": "1/1/2026",
+      "link": "/sport/tournament?id=FD5EA231-3AE9-4E06-842C-7210BECE9297",
+      "ageGroup": "All Ages",
+      "source": "HK",
+      "closingDeadline": "22/12/2025"
+    },
+    {
+      "name": "Tennis For All-Adult (Jan-Feb 2026)",
+      "dates": "1/1/2026",
+      "link": "/sport/tournament?id=65CD93D8-2E74-4346-8F22-57361993C747",
+      "ageGroup": "All Ages",
+      "source": "HK",
+      "closingDeadline": "21/12/2025"
+    },
+    {
+      "name": "Tennis For All-Junior (Jan-Feb 2026)",
+      "dates": "1/1/2026",
+      "link": "/sport/tournament?id=AD9E618A-545C-4187-B04D-4BABB1FB7C64",
+      "ageGroup": "U10, U12",
+      "source": "HK",
+      "closingDeadline": "22/12/2025"
+    },
+    {
+      "name": "testing payment",
+      "dates": "1/1/2026",
+      "link": "/sport/tournament?id=92381EC5-EFCC-4B8B-97AD-42E29118F650",
+      "ageGroup": "All Ages",
+      "source": "HK",
+      "closingDeadline": "16/12/2025"
+    },
+    {
+      "name": "Nissin HK National Jr Tennis Championships 2026 (Victoria Park)",
+      "dates": "24/1/2026 to 15/3/2026",
+      "link": "/sport/tournament?id=7C5ADF25-C5D5-4198-B869-E96C476A17EA",
+      "ageGroup": "U10, U12",
+      "source": "HK",
+      "closingDeadline": "31/12/2025"
+    },
+    {
+      "name": "第十三屆全港小學校際網球比賽 2025-2026",
+      "dates": "26/1/2026 to 13/2/2026",
+      "link": "/sport/tournament?id=5AD371EC-CC7B-474D-8A08-EA09251C040D",
+      "ageGroup": "All Ages",
+      "source": "HK"
+    },
+    {
+      "name": "KLN- Mini Tennis District Inter-Primary Schools Competitions - 1 FEB 2026",
+      "dates": "1/2/2026",
+      "link": "/sport/tournament?id=82BA460E-4B6A-411C-87DB-AEFFEA66A234",
+      "ageGroup": "All Ages",
+      "source": "HK",
+      "closingDeadline": "18/1/2026"
+    },
+    {
+      "name": "Prince Stage 3-Kowloon District Inter-Primary Schools Competitions",
+      "dates": "1/2/2026",
+      "link": "/sport/tournament?id=F53B9138-B6C0-4A2A-B55A-2B3B37B05DC3",
+      "ageGroup": "All Ages",
+      "source": "HK",
+      "closingDeadline": "7/1/2026"
+    },
+    {
+      "name": "Mini Red Challenge Comp 1_1 Mar 2026_HKCTA Tennis Centre-KT",
+      "dates": "1/3/2026",
+      "link": "/sport/tournament?id=CE671EC1-6DD2-403B-AC5E-A883CEAE0E85",
+      "ageGroup": "All Ages",
+      "source": "HK",
+      "closingDeadline": "25/2/2026"
+    },
+    {
+      "name": "Tennis For All-adult (Mar-Apr 2026)",
+      "dates": "1/3/2026",
+      "link": "/sport/tournament?id=A2E68678-661C-430C-8FB0-7CBBCD5A2CF1",
+      "ageGroup": "All Ages",
+      "source": "HK",
+      "closingDeadline": "22/2/2026"
+    },
+    {
+      "name": "Play Tennis March-April 2026",
+      "dates": "1/3/2026 to 30/4/2026",
+      "link": "/sport/tournament?id=D0C18A37-91C1-4FA8-81E0-A8F6ED5F0735",
+      "ageGroup": "All Ages",
+      "source": "HK",
+      "closingDeadline": "20/2/2026"
+    },
+    {
+      "name": "Tennis For All Junior Mar-Apr 2026",
+      "dates": "1/3/2026 to 30/4/2026",
+      "link": "/sport/tournament?id=FDF9E081-CEEA-41EC-A1A8-12C8B1D6B8E7",
+      "ageGroup": "All Ages",
+      "source": "HK",
+      "closingDeadline": "20/2/2026"
+    },
+    {
+      "name": "Nissin Demae Iccho HK Jr. Novice 2026 C1",
+      "dates": "14/3/2026 to 29/3/2026",
+      "link": "/sport/tournament?id=191EA7DA-DA5D-4803-8581-8F22061EDD70",
+      "ageGroup": "U10",
+      "source": "HK",
+      "closingDeadline": "27/2/2026"
+    },
+    {
+      "name": "Bank of China Hong Kong National Tennis Championships 2026",
+      "dates": "14/3/2026 to 10/5/2026",
+      "link": "/sport/tournament?id=1B57DCC5-D851-4EEF-840A-5DEAF10B5799",
+      "ageGroup": "All Ages",
+      "source": "HK",
+      "closingDeadline": "30/1/2026"
+    },
+    {
+      "name": "Mini Red Challenge Comp 2_22 Mar 2026_HKCTA Tennis Centre-KT",
+      "dates": "22/3/2026",
+      "link": "/sport/tournament?id=EF137DEF-D3EA-4C17-92D6-7ACC995AA8C8",
+      "ageGroup": "All Ages",
+      "source": "HK",
+      "closingDeadline": "15/3/2026"
+    },
+    {
+      "name": "Prince Stage 3-New Territories (East) District Inter-Primary Schools Competitions",
+      "dates": "3/4/2026",
+      "link": "/sport/tournament?id=0A47B7D2-B868-44CC-A8D5-EAE8759EA116",
+      "ageGroup": "All Ages",
+      "source": "HK",
+      "closingDeadline": "7/1/2026"
+    },
+    {
+      "name": "Prince Stage 3-New Territories (West) District Inter-Primary Schools Competitions",
+      "dates": "3/4/2026",
+      "link": "/sport/tournament?id=7FEE12AE-1DA0-46E0-A59E-BBC537726CD9",
+      "ageGroup": "All Ages",
+      "source": "HK",
+      "closingDeadline": "7/1/2026"
+    },
+    {
+      "name": "Hong Kong Districts Tennis Circuit 2026 (Comp 1)",
+      "dates": "3/4/2026 to 7/4/2026",
+      "link": "/sport/tournament?id=659BE31B-39F3-42BB-817A-041158C1FFCD",
+      "ageGroup": "All Ages",
+      "source": "HK",
+      "closingDeadline": "20/3/2026"
+    },
+    {
+      "name": "Mini Red Competition 2026 C1",
+      "dates": "6/4/2026",
+      "link": "/sport/tournament?id=F20A4978-CFF8-4330-842B-8A1CF3123E5E",
+      "ageGroup": "All Ages",
+      "source": "HK",
+      "closingDeadline": "20/3/2026"
+    },
+    {
+      "name": "Prince Stage 3-Hong Kong Isand District Inter-Primary Schools Competitions",
+      "dates": "7/4/2026",
+      "link": "/sport/tournament?id=14D9DEA1-0B76-4DB9-A06C-5D47B53AA472",
+      "ageGroup": "All Ages",
+      "source": "HK",
+      "closingDeadline": "7/1/2026"
+    },
+    {
+      "name": "Nissin Demae Iccho HK Jr. Novice 2026 C2",
+      "dates": "11/4/2026 to 26/4/2026",
+      "link": "/sport/tournament?id=E82153FE-2A33-4E9F-A65F-64FFBA70F62C",
+      "ageGroup": "U10",
+      "source": "HK",
+      "closingDeadline": "27/3/2026"
+    },
+    {
+      "name": "Prince Stage 4 Tennis Annual Championships - Orange Ball Pilot Event 2526",
+      "dates": "26/4/2026",
+      "link": "/sport/tournament?id=F29233C1-BB97-4B9D-BFFF-00BE694461BB",
+      "ageGroup": "All Ages",
+      "source": "HK",
+      "closingDeadline": "1/3/2026"
+    },
+    {
+      "name": "2026 OC Barclay Academy Club Championships 1",
+      "dates": "1/01/2026 to 4/01/2026",
+      "link": "/sport/tournament?id=F234D886-603E-4DEF-9023-C79527C40461",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "21 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Vince%20Barclay%20Tennis%20%2C158%20Talavera%20Road%20%20Macquarie%20Park%2C%20NSW%202122%20%20Australia%20%2CMacquarie%20Park",
+      "closingDeadline": "24/12/2025"
+    },
+    {
+      "name": "2026 O5k J125 Ballina New Years Open",
+      "dates": "2/01/2026 to 5/01/2026",
+      "link": "/sport/tournament?id=78829C2C-269A-4BC7-92EE-A314FA995403",
+      "ageGroup": "U10, U12",
+      "source": "AUS",
+      "distance": "605 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Ballina%20Tennis%20Club%2CCnr%20Burnett%20and%20Cherry%20Street%2CBallina",
+      "closingDeadline": "26/12/2025"
+    },
+    {
+      "name": "2026 O3k J125 Newcastle Open and Junior",
+      "dates": "9/01/2026 to 12/01/2026",
+      "link": "/sport/tournament?id=5F5037E6-67AA-4A80-8949-E0F2AD7F8F11",
+      "ageGroup": "U10, U12",
+      "source": "AUS",
+      "distance": "121 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=District%20Park%20Newcastle%2CCnr%20Lambton%20Rd%20and%20Curley%20Rd%2CBroadmeadow",
+      "closingDeadline": "1/1/2026"
+    },
+    {
+      "name": "2026 O8k J250 J125 25th Commercial Club Margaret Court Cup",
+      "dates": "9/01/2026 to 13/01/2026",
+      "link": "/sport/tournament?id=DEA33D80-41D5-44D6-985E-FD27DB7803DE",
+      "ageGroup": "U10, U12",
+      "source": "AUS",
+      "distance": "462 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Albury%20Tennis%20Association%2C365%20Townsend%20Street%2CAlbury",
+      "closingDeadline": "30/12/2025"
+    },
+    {
+      "name": "2026 J125 Parramatta",
+      "dates": "16/01/2026 to 19/01/2026",
+      "link": "/sport/tournament?id=075243DF-C973-4278-BA92-CAF3B199BECE",
+      "ageGroup": "U10, U12",
+      "source": "AUS",
+      "distance": "24 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Parramatta%20City%20Tennis%2CBarton%20Street%2C%20Barton%20Park%2CNorth%20Parramatta",
+      "closingDeadline": "6/1/2026"
+    },
+    {
+      "name": "2026 O3k Barclay Open",
+      "dates": "16/01/2026 to 19/01/2026",
+      "link": "/sport/tournament?id=406A6117-8489-42CA-8FA8-0908B65D5127",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "21 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Vince%20Barclay%20Tennis%20Academy%2C158%20Talavera%20Rd%2CMacquarie%20Park",
+      "closingDeadline": "9/1/2026"
+    },
+    {
+      "name": "2026 O3k J125 Nepean Summer Open",
+      "dates": "16/01/2026 to 19/01/2026",
+      "link": "/sport/tournament?id=27E4BF98-7B35-4973-9C78-D7ED192D408B",
+      "ageGroup": "U10, U12",
+      "source": "AUS",
+      "distance": "54 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Nepean%20District%20Tennis%20Association%2C2260%20Castlereagh%20Road%2CPenrith",
+      "closingDeadline": "6/1/2026"
+    },
+    {
+      "name": "2026 J125 Illawarra",
+      "dates": "20/01/2026 to 23/01/2026",
+      "link": "/sport/tournament?id=61A39D1E-C5D7-4467-9B34-E93F16A1F026",
+      "ageGroup": "U10, U12",
+      "source": "AUS",
+      "distance": "9.1 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Rockdale%20Tennis%20Centre%20%2C71%20Chapel%20Street%20%2CRockdale",
+      "closingDeadline": "10/1/2026"
+    },
+    {
+      "name": "2026 J250 Gosford Junior",
+      "dates": "20/01/2026 to 23/01/2026",
+      "link": "/sport/tournament?id=DFB575A7-F3B5-423C-9D44-6FA6683A590F",
+      "ageGroup": "U10, U12",
+      "source": "AUS",
+      "distance": "57 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Gosford%20Tennis%20Club%2C13%20Racecourse%20Rd%2CGosford",
+      "closingDeadline": "10/1/2026"
+    },
+    {
+      "name": "2026 O3k J125 Tweed Heads",
+      "dates": "20/01/2026 to 23/01/2026",
+      "link": "/sport/tournament?id=C419FEBE-B5AE-42BE-872A-A4F4A235F59E",
+      "ageGroup": "U10, U12",
+      "source": "AUS",
+      "distance": "675 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Arkinstall%20Park%20Regional%20Tennis%20Centre%2CCunningham%20Street%2CTweed%20Heads%20South",
+      "closingDeadline": "12/1/2026"
+    },
+    {
+      "name": "2026 Nepean Western Weekender OC",
+      "dates": "24/01/2026 to 25/01/2026",
+      "link": "/sport/tournament?id=54C82C0D-F214-478F-838A-B512EECDB2DB",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "54 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Nepean%20District%20Tennis%20Club%20%2C2260%20castlereagh%20rd%20%2CSydney",
+      "closingDeadline": "21/1/2026"
+    },
+    {
+      "name": "2026 J125 Macarthur",
+      "dates": "24/01/2026 to 27/01/2026",
+      "link": "/sport/tournament?id=7DE995D8-7161-4E02-BB90-C4DF7E8A529B",
+      "ageGroup": "U10, U12",
+      "source": "AUS",
+      "distance": "39 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Wests%20Tennis%20Centre%20%28Tennis%20Macarthur%29%2C16%20Old%20Leumeah%20Road%2CLeumeah",
+      "closingDeadline": "14/1/2026"
+    },
+    {
+      "name": "2026 J125 Pennant Hills January",
+      "dates": "24/01/2026 to 27/01/2026",
+      "link": "/sport/tournament?id=188287DE-B180-443B-871A-A7C8397C9E94",
+      "ageGroup": "U10, U12",
+      "source": "AUS",
+      "distance": "24 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Pennant%20Hills%20Park%2C25X%20Brittania%20Street%2CPennant%20Hills",
+      "closingDeadline": "14/1/2026"
+    },
+    {
+      "name": "2026 O5k Tennis World January Classic",
+      "dates": "24/01/2026 to 27/01/2026",
+      "link": "/sport/tournament?id=F5DD9EEE-E9CD-488F-B93E-F379558AE7D3",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "17 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Tennis%20World%20Sydney%20Olympic%20Park%2C2%20Rod%20Laver%20Drive%2CSydney%20Olympic%20Park",
+      "closingDeadline": "14/1/2026"
+    },
+    {
+      "name": "2026 O8k Gosford Open",
+      "dates": "30/01/2026 to 3/02/2026",
+      "link": "/sport/tournament?id=FA01E919-B353-4504-AADE-F40D2E78FEF6",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "57 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Gosford%20Tennis%20Club%2C13%20Racecourse%20Rd%2CGosford",
+      "closingDeadline": "21/1/2026"
+    },
+    {
+      "name": "2026 NSTA Championships Open & Junior",
+      "dates": "31/01/2026 to 22/02/2026",
+      "link": "/sport/tournament?id=C521F8E5-326D-4DEC-9DFF-6FF16ABE3493",
+      "ageGroup": "U10, U12",
+      "source": "AUS",
+      "distance": "12 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Northern%20Suburbs%20Tennis%20Association%20-%20Talus%20Street%2C18%20Talus%20St%20Naremburn%2CNaremburn",
+      "closingDeadline": "20/1/2026"
+    },
+    {
+      "name": "2026 JDS Noel Murray Cup",
+      "dates": "7/02/2026 to 8/02/2026",
+      "link": "/sport/tournament?id=6874CAB5-52A9-4379-8173-673CCAF96C68",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "248 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Jerrabomberra%20Tennis%20Club%2C4%20Coral%20Drive%2CCanberra",
+      "closingDeadline": "31/1/2026"
+    },
+    {
+      "name": "2026 ITTO WORLDWIDE CBC Nepean Coloured Ball Series #1",
+      "dates": "8/02/2026",
+      "link": "/sport/tournament?id=59A4F0E5-80B1-4DCC-84CA-69A0B57E5470",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "54 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Nepean%20District%20Tennis%20Association%2C2260%20Castlereagh%20Road%2CPenrith",
+      "closingDeadline": "5/2/2026"
+    },
+    {
+      "name": "2026 OC Tennis Country Series - Gosford",
+      "dates": "14/02/2026 to 15/02/2026",
+      "link": "/sport/tournament?id=3D39782C-95AB-4A87-B8C2-DF68AAABE4AB",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "57 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Gosford%20Tennis%20Club%2C13%20Racecourse%20Road%2CGosford",
+      "closingDeadline": "4/2/2026"
+    },
+    {
+      "name": "2026 CBC Tennis World Coloured Ball Series- Term 1",
+      "dates": "14/02/2026 to 22/03/2026",
+      "link": "/sport/tournament?id=F343DAC3-9272-45F3-A0EC-836E24C4D07B",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "17 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Tennis%20World%20Sydney%20Olympic%20Park%2C2%20Rod%20Laver%20Drive%2CSydney%20Olympic%20Park",
+      "closingDeadline": "28/1/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green Central West RMS - Springwood",
+      "dates": "15/02/2026",
+      "link": "/sport/tournament?id=BD2EEA05-A553-414C-8922-DD3B78024786",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "66 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Springwood%20Tennis%20Centre%2C18%20-%2032%20Spring%20Street%2CSpringwood",
+      "closingDeadline": "9/2/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green North West RMS - Armidale",
+      "dates": "15/02/2026",
+      "link": "/sport/tournament?id=C4DADB95-CD9E-40FC-93C8-882C289F0F64",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "382 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Armidale%20Tennis%20Club%2CGolf%20Links%20Road%2CArmidale",
+      "closingDeadline": "9/2/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green Northumberland RMS - Newcastle #1",
+      "dates": "15/02/2026",
+      "link": "/sport/tournament?id=85FDDFD7-63AB-4DF2-839D-17B4A2940001",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "121 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Newcastle%20District%20Park%2CCnr%20Lambton%20and%20Curley%20Road%2CBroadmeadow",
+      "closingDeadline": "9/2/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green South East RMS - Kiama",
+      "dates": "15/02/2026",
+      "link": "/sport/tournament?id=590E9A34-2273-4F88-A329-89111AC51114",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "90 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Kiama%20Tennis%20Club%2C50%20Noorinan%20Street%2CKiama",
+      "closingDeadline": "9/2/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green South West RMS - South Wagga",
+      "dates": "15/02/2026",
+      "link": "/sport/tournament?id=E67FFA28-FE93-46D8-B383-34E334AB1079",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "378 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=South%20Wagga%20Tennis%20Club%2CCnr%20Murray%20and%20Morgan%20Street%2CWagga%20Wagga",
+      "closingDeadline": "9/2/2026"
+    },
+    {
+      "name": "2026 JDS CBC Metro Superb Tennis 10U Green Ball",
+      "dates": "15/02/2026",
+      "link": "/sport/tournament?id=298501F5-A927-417C-8273-571DBB5E73BA",
+      "ageGroup": "U10",
+      "source": "AUS",
+      "distance": "28 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Superb%20Tennis%20%2C4X%20Stratford%20Close%2C%20Asquith%20NSW%202077%2CSydney%20",
+      "closingDeadline": "9/2/2026"
+    },
+    {
+      "name": "2026 JDS Metro - Tennis Macarthur 12U & 14U",
+      "dates": "15/02/2026",
+      "link": "/sport/tournament?id=946993DB-0AF8-4751-9A8C-0EB2A8E13A1B",
+      "ageGroup": "U12",
+      "source": "AUS",
+      "distance": "39 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Tennis%20NSW%2C16%20Old%20Leumeah%20Road%20Leumeah%2CSydney%20",
+      "closingDeadline": "9/2/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green Central West RMS - Bathurst",
+      "dates": "22/02/2026",
+      "link": "/sport/tournament?id=B72C7227-54DB-4D29-A181-71BF3CAEBB21",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "164 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Bathurst%20Tennis%20Centre%2C261%20Durham%20Street%2CBathurst",
+      "closingDeadline": "16/2/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green North East RMS (Lower) Port Macquarie #1",
+      "dates": "22/02/2026",
+      "link": "/sport/tournament?id=0A279983-A057-4D39-8BFA-7F6A4CB0C648",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "290 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Kendall%20Tennis%20Club%2C3%20Orara%20Street%2CKendall",
+      "closingDeadline": "16/2/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green North East RMS (Upper) - Ballina #1",
+      "dates": "22/02/2026",
+      "link": "/sport/tournament?id=5FAEC623-6083-4595-BA56-7DF277164E10",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "605 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Ballina%20Tennis%20Club%2CCnr%20Burnett%20and%20Cherry%20Street%2CBallina",
+      "closingDeadline": "16/2/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green North West RMS - Tamworth #1",
+      "dates": "22/02/2026",
+      "link": "/sport/tournament?id=79A97155-668E-45A6-BE92-79AAEC580D03",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "317 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=The%20Courts%20%40%20East%2CCnr%20Napier%20%26%20Roderick%20Street%2CTamworth",
+      "closingDeadline": "16/2/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green Northumberland RMS - Gosford #1",
+      "dates": "22/02/2026",
+      "link": "/sport/tournament?id=736F7C8A-663A-497B-824E-7F75558B2C45",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "57 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Gosford%20Tennis%20Club%2C13%20Racecourse%20Road%2CGosford",
+      "closingDeadline": "16/2/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green South East RMS - Shoalhaven",
+      "dates": "22/02/2026",
+      "link": "/sport/tournament?id=ADD97E46-90A3-456F-B1DA-9794A6DE10CF",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "118 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Shoalhaven%20Tennis%20Centre%2CNarang%20Road%2CBomaderry",
+      "closingDeadline": "16/2/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green South West RMS - Deniliquin",
+      "dates": "22/02/2026",
+      "link": "/sport/tournament?id=5486DEFB-D0CD-4638-9CF6-F23BA9F07596",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "601 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Deniliquin%20Lawn%20Tennis%20Club%2C439%20Charlotte%20Street%2CDeniliquin",
+      "closingDeadline": "16/2/2026"
+    },
+    {
+      "name": "2026 JDS CBC Metro Panania Tennis 10u Green Ball",
+      "dates": "22/02/2026",
+      "link": "/sport/tournament?id=91068B04-5287-40AE-98D7-EA71F3838FE2",
+      "ageGroup": "U10",
+      "source": "AUS",
+      "distance": "23 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Panania%20Tennis%20Club%20%2C28%20Childs%20Street%20Panania%202213%2CSydney%20",
+      "closingDeadline": "16/2/2026"
+    },
+    {
+      "name": "2026 JDS Metro Ingleburn Tennis 12U",
+      "dates": "22/02/2026",
+      "link": "/sport/tournament?id=07CE1AB6-C617-40DC-8960-48944CB61901",
+      "ageGroup": "U12",
+      "source": "AUS",
+      "distance": "33 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Ingleburn%20Tennis%20Club%2CFields%20Rd%2C%20Macquarie%20Fields%2C%20NSW%202564%2CSydney",
+      "closingDeadline": "19/2/2026"
+    },
+    {
+      "name": "2026 JDS Metro Maquarie Uni Tennis 12u & 14u",
+      "dates": "22/02/2026",
+      "link": "/sport/tournament?id=2F3251FD-3A26-4281-8204-BCC87F0A35D3",
+      "ageGroup": "U12",
+      "source": "AUS",
+      "distance": "21 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Vince%20Barclay%20Tennis%20%2CMacquarie%20Uni%20Sport%20Field%2C%20158%20Talavera%20Road%20Macquarie%20Park%20NSW%202113%2CSydney%20",
+      "closingDeadline": "16/2/2026"
+    },
+    {
+      "name": "NSWCHSSA Tennis Championships and Trials",
+      "dates": "23/02/2026 to 27/02/2026",
+      "link": "/sport/tournament?id=5F4A115C-FBB3-4CF6-8772-3DD64DA3E326",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "63 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Beaton%20Park%20Tennis%20Centre%20Wollongong%2CFoley%20St%2CWollongong",
+      "closingDeadline": "22/2/2026"
+    },
+    {
+      "name": "2026 OC Tennis Country Series - Nepean",
+      "dates": "28/02/2026 to 1/03/2026",
+      "link": "/sport/tournament?id=05485F7D-BD40-4046-A80A-B45ACCAF4C29",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "54 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Nepean%20District%20Tennis%20Association%2C%202260%20Castlereagh%20Road%2CPenrith",
+      "closingDeadline": "19/2/2026"
+    },
+    {
+      "name": "2026 OC J125 North East Sawtell #1",
+      "dates": "7/03/2026 to 8/03/2026",
+      "link": "/sport/tournament?id=C0D054D3-0F8B-4552-82E0-E0451DD3207A",
+      "ageGroup": "U10, U12",
+      "source": "AUS",
+      "distance": "433 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Sawtell%20Tennis%20Club%2CLyons%20Road%2CSawtell",
+      "closingDeadline": "27/2/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green Central West RMS - Orange",
+      "dates": "8/03/2026",
+      "link": "/sport/tournament?id=C20610BB-9077-489C-BB32-629B6E2EF247",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "210 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Orange%20Ex%20Services%20Tennis%20Club%2CWarrendine%20Street%2COrange",
+      "closingDeadline": "2/3/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green North West RMS - Glen Innes",
+      "dates": "8/03/2026",
+      "link": "/sport/tournament?id=867CAA1B-4FD0-4A99-BF86-916439E2EB21",
+      "ageGroup": "U10, U12, All Ages",
+      "source": "AUS",
+      "distance": "469 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Glen%20Innes%20Tennis%20Club%2C115%20West%20Avenue%2CGlen%20Innes",
+      "closingDeadline": "2/3/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green Northumberland RMS - Lake Macquarie #1",
+      "dates": "8/03/2026",
+      "link": "/sport/tournament?id=2FF27CEB-32FA-4BFA-BC3D-AF92673DC5CC",
+      "ageGroup": "U10, U12, All Ages",
+      "source": "AUS",
+      "distance": "107 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Belmont%20Tennis%20Club%2C10%20Livingstone%20Street%2CBelmont",
+      "closingDeadline": "2/3/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green South East RMS - Picton",
+      "dates": "8/03/2026",
+      "link": "/sport/tournament?id=FDCF6149-6C6F-40B4-BE80-C78B2F5B643D",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "63 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Picton%20Tennis%20Club%2CDowning%20Street%2CPicton",
+      "closingDeadline": "2/3/2026"
+    },
+    {
+      "name": "2026 JDS CBC Metro North West Sydney Tennis 10u & 14u",
+      "dates": "8/03/2026",
+      "link": "/sport/tournament?id=D28127E8-2743-42F3-8B9A-92202F369972",
+      "ageGroup": "U10",
+      "source": "AUS",
+      "distance": "24 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=North%20West%20Sydney%20Tennis%2C25X%20Brittania%20St%2C%20Pennant%20Hills%2CSydney%20",
+      "closingDeadline": "2/3/2026"
+    },
+    {
+      "name": "2026 JDS Metro Cintra Park Tennis 12u",
+      "dates": "8/03/2026",
+      "link": "/sport/tournament?id=3001FB9A-35D2-49C2-B3DC-3B30923F7328",
+      "ageGroup": "U12",
+      "source": "AUS",
+      "distance": "13 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Cintra%20Park%20Tennis%20Centre%2C1B%20Gipps%20St%2C%20Concord%20NSW%202137%2CSydney%20",
+      "closingDeadline": "2/3/2026"
+    },
+    {
+      "name": "2026 Masters Tennis Macarthur NRT6",
+      "dates": "13/03/2026 to 15/03/2026",
+      "link": "/sport/tournament?id=EFA9515D-AB54-4E9E-AB08-AC9C1D174E4C",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "39 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Tennis%20Macarthur%2C16%20OLD%20LEUMEAH%20Road%2CLeumeah",
+      "closingDeadline": "8/3/2026"
+    },
+    {
+      "name": "2026 OC Tennis Country Series - Forster",
+      "dates": "14/03/2026 to 15/03/2026",
+      "link": "/sport/tournament?id=B91D93B1-CF5E-48BF-9CAD-39942257E564",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "228 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Forster%20Tennis%20Club%2C51%20Lake%20Street%2CForster",
+      "closingDeadline": "6/3/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green Central West RMS - Nepean",
+      "dates": "15/03/2026",
+      "link": "/sport/tournament?id=151A2024-1B80-4277-ABAB-5C24159123A5",
+      "ageGroup": "U10, All Ages",
+      "source": "AUS",
+      "distance": "54 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Nepean%20District%20Tennis%20Association%2C2260%20Castlereagh%20Road%2CPenrith",
+      "closingDeadline": "9/3/2026"
+    },
+    {
+      "name": "2026 CBC Nepean Itto Worldwide Coloured Ball Series #2",
+      "dates": "22/03/2026",
+      "link": "/sport/tournament?id=B204CB73-E7B9-41B2-A29E-F75ACE06329D",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "54 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Nepean%20District%20Tennis%20Association%2C2260%20Castlereagh%20Road%2CPenrith",
+      "closingDeadline": "5/3/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green North East RMS (Lower) - Forster",
+      "dates": "22/03/2026",
+      "link": "/sport/tournament?id=1E4EFBAD-C528-4003-9F1B-FD8B4BD61235",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "228 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Forster%20Tennis%20Club%2C51%20Lake%20Street%2CForster",
+      "closingDeadline": "16/3/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green North East RMS (Upper) - Lismore #1",
+      "dates": "22/03/2026",
+      "link": "/sport/tournament?id=C4E6CC9E-8079-49AA-85C3-2D7CA870B8C4",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "601 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Lismore%20Tennis%20Club%2CCnr%20Ballina%20Road%20%26%20Brewster%20Street%2CLismore",
+      "closingDeadline": "16/3/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green North West RMS - Gunnedah #1",
+      "dates": "22/03/2026",
+      "link": "/sport/tournament?id=481A70A2-7CEC-455B-85E4-F1C288D49D68",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "341 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Gunnedah%20Tennis%20Club%2CWolseley%20Park%2C%20Chandos%20Street%2CGunnedah",
+      "closingDeadline": "16/3/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green Northumberland RMS - Singleton #1",
+      "dates": "22/03/2026",
+      "link": "/sport/tournament?id=FB08F1F6-EB83-48C7-AA01-DBC204B1ADB6",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "152 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Howe%20Park%20Tennis%20Club%2CBoundary%20Street%2CSingleton",
+      "closingDeadline": "16/3/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green South East RMS - Moss Vale",
+      "dates": "22/03/2026",
+      "link": "/sport/tournament?id=12BD6992-08EC-40A1-AF62-E280D4C7C946",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "106 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Moss%20Vale%20Tennis%20Club%2C9%20Railway%20Street%2CMoss%20Vale",
+      "closingDeadline": "16/3/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green South West RMS - Albury Grass Courts",
+      "dates": "22/03/2026",
+      "link": "/sport/tournament?id=663A1F05-B644-4F8D-8899-B67C6BE05F98",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "462 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Albury%20Tennis%20Association%2C365%20Townsend%20Street%2CAlbury",
+      "closingDeadline": "16/3/2026"
+    },
+    {
+      "name": "2026 JDS CBC Metro Superb Tennis 10u Green Ball #2",
+      "dates": "22/03/2026",
+      "link": "/sport/tournament?id=26AD1E39-34A7-4E74-A456-AD76000895A6",
+      "ageGroup": "U10",
+      "source": "AUS",
+      "distance": "28 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Superb%20Tennis%2C4X%20Stratford%20Close%2C%20Asquith%20NSW%202077%2CSydney%20",
+      "closingDeadline": "16/3/2026"
+    },
+    {
+      "name": "2026 JDS Metro Oxford Falls Tennis 12u & 14u",
+      "dates": "22/03/2026",
+      "link": "/sport/tournament?id=02C9BAAA-EE8A-4B1B-9E55-A88AA7497F45",
+      "ageGroup": "U12",
+      "source": "AUS",
+      "distance": "20 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Oxford%20Falls%20Racquet%20Club%2C1110%20Oxford%20Falls%20Road%2C%202100%2C%20Sydney%2C%20NSW%2CSydney%20",
+      "closingDeadline": "16/3/2026"
+    },
+    {
+      "name": "2026 O5k J125 'C.ex Coffs' Coffs Harbour Open and Junior Tennis Championships",
+      "dates": "27/03/2026 to 30/03/2026",
+      "link": "/sport/tournament?id=7EE7CF96-4FA6-466C-BD94-E2EC7D76C611",
+      "ageGroup": "U10, U12",
+      "source": "AUS",
+      "distance": "441 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Westside%20Tennis%20Club%20Inc%2CKing%20Street%2CCoffs%20Harbour",
+      "closingDeadline": "17/3/2026"
+    },
+    {
+      "name": "2026 O3k J125 Shoalhaven Open & Junior",
+      "dates": "28/03/2026 to 30/03/2026",
+      "link": "/sport/tournament?id=1AF7EE8A-E627-43FD-A18D-4E6BFCD68635",
+      "ageGroup": "U12, All Ages",
+      "source": "AUS",
+      "distance": "118 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Shoalhaven%20Tennis%20Centre%2CNarang%20Road%2CBomaderry",
+      "closingDeadline": "18/3/2026"
+    },
+    {
+      "name": "2026 12u & 14u Australian Claycourt Championships - NSW Qualifying",
+      "dates": "28/03/2026 to 30/04/2026",
+      "link": "/sport/tournament?id=2BDAB054-9C33-458D-A010-8782845B7FFD",
+      "ageGroup": "U12",
+      "source": "AUS",
+      "distance": "21 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Tennis%20NSW%2C158%20Talavera%20road%20%2CSydney%20",
+      "closingDeadline": "18/3/2026"
+    },
+    {
+      "name": "2026 O3k/OC J125/JC Nepean 60th Easter Open & Junior",
+      "dates": "2/04/2026 to 6/04/2026",
+      "link": "/sport/tournament?id=278EBC1D-2998-46A5-8C6A-6C7DC192258B",
+      "ageGroup": "U10, U12",
+      "source": "AUS",
+      "distance": "54 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Nepean%20District%20Tennis%20Association%2C2260%20Castlereagh%20Road%2CPenrith",
+      "closingDeadline": "23/3/2026"
+    },
+    {
+      "name": "2026 O3k J125 Albury Easter Open & Junior",
+      "dates": "3/04/2026 to 6/04/2026",
+      "link": "/sport/tournament?id=4FC43AA9-60EF-4C7A-9A14-000AC15E58D5",
+      "ageGroup": "U10, U12",
+      "source": "AUS",
+      "distance": "462 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Albury%20Tennis%20Association%2C365%20Townsend%20Street%2CAlbury",
+      "closingDeadline": "24/3/2026"
+    },
+    {
+      "name": "2026 O8k J125 Capital of Country Easter Open",
+      "dates": "3/04/2026 to 6/04/2026",
+      "link": "/sport/tournament?id=4F9A0D59-D9AD-465D-AF69-E25EE8DC0300",
+      "ageGroup": "U10, U12",
+      "source": "AUS",
+      "distance": "317 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=The%20Courts%20%40%20East%2CCnr%20Napier%20%26%20Roderick%20Street%2CTamworth",
+      "closingDeadline": "24/3/2026"
+    },
+    {
+      "name": "2026 O3k J125 Bathurst Autumn Open & Junior",
+      "dates": "7/04/2026 to 10/04/2026",
+      "link": "/sport/tournament?id=742891D1-6D4C-4ACB-ABED-879AD981262E",
+      "ageGroup": "U10, U12",
+      "source": "AUS",
+      "distance": "164 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Bathurst%20Tennis%20Centre%2C261%20Durham%20Street%2CBathurst",
+      "closingDeadline": "28/3/2026"
+    },
+    {
+      "name": "2026 OC J125 Lismore Open and Junior",
+      "dates": "7/04/2026 to 10/04/2026",
+      "link": "/sport/tournament?id=208A6390-0A9C-4880-B1D1-CD8A712D18CE",
+      "ageGroup": "U10, U12",
+      "source": "AUS",
+      "distance": "601 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Lismore%20Tennis%20Club%2C82%20Ballina%20Road%2CLismore",
+      "closingDeadline": "28/3/2026"
+    },
+    {
+      "name": "2026 Masters Pennant Hills NWST NRT6",
+      "dates": "10/04/2026 to 12/04/2026",
+      "link": "/sport/tournament?id=816D439F-D1DA-4028-AC03-10549E8255CC",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "24 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=North%20West%20Sydney%20Tennis%2C25X%20Britannia%20Street%2CPennant%20Hills",
+      "closingDeadline": "31/3/2026"
+    },
+    {
+      "name": "2026 O3k J125 Newcastle Autumn Open and Junior",
+      "dates": "11/04/2026 to 13/04/2026",
+      "link": "/sport/tournament?id=968BB816-8AF8-4A7F-831C-EE32DC341278",
+      "ageGroup": "U10, U12",
+      "source": "AUS",
+      "distance": "121 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Newcastle%20District%20Park%2CCnr%20Lambton%20and%20Curley%20Road%2CBroadmeadow",
+      "closingDeadline": "1/4/2026"
+    },
+    {
+      "name": "2026 OC J125 Wollongong Open & Junior",
+      "dates": "11/04/2026 to 13/04/2026",
+      "link": "/sport/tournament?id=F4CE730A-634F-4D57-B0FC-359AA191B13E",
+      "ageGroup": "U10, U12",
+      "source": "AUS",
+      "distance": "63 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Wollongong%20City%20Tennis%20Club%2C37%20Foley%20Street%2CGwynneville",
+      "closingDeadline": "1/4/2026"
+    },
+    {
+      "name": "2026 J125 Macquarie",
+      "dates": "14/04/2026 to 16/04/2026",
+      "link": "/sport/tournament?id=88A7B04E-6529-46BF-A56C-3463B2C81979",
+      "ageGroup": "U10, U12",
+      "source": "AUS",
+      "distance": "21 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Vince%20Barclay%20Tennis%2CMacquarie%20Uni%20Sport%20Field%2C%20158%20Talavera%20Road%20Macquarie%20Park%2CMacquarie%20Park",
+      "closingDeadline": "4/4/2026"
+    },
+    {
+      "name": "2026 O3k Macarthur",
+      "dates": "14/04/2026 to 16/04/2026",
+      "link": "/sport/tournament?id=2CDFFAF0-A69A-4C8E-803F-44EDA85418FB",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "39 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Wests%20Tennis%20Centre%20%28Tennis%20Macarthur%29%2C16%20Old%20Leumeah%20Road%2CLeumeah",
+      "closingDeadline": "4/4/2026"
+    },
+    {
+      "name": "2026 J250 NSW Age",
+      "dates": "14/04/2026 to 18/04/2026",
+      "link": "/sport/tournament?id=7EAC91F8-D455-4AA2-BE86-EE7DF76DF842",
+      "ageGroup": "U10, U12",
+      "source": "AUS",
+      "distance": "17 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Sydney%20Olympic%20Park%20Tennis%20Centre%2C2%20Rod%20Laver%20Drive%2C%20Olympic%20Park%2COlympic%20Park",
+      "closingDeadline": "31/3/2026"
+    },
+    {
+      "name": "2026 J125 Hills",
+      "dates": "17/04/2026 to 20/04/2026",
+      "link": "/sport/tournament?id=05E1CC4F-1F97-4107-8B32-51681F6D3AEA",
+      "ageGroup": "U10, U12",
+      "source": "AUS",
+      "distance": "33 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Caterson%20Tennis%20Centre%2CCaterson%20Dr%2C%20Castle%20Hill%2CCastle%20Hill",
+      "closingDeadline": "7/4/2026"
+    },
+    {
+      "name": "2026 O3k J125 Illawarra",
+      "dates": "17/04/2026 to 20/04/2026",
+      "link": "/sport/tournament?id=7F5EC442-2261-4AF6-A664-E114FAD1BD23",
+      "ageGroup": "U10, U12",
+      "source": "AUS",
+      "distance": "9.1 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Rockdale%20Tennis%20Centre%2C71%20Chapel%20Street%20%2CRockdale",
+      "closingDeadline": "7/4/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green Central West RMS - Dubbo",
+      "dates": "3/05/2026",
+      "link": "/sport/tournament?id=0CC97582-521D-4621-BA2E-1C7D874F3508",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "308 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Paramount%20Tennis%20Club%2C74%20Wingewarra%20Street%2CDubbo",
+      "closingDeadline": "27/4/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green North East RMS (Lower) - Port Macquarie #2",
+      "dates": "3/05/2026",
+      "link": "/sport/tournament?id=C2919C75-636E-4C1A-BC7F-5D651496E711",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "320 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Port%20Macquarie%20Tennis%20Club%2C12%20Maritime%20Lane%2CPort%20Macquarie",
+      "closingDeadline": "27/4/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green North East RMS (Upper) - Tweed Heads",
+      "dates": "3/05/2026",
+      "link": "/sport/tournament?id=C2EA8690-F2FF-445F-A0AD-821BA2102657",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "675 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Voyager%20Tweed%20Heads%2CArkinstall%20Park%2C%20Cunningham%20Street%2CTweed%20Heads%20South",
+      "closingDeadline": "27/4/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green North West RMS - Narrabri #1",
+      "dates": "3/05/2026",
+      "link": "/sport/tournament?id=ECF5F452-35A3-43A9-B168-92DE1F0800FA",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "422 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Narrabri%20Tennis%20Club%2CCnr%20Wukuwa%20%26%20Boheena%20Street%2CNarrabri",
+      "closingDeadline": "27/4/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green Northumberland RMS - Nelson Bay",
+      "dates": "3/05/2026",
+      "link": "/sport/tournament?id=4968142F-F36B-433C-935D-B595026127F4",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "158 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Nelson%20Bay%20Tennis%20Club%2C61%20Dowling%20Street%2CNelson%20Bay",
+      "closingDeadline": "27/4/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green South East RMS - Ulladulla",
+      "dates": "3/05/2026",
+      "link": "/sport/tournament?id=E5C6B7D6-5073-4CFA-8E39-8DD2E95F9822",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "174 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Milton%20Ulladulla%20Tennis%20Club%2C151%20Warden%20Street%2CUlladulla",
+      "closingDeadline": "27/4/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green South West RMS - Wagga Wagga",
+      "dates": "3/05/2026",
+      "link": "/sport/tournament?id=3044B6B1-47E1-4480-80AA-EF80098E85B8",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "379 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Jim%20Elphick%20Tennis%20Centre%20%28Bolton%20Park%20Sporting%20Complex%29%2CEdward%20Street%2CWagga%20Wagga",
+      "closingDeadline": "27/4/2026"
+    },
+    {
+      "name": "2026 JDS CBC Metro Parramatta Tennis 10U & 14U",
+      "dates": "3/05/2026",
+      "link": "/sport/tournament?id=EDEB5D8E-2682-4ADA-BDF4-ADD6844F1D0C",
+      "ageGroup": "U10",
+      "source": "AUS",
+      "distance": "24 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Parramatta%20City%20Tennis%2CBarton%20St%2C%20Sydney%20New%20South%20Wales%202151%20%C2%B7%2CSydney%20",
+      "closingDeadline": "27/4/2026"
+    },
+    {
+      "name": "2026 Gloucester Seniors Tournament  NRT6",
+      "dates": "15/05/2026 to 17/05/2026",
+      "link": "/sport/tournament?id=963F78E6-6A2D-46EC-BC59-0CBA3CC54CAB",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "224 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Gloucester%20Tennis%20Club%2CGloucester%20Pk%2CGloucester",
+      "closingDeadline": "8/5/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green South East RMS - Moruya",
+      "dates": "16/05/2026",
+      "link": "/sport/tournament?id=C528AADA-5BDF-4055-A7C5-F9764DDED89E",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "245 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Moruya%20Tennis%20Club%2CShore%20Street%2CMoruya",
+      "closingDeadline": "11/5/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green Central West RMS - Bathurst #2",
+      "dates": "17/05/2026",
+      "link": "/sport/tournament?id=49CD38AD-A459-471D-9D2C-3118DAB75C34",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "164 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Bathurst%20Tennis%20Centre%2C261%20Durham%20Street%2CBathurst",
+      "closingDeadline": "11/5/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green North West RMS - West Tamworth",
+      "dates": "17/05/2026",
+      "link": "/sport/tournament?id=6350EDC5-4992-4509-93DE-2CFD8E6D6369",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "316 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=West%20Tamworth%20Tennis%20Club%2CBelmore%20Park%2C%2016%20Gidley%20Street%2CWest%20Tamworth",
+      "closingDeadline": "11/5/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green Northumberland RMS - Charmhaven",
+      "dates": "17/05/2026",
+      "link": "/sport/tournament?id=4C59D3F7-7029-471B-8FAC-E31D459ED8E0",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "81 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Charmhaven%20Tennis%20Club%2C35%20Parkside%20Drive%2CCharmhaven",
+      "closingDeadline": "11/5/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green South East RMS - Batemans Bay",
+      "dates": "17/05/2026",
+      "link": "/sport/tournament?id=DCA13098-4BA9-408E-8BAD-341E2E550BE0",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "221 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Batemans%20Bay%20Tennis%20Club%2CHanging%20Rock%20Complex%2C%20Beach%20Road%2CBatemans%20Bay",
+      "closingDeadline": "11/5/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green South West RMS - East Albury",
+      "dates": "17/05/2026",
+      "link": "/sport/tournament?id=5E4E3AD8-BD8A-4491-A453-FD1F0B104BCC",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "459 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=East%20Albury%20Tennis%20Club%2CCnr%20Short%20Street%20%26%20Borella%20Road%2CAlbury",
+      "closingDeadline": "11/5/2026"
+    },
+    {
+      "name": "2026 JDS CBC Metro Maquarie Uni Tennis 10u Green Ball",
+      "dates": "17/05/2026",
+      "link": "/sport/tournament?id=9687CA65-D7A4-43D2-9B07-4F812803FEFB",
+      "ageGroup": "U10",
+      "source": "AUS",
+      "distance": "21 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Vince%20Barclay%20Tennis%2CMacquarie%20Uni%20Sport%20Field%2C%20158%20Talavera%20Road%20Macquarie%20Park%20NSW%202113%2CSydney%20",
+      "closingDeadline": "11/5/2026"
+    },
+    {
+      "name": "2026 JDS Metro North West Sydney Tennis 12u & 14u",
+      "dates": "17/05/2026",
+      "link": "/sport/tournament?id=5324E15B-85DF-4657-A281-3DEBC156B0E8",
+      "ageGroup": "U12",
+      "source": "AUS",
+      "distance": "24 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=North%20West%20Sydney%20Tennis%2C25X%20Britannia%20St%2C%20Pennant%20Hills%20%20NSW%20%20%2CSydney%20",
+      "closingDeadline": "11/5/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green  Northumberland RMS - Newcastle #2",
+      "dates": "31/05/2026",
+      "link": "/sport/tournament?id=FF9E88ED-E85F-45F3-94A0-CC4B4BA4FA14",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "121 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Newcastle%20District%20Park%2CCnr%20Curley%20and%20Lambton%20Road%2CBroadmeadow",
+      "closingDeadline": "25/5/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green Central West RMS - Forbes",
+      "dates": "31/05/2026",
+      "link": "/sport/tournament?id=F7EC949D-BF0D-4424-8582-4F77A40E6D8B",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "304 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Forbes%20Tennis%20Club%2C2-20%20Church%20Street%2CForbes",
+      "closingDeadline": "25/5/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green North West RMS - Inverell",
+      "dates": "31/05/2026",
+      "link": "/sport/tournament?id=EB419A2B-2FAC-4DE2-9DEB-A11219C600B6",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "462 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Inverell%20Tennis%20Club%2C115%20Evan%20Street%2CInverell",
+      "closingDeadline": "25/5/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green South East RMS - Tennis Wollongong",
+      "dates": "31/05/2026",
+      "link": "/sport/tournament?id=85FBA10C-8E9C-46EA-82AE-EEC2ACD2C854",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "63 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Wollongong%20City%20Tennis%20Club%2C37%20Foley%20Street%2CGwynneville",
+      "closingDeadline": "25/5/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green South West RMS - Young",
+      "dates": "31/05/2026",
+      "link": "/sport/tournament?id=F8A6CA18-0E5F-4CB7-B054-1FBBE622B089",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "273 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Young%20Tennis%20Club%2CLachlan%20Street%2CYoung",
+      "closingDeadline": "25/5/2026"
+    },
+    {
+      "name": "2026 JDS Metro Macarthur Tennis 10u Green Ball",
+      "dates": "31/05/2026",
+      "link": "/sport/tournament?id=5C122A93-B819-4BAE-8B6E-9B5CF5F557F4",
+      "ageGroup": "U10",
+      "source": "AUS",
+      "distance": "39 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Tennis%20Macarthur%2C16%20Old%20Leumeah%20Road%20Leumeah%2CSydney%20",
+      "closingDeadline": "25/5/2026"
+    },
+    {
+      "name": "2026 O3k South Coast Open June Long Weekend Batemans Bay",
+      "dates": "5/06/2026 to 8/06/2026",
+      "link": "/sport/tournament?id=E5B3596E-F23F-4A2B-95DF-1595AF9F93A1",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "221 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Batemans%20Bay%20Tennis%20Complex%2CHanging%20Rock%20Place%2CBatemans%20Bay",
+      "closingDeadline": "26/5/2026"
+    },
+    {
+      "name": "2026 OC J125 Griffith MIA Open",
+      "dates": "6/06/2026 to 8/06/2026",
+      "link": "/sport/tournament?id=9EBC6505-902E-4BAD-AE5F-951C29BD790D",
+      "ageGroup": "U10, U12",
+      "source": "AUS",
+      "distance": "480 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Griffith%20Tennis%20Club%2CNoorilla%20Street%2CGriffith",
+      "closingDeadline": "26/5/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green Central West RMS - Parkes",
+      "dates": "14/06/2026",
+      "link": "/sport/tournament?id=6C0F5E5A-EB9D-4D83-ABE5-41F809B2549D",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "298 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Parkes%20Tennis%20Club%2CVictoria%20Street%2CParkes",
+      "closingDeadline": "8/6/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green North East RMS (Lower) - Port Macquarie #3",
+      "dates": "14/06/2026",
+      "link": "/sport/tournament?id=813CAC45-0908-416D-888F-A9EF95695930",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "318 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Westport%20Tennis%20Club%2C33%20Woods%20Street%2CPort%20Macquarie",
+      "closingDeadline": "8/6/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green North East RMS (Upper) - Terranora",
+      "dates": "14/06/2026",
+      "link": "/sport/tournament?id=D5743A00-D5B4-48AC-A1CF-964AF58A83ED",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "669 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Terranora%20Tennis%20Club%2C89%20Henry%20Lawson%20Drive%2CTerranora",
+      "closingDeadline": "8/6/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green North West RMS - Gunnedah #2",
+      "dates": "14/06/2026",
+      "link": "/sport/tournament?id=44D0CFD2-DB48-4096-B6AB-B2DFDECF618B",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "341 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Gunnedah%20Tennis%20Club%2CWolseley%20Park%2C%20Chandos%20Street%2CGunnedah",
+      "closingDeadline": "8/6/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green Northumberland RMS - Scone",
+      "dates": "14/06/2026",
+      "link": "/sport/tournament?id=A12EA8A2-E790-44BD-8B8F-F1998062DDC6",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "212 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Scone%20Tennis%20Club%2C45%20Hill%20Street%2CScone",
+      "closingDeadline": "8/6/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green South East RMS - Kiama #2",
+      "dates": "14/06/2026",
+      "link": "/sport/tournament?id=4BD85916-659F-4CD7-99D3-9D20212C1585",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "90 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Kiama%20Tennis%20Club%2C50%20Noorinan%20Street%2CKiama",
+      "closingDeadline": "8/6/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green South West RMS - Henty",
+      "dates": "14/06/2026",
+      "link": "/sport/tournament?id=728AD19F-E84E-4509-9D6E-CDA6E09EAD7E",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "423 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Henty%20Tennis%20Club%2CKeightly%20Street%2CHenty",
+      "closingDeadline": "8/6/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green South East RMS - Merimbula",
+      "dates": "20/06/2026",
+      "link": "/sport/tournament?id=FDCD8FC0-841C-4E63-BB9A-CA279F342C19",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "351 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Merimbula%20Tennis%20Club%2CKalinda%20Street%2CMerimbula",
+      "closingDeadline": "15/6/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green Central West RMS - Nepean #2",
+      "dates": "21/06/2026",
+      "link": "/sport/tournament?id=41BFA2C1-41D5-4893-A3ED-B0D42B4D8BF1",
+      "ageGroup": "U10, All Ages",
+      "source": "AUS",
+      "distance": "54 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Nepean%20Tennis%20Centre%2C2260%20Castlereagh%20Road%2CPenrith",
+      "closingDeadline": "15/6/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green North West RMS - Narrabri #2",
+      "dates": "21/06/2026",
+      "link": "/sport/tournament?id=3E7F93D7-1BD4-4AE0-9975-D1EE68EF55BC",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "422 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Narrabri%20Tennis%20Club%2CCnr%20Wukuwa%20%26%20Boheena%20Street%2CNarrabri",
+      "closingDeadline": "15/6/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green South East RMS - Merimbula #2",
+      "dates": "21/06/2026",
+      "link": "/sport/tournament?id=5E5E9113-9F03-4EAB-9293-2460A6B852F2",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "351 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Merimbula%20Tennis%20Club%2CKalinda%20Street%2CMerimbula",
+      "closingDeadline": "15/6/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green South West RMS - West Wyalong",
+      "dates": "21/06/2026",
+      "link": "/sport/tournament?id=A7F34609-33B3-4241-9466-53B3D8A74603",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "372 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=West%20Wyalong%20Tennis%20Club%2CPark%20Street%2CWest%20Wyalong",
+      "closingDeadline": "15/6/2026"
+    },
+    {
+      "name": "2026 O5k NSW Country Closed Championships Open",
+      "dates": "3/07/2026 to 6/07/2026",
+      "link": "/sport/tournament?id=F9EC5E87-4B72-4B93-888E-553330C48E56",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "378 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Jim%20Elphick%20Tennis%20Centre%20%28Bolton%20Park%20Sporting%20Complex%29%2C50%20Morgan%20Street%2CWagga%20Wagga",
+      "closingDeadline": "23/6/2026"
+    },
+    {
+      "name": "2026 J125 NSW Country Closed Championships Junior",
+      "dates": "6/07/2026 to 10/07/2026",
+      "link": "/sport/tournament?id=8EB376F3-8531-489D-A283-4A7DD6815825",
+      "ageGroup": "U10, U12",
+      "source": "AUS",
+      "distance": "378 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Jim%20Elphick%20Tennis%20Centre%20%28Bolton%20Park%20Sporting%20Complex%29%2C50%20Morgan%20Street%2CWagga%20Wagga",
+      "closingDeadline": "26/6/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green South East RMS - Narooma",
+      "dates": "8/08/2026",
+      "link": "/sport/tournament?id=DD5DE35F-858C-4C72-AF3F-8CA5AC8C30DD",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "274 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Narooma%20Tennis%20Club%2CMcMillan%20Rd%2CNarooma",
+      "closingDeadline": "3/8/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green Central West RMS - Dubbo #2",
+      "dates": "9/08/2026",
+      "link": "/sport/tournament?id=FBA85BB7-A679-475A-984D-622B9767A394",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "308 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Paramount%20Tennis%20Club%2C74%20Wingewarra%20Street%2CDubbo",
+      "closingDeadline": "3/8/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green North East RMS (Lower) - Twin Towns",
+      "dates": "9/08/2026",
+      "link": "/sport/tournament?id=68C743B8-0A79-48E1-B966-78DB641C4CBA",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "228 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Twin%20Towns%20Tennis%20Club%2CCapel%20Street%2CTuncurry",
+      "closingDeadline": "27/7/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green North East RMS (Upper) - Ballina #2",
+      "dates": "9/08/2026",
+      "link": "/sport/tournament?id=1C23B5FA-9C0C-4B9E-8077-BA6A515463C0",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "605 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Ballina%20Tennis%20Club%2CCnr%20Burnett%20and%20Cherry%20Street%2CBallina",
+      "closingDeadline": "3/8/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green North West RMS - Tamworth #2",
+      "dates": "9/08/2026",
+      "link": "/sport/tournament?id=00321156-0D84-4FA8-9FBC-8E97D10A79AE",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "317 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=The%20Courts%20%40%20East%2CCnr%20Napier%20%26%20Roderick%20Street%2CTamworth",
+      "closingDeadline": "3/8/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green Northumberland RMS - Lake Macquarie #2",
+      "dates": "9/08/2026",
+      "link": "/sport/tournament?id=1F977120-9587-4B49-9DDD-F1606ED83291",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "107 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Belmont%20Tennis%20Club%2C10%20Livingstone%20Street%2CBelmont",
+      "closingDeadline": "3/8/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green South East RMS - Moruya #2",
+      "dates": "9/08/2026",
+      "link": "/sport/tournament?id=F3374F6D-AEC5-462B-B98C-B7B4BE9B18AB",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "245 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Moruya%20Tennis%20Club%2CShore%20Street%2CMoruya",
+      "closingDeadline": "3/8/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green South West RMS - St Pat's Albury",
+      "dates": "9/08/2026",
+      "link": "/sport/tournament?id=BFA01D27-F2DB-44A7-A231-DDC9402464EC",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "459 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=St%20Patricks%20Tennis%20Club%2C220%20Andrews%20St%2CAlbury",
+      "closingDeadline": "3/8/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green Central West RMS - Cowra",
+      "dates": "23/08/2026",
+      "link": "/sport/tournament?id=49256780-F8F2-4F45-8821-6B03B7D480FA",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "236 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Cowra%20Tennis%20Club%2C1%20Grenfell%20Road%2CCowra",
+      "closingDeadline": "17/8/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green North West RMS - Moree",
+      "dates": "23/08/2026",
+      "link": "/sport/tournament?id=C37206DF-8928-40B1-A1EF-8B2FB6059E0A",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "514 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Moree%20Tennis%20Club%2CEndeavour%20Lane%2CMoree",
+      "closingDeadline": "17/8/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green Northumberland RMS - Raymond Terrace",
+      "dates": "23/08/2026",
+      "link": "/sport/tournament?id=FD088A05-6BC7-4001-8C19-7F13A1B4172E",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "138 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Raymond%20Terrace%20Tennis%20Club%2CKangaroo%20Street%2CRaymond%20Terrace",
+      "closingDeadline": "17/8/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green South East RMS - Shoalhaven #2",
+      "dates": "23/08/2026",
+      "link": "/sport/tournament?id=EE2EECFC-DAEC-46FB-AE82-712ABA7ACA64",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "118 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Shoalhaven%20District%20Tennis%20Association%2CNarang%20Road%2CBomaderry",
+      "closingDeadline": "17/8/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green South West RMS - Goulburn",
+      "dates": "23/08/2026",
+      "link": "/sport/tournament?id=7555E833-0CF8-4589-A172-F763F2DD1DD7",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "166 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Goulburn%20Tennis%20Club%2CBishop%20Street%2CGoulburn",
+      "closingDeadline": "17/8/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green Central West RMS - Springwood",
+      "dates": "6/09/2026",
+      "link": "/sport/tournament?id=2C252C61-2E73-4E90-9FAD-6A87F24FC2AB",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "66 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Springwood%20Tennis%20Club%2C18%20-%2032%20Spring%20Street%2CSpringwood",
+      "closingDeadline": "31/8/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green North East RMS (Lower) - Sawtell",
+      "dates": "6/09/2026",
+      "link": "/sport/tournament?id=7775B39D-23F1-474C-B15D-976E0099D59D",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "433 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Sawtell%20Tennis%20Club%2CLyons%20Road%2CSawtell",
+      "closingDeadline": "31/8/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green North East RMS (Upper) - Lismore #2",
+      "dates": "6/09/2026",
+      "link": "/sport/tournament?id=69A9F0CF-A094-4B0E-9E26-D85CFA481F81",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "601 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Lismore%20Tennis%20Club%2CElaine%20Blanche%20Tennis%20Courts%2C%2082%20Ballina%20Road%2CLismore",
+      "closingDeadline": "31/8/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green Northumberland RMS - Singleton #2",
+      "dates": "6/09/2026",
+      "link": "/sport/tournament?id=9B10C9B5-F2C7-4DC1-8909-F4D0A70F471B",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "152 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Howe%20Park%20Tennis%20Club%2C51%20Boundary%20Street%2CSingleton",
+      "closingDeadline": "31/8/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green South East RMS - Bulli",
+      "dates": "6/09/2026",
+      "link": "/sport/tournament?id=7FCB133C-C137-4CE3-8189-A9C077EACC11",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "54 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Bulli%20Tennis%20Club%2CGrevillea%20Park%20Road%2CBulli",
+      "closingDeadline": "31/8/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green South West RMS - Thurgoona",
+      "dates": "6/09/2026",
+      "link": "/sport/tournament?id=09052FA8-27B5-4686-84E3-ECC2FDDBBD35",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "453 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Thurgoona%20Tennis%20Club%2C1%20Evesham%20Place%2CThurgoona",
+      "closingDeadline": "31/8/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green North East RMS Champion of Champions",
+      "dates": "19/09/2026 to 20/09/2026",
+      "link": "/sport/tournament?id=6B14A2FB-EFE5-4F0D-89DE-79B7D504F79F",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "499 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Grafton%20City%20Tennis%20Club%2C202%20Prince%20Street%2CGrafton",
+      "closingDeadline": "16/9/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green Central West RMS - Orange #2",
+      "dates": "20/09/2026",
+      "link": "/sport/tournament?id=B7FD8F1C-B8FD-41A9-B8D6-79CA03677C95",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "210 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Orange%20Ex%20Services%20Tennis%20Club%2CWarrendine%20Street%2COrange",
+      "closingDeadline": "14/9/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green North West RMS Regional Champion of Champions",
+      "dates": "20/09/2026",
+      "link": "/sport/tournament?id=48554181-F7D8-42BB-9506-8E1694B370A9",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "1941 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=TBC%2CTBC%2CTBC",
+      "closingDeadline": "14/9/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green Northumberland RMS - Gosford #2",
+      "dates": "20/09/2026",
+      "link": "/sport/tournament?id=31E5D4BC-8F56-4BB1-9109-E2EA35DC0481",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "57 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Gosford%20Tennis%20Club%2C13%20Racecourse%20Road%2CGosford%20",
+      "closingDeadline": "14/9/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green South East RMS - Bowral",
+      "dates": "20/09/2026",
+      "link": "/sport/tournament?id=E89A6F75-019C-4688-81F6-258612248E8B",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "97 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Bowral%20Tennis%20Club%2CLoseby%20Park%2C%20Park%20Road%2CBowral",
+      "closingDeadline": "14/9/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green South West RMS - Griffith",
+      "dates": "20/09/2026",
+      "link": "/sport/tournament?id=7BA9D5E5-A21B-45EC-89C8-82C4623C1DC1",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "480 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Griffith%20Tennis%20Club%2CNoorilla%20Street%2CGriffith",
+      "closingDeadline": "14/9/2026"
+    },
+    {
+      "name": "2026 Masters Picton Seniors NRT6",
+      "dates": "25/09/2026 to 27/09/2026",
+      "link": "/sport/tournament?id=552E56C7-2448-449E-AD18-AB335D270845",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "63 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Picton%20Tennis%20Club%2CDowning%20Street%2CPicton",
+      "closingDeadline": "18/9/2026"
+    },
+    {
+      "name": "2026 O5k J125 Bathurst Spring Open & Junior Event",
+      "dates": "2/10/2026 to 5/10/2026",
+      "link": "/sport/tournament?id=28DA1C9D-1F87-4006-B58C-F9DA48449FFE",
+      "ageGroup": "U10, U12",
+      "source": "AUS",
+      "distance": "164 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Bathurst%20Tennis%20Centre%2C261%20Durham%20Street%2CBathurst",
+      "closingDeadline": "22/9/2026"
+    },
+    {
+      "name": "2026 JC Rex Hartwig Cup",
+      "dates": "9/10/2026 to 11/10/2026",
+      "link": "/sport/tournament?id=17674FA9-A349-4DAD-944C-C0376585C72B",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "462 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Albury%20Tennis%20Association%2C365%20Townsend%20Street%2CAlbury",
+      "closingDeadline": "29/9/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green Northern Foundation RMS Champion of Champions (North East and North West)",
+      "dates": "17/10/2026 to 18/10/2026",
+      "link": "/sport/tournament?id=97F2E418-DD56-4775-8101-A88126FC1D74",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "462 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Inverell%20Tennis%20Club%2CEvans%20Street%2CInverell",
+      "closingDeadline": "10/10/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green Central West RMS - Springwood #2",
+      "dates": "18/10/2026",
+      "link": "/sport/tournament?id=57C6AAA6-2DA2-469B-82D7-23EBE19603DB",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "66 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Springwood%20Tennis%20Club%2C18%20-%2032%20Spring%20Street%2CSpringwood",
+      "closingDeadline": "12/10/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green South East RMS - Complete Tennis Wollongong",
+      "dates": "18/10/2026",
+      "link": "/sport/tournament?id=78BCCCB2-AE55-4FED-8960-2A333A33A26F",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "63 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Wollongong%20City%20Tennis%20Club%2C37%20Foley%20Street%2CGwynneville",
+      "closingDeadline": "12/10/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green South West RMS - Wagga Wagga #2",
+      "dates": "18/10/2026",
+      "link": "/sport/tournament?id=9FDBE576-77EB-4586-8253-401664503F23",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "379 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Jim%20Elphick%20Tennis%20Centre%20%28Bolton%20Park%20Sporting%20Complex%29%2CEdward%20Street%2CWagga%20Wagga",
+      "closingDeadline": "12/10/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green Central West RMS Regional Champion of Champions",
+      "dates": "31/10/2026 to 1/11/2026",
+      "link": "/sport/tournament?id=B63664E1-3377-4EC8-8D8E-35A69B918CCB",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "1941 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=TBC%2CTBC%2CTBC",
+      "closingDeadline": "26/10/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green South East RMS Regional Champion of Champions",
+      "dates": "31/10/2026 to 1/11/2026",
+      "link": "/sport/tournament?id=C158C967-7E9E-4080-9EC5-91A9E313FB78",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "1941 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=TBC%2CTBC%2CTBC",
+      "closingDeadline": "26/10/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green South West RMS Regional Champion of Champions",
+      "dates": "31/10/2026 to 1/11/2026",
+      "link": "/sport/tournament?id=3468F697-19CB-49DA-9FDA-3D4A216852BD",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "1941 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=TBC%2CTBC%2CTBC",
+      "closingDeadline": "26/10/2026"
+    },
+    {
+      "name": "2026 JDS CBC Green Northumberland RMS Regional Champion of Champions",
+      "dates": "1/11/2026",
+      "link": "/sport/tournament?id=00A56D5F-E41B-4239-9326-74F8898FD3D3",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "1941 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=TBC%2CTBC%2CTBC",
+      "closingDeadline": "26/10/2026"
+    },
+    {
+      "name": "2026 OC Tennis Country Series Finals - Tamworth",
+      "dates": "21/11/2026 to 22/11/2026",
+      "link": "/sport/tournament?id=BDFFFD13-9161-47F0-9074-16695252AA0E",
+      "ageGroup": "All Ages",
+      "source": "AUS",
+      "distance": "317 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=The%20Courts%20%40%20East%2CCnr%20Napier%20%26%20Roderick%20Street%2CTamworth",
+      "closingDeadline": "11/11/2026"
+    },
+    {
+      "name": "2026 J125 NSW State Champion of Champions",
+      "dates": "28/11/2026 to 30/11/2026",
+      "link": "/sport/tournament?id=6A877AF8-AA15-4A63-8EA9-7C503F260B15",
+      "ageGroup": "U10, U12",
+      "source": "AUS",
+      "distance": "1941 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=TBC%2CTBC%2CTBC",
+      "closingDeadline": "21/11/2026"
+    },
+    {
+      "name": "2026 O3k J125 Bathurst Summer Open & Junior Event",
+      "dates": "12/12/2026 to 14/12/2026",
+      "link": "/sport/tournament?id=F41514FF-7873-490F-AE61-9E47FAE574D7",
+      "ageGroup": "U10, U12",
+      "source": "AUS",
+      "distance": "164 km",
+      "mapsLink": "https://www.google.com/maps/dir/?api=1&destination=Bathurst%20Tennis%20Centre%2C261%20Durham%20Street%2CBathurst",
+      "closingDeadline": "2/12/2026"
+    }
+  ]
+}
