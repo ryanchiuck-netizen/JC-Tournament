@@ -4,6 +4,9 @@ import fs from "fs/promises";
 import path from "path";
 import { runScraper } from "./scraper.js";
 import cron from "node-cron";
+import axios from "axios";
+import * as cheerio from "cheerio";
+import pLimit from "p-limit";
 
 async function startServer() {
   const app = express();
@@ -50,6 +53,80 @@ async function startServer() {
         isScraping: isScraping,
         message: "Data not available yet. Scraper is running."
       });
+    }
+  });
+
+  // API route for Player Watch
+  app.get("/api/player-watch", async (req, res) => {
+    const playerName = req.query.name as string;
+    if (!playerName) {
+      return res.status(400).json({ error: "Player name is required" });
+    }
+
+    try {
+      const data = await fs.readFile(dataPath, "utf-8");
+      const { tournaments } = JSON.parse(data);
+      
+      const limit = pLimit(5);
+      const matches: any[] = [];
+
+      const searchTasks = tournaments.map((tournament: any) => 
+        limit(async () => {
+          const domain = tournament.source === "HK" ? "hkta.tournamentsoftware.com" : "tournaments.tennis.com.au";
+          const playersUrl = `https://${domain}/tournament/${tournament.link.split("id=")[1]}/Players/GetPlayersContent`;
+          
+          try {
+            const response = await axios.get(playersUrl, {
+              headers: {
+                "User-Agent": "Mozilla/5.0",
+                "X-Requested-With": "XMLHttpRequest"
+              },
+              timeout: 10000
+            });
+
+            // Quick check if name exists in HTML before parsing
+            if (response.data.toLowerCase().includes(playerName.toLowerCase())) {
+              const $ = cheerio.load(response.data);
+              let playerDetailLink = "";
+
+              $("li.js-alphabet-list-item").each((i, el) => {
+                const name = $(el).find(".media__title").text().trim();
+                if (name.toLowerCase().includes(playerName.toLowerCase())) {
+                  playerDetailLink = $(el).find(".media__title a").attr("href") || "";
+                  return false; // break
+                }
+              });
+
+              if (playerDetailLink) {
+                const fullPlayerUrl = `https://${domain}${playerDetailLink}`;
+                const detailResponse = await axios.get(fullPlayerUrl, {
+                  headers: { "User-Agent": "Mozilla/5.0" },
+                  timeout: 10000
+                });
+                const $detail = cheerio.load(detailResponse.data);
+                
+                $detail(".media__subheading a").each((i, el) => {
+                  const drawName = $detail(el).text().trim();
+                  const drawLink = $detail(el).attr("href");
+                  matches.push({
+                    tournamentName: tournament.name,
+                    tournamentLink: `https://${domain}${tournament.link}`,
+                    drawName: drawName,
+                    drawLink: drawLink ? `https://${domain}${drawLink}` : undefined
+                  });
+                });
+              }
+            }
+          } catch (e) {
+            // Skip failed requests
+          }
+        })
+      );
+
+      await Promise.all(searchTasks);
+      res.json({ playerName, matches });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to search for player" });
     }
   });
 
