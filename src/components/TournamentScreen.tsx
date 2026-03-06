@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Trophy, Calendar, MapPin, Users, ChevronDown, ChevronUp } from 'lucide-react';
+import { Trophy, Calendar, MapPin, Users, ChevronDown, ChevronUp, CalendarPlus } from 'lucide-react';
+import { getGoogleCalendarLink } from '../services/tournamentService';
+import { Tournament } from '../types';
 
 interface JoinedPlayer {
   player: {
@@ -71,10 +73,28 @@ function TournamentItem({ t, index }: { t: TournamentWithPlayers, index: number 
               <Users className="w-4 h-4" />
               {t.joinedPlayers.length} player{t.joinedPlayers.length !== 1 ? 's' : ''}
             </div>
+            {t.tournament.distance && (
+              <div className="flex items-center gap-1.5 text-gray-400">
+                <MapPin className="w-4 h-4 text-gray-500" />
+                {t.tournament.distance}
+              </div>
+            )}
           </div>
         </div>
-        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-800/50 text-gray-400 shrink-0">
-          {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+        <div className="flex items-center gap-3 shrink-0">
+          <a 
+            href={getGoogleCalendarLink(t.tournament as Tournament)}
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="w-9 h-9 flex items-center justify-center bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-full transition-colors"
+            title="Add to Google Calendar"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <CalendarPlus className="w-4 h-4" />
+          </a>
+          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-800/50 text-gray-400">
+            {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+          </div>
         </div>
       </div>
 
