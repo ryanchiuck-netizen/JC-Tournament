@@ -8,6 +8,14 @@ export async function fetchTournaments(): Promise<StaticData> {
   return response.json();
 }
 
+export async function fetchPlayers(): Promise<string[]> {
+  const response = await fetch('/api/players');
+  if (!response.ok) {
+    return [];
+  }
+  return response.json();
+}
+
 export function getFullLink(link: string, source: "HK" | "AUS") {
   if (link.startsWith('http')) return link;
   const base = source === "HK" ? "https://hkta.tournamentsoftware.com" : "https://tournaments.tennis.com.au";

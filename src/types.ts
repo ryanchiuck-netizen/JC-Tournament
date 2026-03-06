@@ -17,6 +17,7 @@ export interface PlayerMatch {
   tournamentLink: string;
   drawName: string;
   drawLink?: string;
+  tournamentDates: string;
 }
 
 export interface PlayerWatchResult {

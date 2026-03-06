@@ -1,28 +1,28 @@
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 
-import fs from 'fs/promises';
-
 async function test() {
-  const id = 'FD5EA231-3AE9-4E06-842C-7210BECE9297';
-  const url = `https://tournaments.tennis.com.au/sport/draws.aspx?id=${id}`;
+  const profileUrl = 'https://tournaments.tennis.com.au/player-profile/d8c9ab7b-18a8-4631-b8de-4edbf1d543a1';
+  
   try {
-    const res = await axios.get(url);
-    const $ = cheerio.load(res.data);
-    console.log($('title').text());
-    
-    // Find all draws
-    const draws = [];
-    $('.drawname').each((i, el) => {
-      draws.push({
-        name: $(el).text().trim(),
-        link: $(el).attr('href')
-      });
+    const titlesUrl = `${profileUrl}/PersonHome/TitlesFinals`;
+    const titlesRes = await axios.get(titlesUrl, {
+      headers: { 
+        "User-Agent": "Mozilla/5.0",
+        "X-Requested-With": "XMLHttpRequest"
+      },
+      timeout: 10000
     });
-    await fs.writeFile('test-draws.html', res.data);
-    console.log("Wrote to test-draws.html");
-  } catch (e) {
-    console.error(e.message);
+    const $titles = cheerio.load(titlesRes.data);
+    
+    console.log("Titles HTML snippet:", $titles('body').html()?.substring(0, 1000));
+    
+    // Let's see what elements exist
+    $titles('.list__item').each((i, el) => {
+      console.log("List item text:", $titles(el).text().replace(/\s+/g, ' ').trim());
+    });
+  } catch (e: any) {
+    console.log("Error:", e.message);
   }
 }
 

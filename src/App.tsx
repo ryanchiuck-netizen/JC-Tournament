@@ -2,10 +2,10 @@ import React, { useState, useEffect, useMemo } from "react";
 import { 
   Loader2, 
   AlertCircle, 
-  Trophy,
   Filter,
   RefreshCw,
-  Clock
+  Clock,
+  LogOut
 } from "lucide-react";
 import { AnimatePresence } from "motion/react";
 import * as XLSX from 'xlsx';
@@ -16,9 +16,15 @@ import { TournamentCard } from "./components/TournamentCard";
 import { FilterBar } from "./components/FilterBar";
 import { MonthTabs } from "./components/MonthTabs";
 import { PlayerWatch } from "./components/PlayerWatch";
+import { PlayerScreen } from "./components/PlayerScreen";
+import { TournamentScreen } from "./components/TournamentScreen";
+import { Login } from "./components/Login";
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<"tournaments" | "player-watch">("tournaments");
+  const [user, setUser] = useState<{ email: string; name: string; picture: string } | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  const [activeTab, setActiveTab] = useState<"tournaments" | "player-watch" | "player-screen" | "tournament-screen">("tournaments");
   const [allTournaments, setAllTournaments] = useState<Tournament[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -32,7 +38,33 @@ export default function App() {
   const currentMonthIndex = new Date('2026-03-04').getMonth();
   const [selectedMonth, setSelectedMonth] = useState<number | 'ALL'>(currentMonthIndex);
 
+  const checkAuth = async () => {
+    try {
+      const res = await fetch('/api/auth/me');
+      if (res.ok) {
+        const data = await res.json();
+        setUser(data.user);
+      } else {
+        setUser(null);
+      }
+    } catch (err) {
+      setUser(null);
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  const handleLogout = async () => {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    setUser(null);
+  };
+
   const fetchStaticData = async () => {
+    if (!user) return;
     setLoading(true);
     setError(null);
     try {
@@ -50,14 +82,16 @@ export default function App() {
   };
 
   useEffect(() => {
-    fetchStaticData();
-    
-    const intervalId = setInterval(() => {
+    if (user) {
       fetchStaticData();
-    }, 60 * 60 * 1000);
-    
-    return () => clearInterval(intervalId);
-  }, []);
+      
+      const intervalId = setInterval(() => {
+        fetchStaticData();
+      }, 60 * 60 * 1000);
+      
+      return () => clearInterval(intervalId);
+    }
+  }, [user]);
 
   // Filter tournaments based on region, ageFilter, searchTerm, and month
   const filteredTournaments = useMemo(() => {
@@ -142,6 +176,18 @@ export default function App() {
     XLSX.writeFile(wb, "Tournaments_2026.xlsx");
   };
 
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Login onLoginSuccess={checkAuth} />;
+  }
+
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100 font-sans selection:bg-blue-500/30">
       {/* Header */}
@@ -150,7 +196,11 @@ export default function App() {
           <div className="flex items-center gap-8">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-sm">
-                <Trophy className="w-4 h-4 text-white" />
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <path d="M6 3.5a9 9 0 0 1 0 17"></path>
+                  <path d="M18 3.5a9 9 0 0 0 0 17"></path>
+                </svg>
               </div>
               <div>
                 <h1 className="text-[17px] font-semibold tracking-tight leading-tight text-white">JC Tennis</h1>
@@ -177,121 +227,167 @@ export default function App() {
                     : "text-gray-400 hover:text-gray-200"
                 }`}
               >
-                Player Watch
+                Player Search
+              </button>
+              <button
+                onClick={() => setActiveTab("player-screen")}
+                className={`px-4 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${
+                  activeTab === "player-screen" 
+                    ? "bg-white/10 text-white shadow-sm" 
+                    : "text-gray-400 hover:text-gray-200"
+                }`}
+              >
+                Player Screen
+              </button>
+              <button
+                onClick={() => setActiveTab("tournament-screen")}
+                className={`px-4 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${
+                  activeTab === "tournament-screen" 
+                    ? "bg-white/10 text-white shadow-sm" 
+                    : "text-gray-400 hover:text-gray-200"
+                }`}
+              >
+                Tournament Screen
               </button>
             </nav>
           </div>
           
-          <div className="flex items-center gap-3">
-            {/* Region Tabs */}
-            <div className="flex bg-gray-800/80 p-1 rounded-lg shrink-0">
-              <button 
-                onClick={() => setRegion("HK")}
-                className={`px-3 py-1 text-sm font-medium rounded-md transition-all flex items-center gap-1.5 ${region === "HK" ? 'bg-gray-700 text-white shadow-sm' : 'text-gray-400 hover:text-gray-200'}`}
-              >
-                <span>🇭🇰</span> HK
-              </button>
-              <button 
-                onClick={() => setRegion("AUS")}
-                className={`px-3 py-1 text-sm font-medium rounded-md transition-all flex items-center gap-1.5 ${region === "AUS" ? 'bg-gray-700 text-white shadow-sm' : 'text-gray-400 hover:text-gray-200'}`}
-              >
-                <span>🇦🇺</span> AUS
-              </button>
-              <button 
-                onClick={() => setRegion("BOTH")}
-                className={`px-3 py-1 text-sm font-medium rounded-md transition-all flex items-center gap-1.5 ${region === "BOTH" ? 'bg-gray-700 text-white shadow-sm' : 'text-gray-400 hover:text-gray-200'}`}
-              >
-                <span>🇭🇰 + 🇦🇺</span>
-              </button>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              {user.picture && (
+                <img src={user.picture} alt={user.name} className="w-6 h-6 rounded-full" referrerPolicy="no-referrer" />
+              )}
+              <span className="text-sm font-medium text-gray-300 hidden sm:block">{user.name}</span>
             </div>
-
-            <button 
-              onClick={fetchStaticData}
-              disabled={loading}
-              className="w-8 h-8 flex items-center justify-center bg-gray-800/80 hover:bg-gray-700 text-gray-300 rounded-full transition-colors disabled:opacity-50 shrink-0"
-              title="Refresh Now"
+            <button
+              onClick={handleLogout}
+              className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
+              title="Sign out"
             >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              <LogOut className="w-4 h-4" />
             </button>
           </div>
         </div>
       </header>
 
-      <MonthTabs selectedMonth={selectedMonth} setSelectedMonth={setSelectedMonth} />
+      {activeTab === "tournaments" && (
+        <MonthTabs selectedMonth={selectedMonth} setSelectedMonth={setSelectedMonth} />
+      )}
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
-        {activeTab === "tournaments" ? (
-          <>
-            <FilterBar 
-          ageFilter={ageFilter}
-          setAgeFilter={setAgeFilter}
-          within120km={within120km}
-          setWithin120km={setWithin120km}
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          handleExport={handleExport}
-          loading={loading}
-        />
-
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-gray-500 mb-6">
-          <div className="flex items-center gap-1.5">
-            <Clock className="w-3.5 h-3.5" />
-            Updated {lastUpdated.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Asia/Hong_Kong' }).replace(/ /g, '-')} {lastUpdated.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Hong_Kong' })} HKT
-          </div>
-          {loading && (
-            <div className="flex items-center gap-1.5 text-orange-400 font-medium">
-              <div className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
-              Refreshing data...
-            </div>
-          )}
-        </div>
-
-        {/* Error State */}
-        <AnimatePresence>
-          {error && (
-            <div className="bg-red-900/20 border border-red-900/50 rounded-2xl p-4 flex items-start gap-3 text-red-400 mb-6">
-              <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0 text-red-500" />
-              <div>
-                <p className="font-semibold text-sm text-red-300">Failed to Load Data</p>
-                <p className="text-sm opacity-90 mt-0.5">{error}</p>
+        <div className={activeTab === "tournaments" ? "block" : "hidden"}>
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+            <div className="flex items-center gap-3">
+              <div className="flex bg-gray-900/50 p-1 rounded-xl border border-gray-800 shadow-sm">
+                <button 
+                  onClick={() => setRegion("HK")}
+                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-all flex items-center gap-2 ${region === "HK" ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-400 hover:text-gray-200'}`}
+                >
+                  <span>🇭🇰</span> HK
+                </button>
+                <button 
+                  onClick={() => setRegion("AUS")}
+                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-all flex items-center gap-2 ${region === "AUS" ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-400 hover:text-gray-200'}`}
+                >
+                  <span>🇦🇺</span> AUS
+                </button>
+                <button 
+                  onClick={() => setRegion("BOTH")}
+                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-all flex items-center gap-2 ${region === "BOTH" ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-400 hover:text-gray-200'}`}
+                >
+                  <span>🇭🇰 + 🇦🇺</span>
+                </button>
               </div>
-            </div>
-          )}
-        </AnimatePresence>
 
-        {/* Data View */}
-        <div className="bg-gray-900 rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.2)] border border-gray-800 overflow-hidden">
-          <div className="bg-gray-800/50 border-b border-gray-800 px-6 py-3 flex items-center justify-between text-xs font-medium text-gray-400 uppercase tracking-wider">
-            <span>{filteredTournaments.length} Tournaments Found</span>
+              <button 
+                onClick={fetchStaticData}
+                disabled={loading}
+                className="w-10 h-10 flex items-center justify-center bg-gray-900/50 hover:bg-gray-800 text-gray-300 rounded-xl border border-gray-800 transition-all disabled:opacity-50 shadow-sm"
+                title="Refresh Database"
+              >
+                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              </button>
+            </div>
+
+            <div className="flex items-center gap-1.5 text-xs text-gray-500 bg-gray-900/30 px-3 py-1.5 rounded-lg border border-gray-800/50">
+              <Clock className="w-3.5 h-3.5" />
+              Updated {lastUpdated.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Asia/Hong_Kong' }).replace(/ /g, '-')} {lastUpdated.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Hong_Kong' })} HKT
+            </div>
           </div>
-          
-          <div className="divide-y divide-gray-800/50">
-            {loading && allTournaments.length === 0 ? (
-              <div className="p-16 flex flex-col items-center justify-center gap-4 text-gray-500">
-                <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-                <p className="text-sm font-medium">Loading Database...</p>
-              </div>
-            ) : filteredTournaments.length > 0 ? (
-              filteredTournaments.map((t, i) => (
-                <TournamentCard key={i} tournament={t} index={i} />
-              ))
-            ) : !loading && (
-              <div className="p-16 flex flex-col items-center justify-center gap-3 text-gray-500">
-                <div className="w-12 h-12 bg-gray-800 rounded-full flex items-center justify-center mb-2">
-                  <Filter className="w-6 h-6 text-gray-600" />
-                </div>
-                <p className="text-sm font-medium text-gray-400">No tournaments found</p>
-                <p className="text-sm text-center max-w-xs">
-                  Try adjusting your filters.
-                </p>
+
+          <FilterBar 
+            ageFilter={ageFilter}
+            setAgeFilter={setAgeFilter}
+            within120km={within120km}
+            setWithin120km={setWithin120km}
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            handleExport={handleExport}
+            loading={loading}
+          />
+
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-gray-500 mb-6">
+            {loading && (
+              <div className="flex items-center gap-1.5 text-orange-400 font-medium">
+                <div className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
+                Refreshing data...
               </div>
             )}
+          </div>
+
+          <AnimatePresence>
+            {error && (
+              <div className="bg-red-900/20 border border-red-900/50 rounded-2xl p-4 flex items-start gap-3 text-red-400 mb-6">
+                <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0 text-red-500" />
+                <div>
+                  <p className="font-semibold text-sm text-red-300">Failed to Load Data</p>
+                  <p className="text-sm opacity-90 mt-0.5">{error}</p>
+                </div>
+              </div>
+            )}
+          </AnimatePresence>
+
+          <div className="bg-gray-900 rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.2)] border border-gray-800 overflow-hidden">
+            <div className="bg-gray-800/50 border-b border-gray-800 px-6 py-3 flex items-center justify-between text-xs font-medium text-gray-400 uppercase tracking-wider">
+              <span>{filteredTournaments.length} Tournaments Found</span>
+            </div>
+            
+            <div className="divide-y divide-gray-800/50">
+              {loading && allTournaments.length === 0 ? (
+                <div className="p-16 flex flex-col items-center justify-center gap-4 text-gray-500">
+                  <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+                  <p className="text-sm font-medium">Loading Database...</p>
+                </div>
+              ) : filteredTournaments.length > 0 ? (
+                filteredTournaments.map((t, i) => (
+                  <TournamentCard key={i} tournament={t} index={i} />
+                ))
+              ) : !loading && (
+                <div className="p-16 flex flex-col items-center justify-center gap-3 text-gray-500">
+                  <div className="w-12 h-12 bg-gray-800 rounded-full flex items-center justify-center mb-2">
+                    <Filter className="w-6 h-6 text-gray-600" />
+                  </div>
+                  <p className="text-sm font-medium text-gray-400">No tournaments found</p>
+                  <p className="text-sm text-center max-w-xs">
+                    Try adjusting your filters.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
-        </>
-      ) : (
-        <PlayerWatch />
-      )}
+        </div>
+
+        <div className={activeTab === "player-watch" ? "block" : "hidden"}>
+          <PlayerWatch />
+        </div>
+
+        <div className={activeTab === "player-screen" ? "block" : "hidden"}>
+          <PlayerScreen />
+        </div>
+
+        <div className={activeTab === "tournament-screen" ? "block" : "hidden"}>
+          <TournamentScreen />
+        </div>
 
       {/* Footer */}
         <footer className="mt-12 pb-8 text-center text-xs text-gray-600 font-medium">

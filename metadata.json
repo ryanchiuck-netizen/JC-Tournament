@@ -1,5 +1,5 @@
 {
-  "name": "Jordan Tennis Calendar",
-  "description": "Jordan's tennis calendar for Hong Kong and Australia",
+  "name": "Secure Gmail Login",
+  "description": "A secure login portal restricted to specific Gmail accounts with an admin dashboard for tracking login history.",
   "requestFramePermissions": []
 }
