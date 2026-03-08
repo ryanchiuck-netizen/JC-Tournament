@@ -23,13 +23,18 @@ async function startServer() {
 
   // Middleware to check auth
   const requireAuth = (req: any, res: any, next: any) => {
+    console.log("requireAuth - req.cookies:", req.cookies);
     const token = req.cookies.auth_token;
-    if (!token) return res.status(401).json({ error: "Unauthorized" });
+    if (!token) {
+      console.log("requireAuth - No auth_token cookie found");
+      return res.status(401).json({ error: "Unauthorized" });
+    }
     try {
       const decoded = jwt.verify(token, JWT_SECRET);
       req.user = decoded;
       next();
     } catch (err) {
+      console.log("requireAuth - Invalid token:", err);
       res.status(401).json({ error: "Invalid token" });
     }
   };
@@ -116,23 +121,26 @@ async function startServer() {
 
       // Set cookie
       res.cookie("auth_token", token, {
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
+        secure: true,
+        sameSite: "none",
         httpOnly: true,
-        maxAge: 7 * 24 * 60 * 60 * 1000
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+        path: '/'
       });
       res.cookie("drive_access_token", tokenRes.data.access_token, {
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
+        secure: true,
+        sameSite: "none",
         httpOnly: true,
-        maxAge: 7 * 24 * 60 * 60 * 1000
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+        path: '/'
       });
       if (tokenRes.data.refresh_token) {
         res.cookie("drive_refresh_token", tokenRes.data.refresh_token, {
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "lax",
+          secure: true,
+          sameSite: "none",
           httpOnly: true,
-          maxAge: 7 * 24 * 60 * 60 * 1000
+          maxAge: 7 * 24 * 60 * 60 * 1000,
+          path: '/'
         });
       }
 
@@ -172,19 +180,22 @@ async function startServer() {
 
   app.post("/api/auth/logout", (req, res) => {
     res.clearCookie("auth_token", {
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      secure: true,
+      sameSite: "none",
       httpOnly: true,
+      path: '/'
     });
     res.clearCookie("drive_access_token", {
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      secure: true,
+      sameSite: "none",
       httpOnly: true,
+      path: '/'
     });
     res.clearCookie("drive_refresh_token", {
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      secure: true,
+      sameSite: "none",
       httpOnly: true,
+      path: '/'
     });
     res.json({ success: true });
   });
@@ -485,10 +496,10 @@ async function startServer() {
 
     oauth2Client.on('tokens', (tokens) => {
       if (tokens.refresh_token) {
-        res.cookie("drive_refresh_token", tokens.refresh_token, { secure: process.env.NODE_ENV === "production", sameSite: "lax", httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 });
+        res.cookie("drive_refresh_token", tokens.refresh_token, { secure: true, sameSite: "none", httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000, path: '/' });
       }
       if (tokens.access_token) {
-        res.cookie("drive_access_token", tokens.access_token, { secure: process.env.NODE_ENV === "production", sameSite: "lax", httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 });
+        res.cookie("drive_access_token", tokens.access_token, { secure: true, sameSite: "none", httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000, path: '/' });
       }
     });
 
