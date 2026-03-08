@@ -194,7 +194,7 @@ export function PlayerWatch() {
           <h2 className="text-2xl font-bold text-white tracking-tight">Player Search</h2>
           <p className="text-gray-400">Enter a player's name to see which tournaments and draws they are appearing in.</p>
           
-          <form onSubmit={handleSearch} className="mt-6 flex gap-2">
+          <form onSubmit={handleSearch} className="mt-6 flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1" ref={dropdownRef}>
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
               <input
@@ -246,7 +246,7 @@ export function PlayerWatch() {
             <button
               type="submit"
               disabled={loading || !playerName.trim()}
-              className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white px-6 py-3 rounded-xl font-semibold transition-all flex items-center gap-2"
+              className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white px-6 py-3 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 shrink-0"
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Search"}
             </button>

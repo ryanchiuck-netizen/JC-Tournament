@@ -10,7 +10,14 @@ export function Login({ onLoginSuccess }: { onLoginSuccess: () => void }) {
     setError(null);
     try {
       const res = await fetch('/api/auth/url');
-      const data = await res.json();
+      const resClone = res.clone();
+      let data;
+      try {
+        data = await res.json();
+      } catch (e) {
+        console.error("Failed to parse /api/auth/url JSON. Response text:", await resClone.text());
+        throw e;
+      }
       
       const width = 500;
       const height = 600;

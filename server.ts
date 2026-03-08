@@ -9,6 +9,7 @@ import * as cheerio from "cheerio";
 import pLimit from "p-limit";
 import cookieParser from "cookie-parser";
 import jwt from "jsonwebtoken";
+import { google } from "googleapis";
 
 async function startServer() {
   const app = express();
@@ -43,7 +44,7 @@ async function startServer() {
       client_id: process.env.GOOGLE_CLIENT_ID || "",
       redirect_uri: redirectUri,
       response_type: "code",
-      scope: "email profile",
+      scope: "email profile https://www.googleapis.com/auth/drive.file",
       access_type: "offline",
       prompt: "consent"
     });
@@ -99,6 +100,20 @@ async function startServer() {
         httpOnly: true,
         maxAge: 7 * 24 * 60 * 60 * 1000
       });
+      res.cookie("drive_access_token", tokenRes.data.access_token, {
+        secure: true,
+        sameSite: "none",
+        httpOnly: true,
+        maxAge: 7 * 24 * 60 * 60 * 1000
+      });
+      if (tokenRes.data.refresh_token) {
+        res.cookie("drive_refresh_token", tokenRes.data.refresh_token, {
+          secure: true,
+          sameSite: "none",
+          httpOnly: true,
+          maxAge: 7 * 24 * 60 * 60 * 1000
+        });
+      }
 
       res.send(`
         <html><body>
@@ -135,6 +150,16 @@ async function startServer() {
 
   app.post("/api/auth/logout", (req, res) => {
     res.clearCookie("auth_token", {
+      secure: true,
+      sameSite: "none",
+      httpOnly: true,
+    });
+    res.clearCookie("drive_access_token", {
+      secure: true,
+      sameSite: "none",
+      httpOnly: true,
+    });
+    res.clearCookie("drive_refresh_token", {
       secure: true,
       sameSite: "none",
       httpOnly: true,
@@ -291,7 +316,7 @@ async function startServer() {
 
   app.get("/api/tournaments-for-players", requireAuth, async (req, res) => {
     try {
-      const savedPlayers = await getSavedPlayers();
+      const savedPlayers = await getSavedPlayers(req, res);
       if (!savedPlayers || savedPlayers.length === 0) {
         return res.json({ tournaments: [] });
       }
@@ -420,18 +445,204 @@ async function startServer() {
 
   // --- Global Saved Players Routes ---
   const savedPlayersPath = path.join(process.cwd(), "public", "saved-players.json");
+  
+  // Lock to prevent concurrent writes to Google Drive
+  let driveWriteLock = Promise.resolve();
 
-  const getSavedPlayers = async () => {
-    try {
-      const data = await fs.readFile(savedPlayersPath, "utf-8");
-      return JSON.parse(data);
-    } catch {
-      return [];
-    }
+  const getDriveClient = (req: any, res: any) => {
+    const oauth2Client = new google.auth.OAuth2(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET,
+      `${(process.env.APP_URL || "").replace(/\/$/, "")}/api/auth/callback`
+    );
+
+    oauth2Client.setCredentials({
+      access_token: req.cookies.drive_access_token,
+      refresh_token: req.cookies.drive_refresh_token
+    });
+
+    oauth2Client.on('tokens', (tokens) => {
+      if (tokens.refresh_token) {
+        res.cookie("drive_refresh_token", tokens.refresh_token, { secure: true, sameSite: "none", httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 });
+      }
+      if (tokens.access_token) {
+        res.cookie("drive_access_token", tokens.access_token, { secure: true, sameSite: "none", httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 });
+      }
+    });
+
+    return google.drive({ 
+      version: 'v3', 
+      auth: oauth2Client,
+      // Increase timeout to 60 seconds for better stability
+      timeout: 60000 
+    });
   };
 
-  const savePlayers = async (players: any[]) => {
-    await fs.writeFile(savedPlayersPath, JSON.stringify(players, null, 2));
+  const getSavedPlayers = async (req: any, res: any) => {
+    let players: any[] = [];
+    try {
+      if (!req.cookies.drive_access_token) {
+        const data = await fs.readFile(savedPlayersPath, "utf-8");
+        players = JSON.parse(data);
+      } else {
+        const drive = getDriveClient(req, res);
+        
+        const maxRetries = 5;
+        let lastError: any = null;
+        
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+          try {
+            const response = await drive.files.list({
+              q: "name='saved-players.json' and trashed=false",
+              spaces: 'drive',
+              fields: 'files(id, name)'
+            });
+
+            const files = response.data.files;
+            if (!files || files.length === 0) {
+              players = [];
+            } else {
+              const fileId = files[0].id;
+              const fileRes = await drive.files.get({
+                fileId: fileId!,
+                alt: 'media'
+              }, { responseType: 'json' });
+
+              players = fileRes.data || [];
+            }
+            lastError = null;
+            break; // Success
+          } catch (err: any) {
+            lastError = err;
+            const errMsg = (err.response?.data?.error?.message || err.message || String(err)).toLowerCase();
+            const isRateLimit = errMsg.includes("rate limit");
+            const isTransient = 
+              errMsg.includes("transient failure") || 
+              errMsg.includes("socket hang up") || 
+              errMsg.includes("econnreset") || 
+              errMsg.includes("etimedout") ||
+              isRateLimit ||
+              errMsg.includes("aborted") ||
+              err.code === 'ECONNRESET' ||
+              err.code === 'ETIMEDOUT' ||
+              err.name === 'AbortError';
+
+            if (isTransient && attempt < maxRetries) {
+              const delay = isRateLimit ? 5000 * attempt : 2000 * attempt;
+              console.log(`Transient error reading from Drive (Attempt ${attempt}): ${errMsg}. Retrying in ${delay}ms...`);
+              await new Promise(resolve => setTimeout(resolve, delay));
+            } else {
+              throw err;
+            }
+          }
+        }
+      }
+    } catch (e: any) {
+      const errorMessage = e.response?.data?.error?.message || e.message || String(e);
+      if (!errorMessage.includes("Google Drive API has not been used")) {
+        console.error("Error reading from Google Drive:", errorMessage);
+      }
+      try {
+        const data = await fs.readFile(savedPlayersPath, "utf-8");
+        players = JSON.parse(data);
+      } catch {
+        players = [];
+      }
+    }
+
+    // Deduplicate players by URL (or name + source if URL is missing)
+    const uniquePlayersMap = new Map();
+    for (const player of players) {
+      const key = player.url || `${player.name}-${player.source}`;
+      if (!uniquePlayersMap.has(key)) {
+        uniquePlayersMap.set(key, player);
+      }
+    }
+    return Array.from(uniquePlayersMap.values());
+  };
+
+  const savePlayers = async (req: any, res: any, players: any[]) => {
+    try {
+      await fs.writeFile(savedPlayersPath, JSON.stringify(players, null, 2));
+
+      if (!req.cookies.drive_access_token) {
+        return;
+      }
+
+      const drive = getDriveClient(req, res);
+      const response = await drive.files.list({
+        q: "name='saved-players.json' and trashed=false",
+        spaces: 'drive',
+        fields: 'files(id, name)'
+      });
+
+      const files = response.data.files;
+      const fileMetadata = {
+        name: 'saved-players.json',
+        mimeType: 'application/json'
+      };
+      
+      const media = {
+        mimeType: 'application/json',
+        body: JSON.stringify(players, null, 2)
+      };
+
+      const maxRetries = 5;
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          const drive = getDriveClient(req, res);
+          
+          // Use the lock to ensure sequential writes
+          await (driveWriteLock = driveWriteLock.then(async () => {
+            if (!files || files.length === 0) {
+              await drive.files.create({
+                requestBody: fileMetadata,
+                media: media,
+                fields: 'id'
+              });
+            } else {
+              const fileId = files[0].id;
+              await drive.files.update({
+                fileId: fileId!,
+                media: media
+              });
+            }
+          }).catch(err => {
+            // If the lock-protected operation fails, we still want to proceed with retries
+            throw err;
+          }));
+          
+          break; // Success, exit retry loop
+        } catch (err: any) {
+          const errMsg = (err.response?.data?.error?.message || err.message || String(err)).toLowerCase();
+          const isRateLimit = errMsg.includes("rate limit");
+          const isTransient = 
+            errMsg.includes("transient failure") || 
+            errMsg.includes("socket hang up") || 
+            errMsg.includes("econnreset") || 
+            errMsg.includes("etimedout") ||
+            isRateLimit ||
+            errMsg.includes("aborted") ||
+            err.code === 'ECONNRESET' ||
+            err.code === 'ETIMEDOUT' ||
+            err.name === 'AbortError';
+
+          if (isTransient && attempt < maxRetries) {
+            // Wait longer for rate limits
+            const delay = isRateLimit ? 5000 * attempt : 2000 * attempt;
+            console.log(`Transient error writing to Drive (Attempt ${attempt}): ${errMsg}. Retrying in ${delay}ms...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+          } else {
+            throw err; // Rethrow if not transient or out of retries
+          }
+        }
+      }
+    } catch (e: any) {
+      const errorMessage = e.response?.data?.error?.message || e.message || String(e);
+      if (!errorMessage.includes("Google Drive API has not been used")) {
+        console.error("Error writing to Google Drive:", errorMessage);
+      }
+    }
   };
 
   async function scrapePlayerProfile(profileUrl: string, playerNameFallback: string) {
@@ -596,28 +807,167 @@ async function startServer() {
     };
   }
 
-  app.get("/api/saved-players", requireAuth, async (req, res) => {
-    const players = await getSavedPlayers();
-    
-    // Refresh players data
-    const limit = pLimit(5);
-    const updatedPlayers = await Promise.all(
-      players.map((p: any) => 
-        limit(async () => {
-          if (!p.url) return p;
-          try {
-            const updatedStats = await scrapePlayerProfile(p.url, p.name);
-            return { ...p, ...updatedStats, name: p.name };
-          } catch (e) {
-            console.error(`Failed to refresh player ${p.name}:`, e);
-            return p;
+  app.post("/api/check-draw", requireAuth, async (req, res) => {
+    const { url } = req.body;
+    if (!url || typeof url !== 'string') {
+      return res.status(400).json({ error: "Draw URL is required" });
+    }
+
+    try {
+      const drawRes = await axios.get(url, {
+        headers: { "User-Agent": "Mozilla/5.0" },
+        timeout: 10000
+      });
+
+      const $ = cheerio.load(drawRes.data);
+      const playerLinks: { name: string, url: string }[] = [];
+
+      $('a[href*="player.aspx?"], a[href*="/player/"]').each((i, el) => {
+        const name = $(el).text().trim();
+        const href = $(el).attr('href');
+        // Ignore links that don't have a name or are just icons
+        if (name && href && !href.includes('/player-profile/')) {
+          let fullUrl = href;
+          if (!href.startsWith('http')) {
+            if (href.startsWith('/')) {
+              fullUrl = `https://tournaments.tennis.com.au${href}`;
+            } else {
+              fullUrl = `https://tournaments.tennis.com.au/sport/${href}`;
+            }
           }
-        })
-      )
-    );
+          
+          if (!playerLinks.some(pl => pl.url === fullUrl)) {
+            playerLinks.push({ name, url: fullUrl });
+          }
+        }
+      });
+
+      if (playerLinks.length === 0) {
+        return res.json({ players: [] });
+      }
+
+      const limit = pLimit(3); // Scrape 3 players at a time
+      const playersStats = await Promise.all(
+        playerLinks.map(pl => 
+          limit(async () => {
+            try {
+              let finalProfileUrl = '';
+              
+              if (pl.url.includes('/player-profile/')) {
+                finalProfileUrl = pl.url;
+              } else {
+                // 1. Fetch player page to find profile link
+                const playerPageRes = await axios.get(pl.url, {
+                  headers: { "User-Agent": "Mozilla/5.0" },
+                  timeout: 10000
+                });
+                const $player = cheerio.load(playerPageRes.data);
+                
+                // Find the link that goes to /player-profile/
+                let profileRedirectUrl = '';
+                $player('a[href*="/player-profile/"]').each((i, el) => {
+                  const text = $player(el).text().trim();
+                  if (text.toLowerCase().includes(pl.name.toLowerCase().split(' ')[0])) {
+                    const href = $player(el).attr('href');
+                    profileRedirectUrl = href?.startsWith('http') ? href : 'https://tournaments.tennis.com.au' + href;
+                    return false;
+                  }
+                });
+
+                if (!profileRedirectUrl) {
+                  // Try any /player-profile/ link if name match fails
+                  const firstPlayerLink = $player('a[href*="/player-profile/"]').first().attr('href');
+                  if (firstPlayerLink) {
+                    profileRedirectUrl = firstPlayerLink.startsWith('http') ? firstPlayerLink : 'https://tournaments.tennis.com.au' + firstPlayerLink;
+                  }
+                }
+
+                if (!profileRedirectUrl) {
+                  // Fallback: maybe it's still using the old /player/ format
+                  $player('a[href*="/player/"]').each((i, el) => {
+                    const text = $player(el).text().trim();
+                    if (text.toLowerCase().includes(pl.name.toLowerCase().split(' ')[0])) {
+                      const href = $player(el).attr('href');
+                      profileRedirectUrl = href?.startsWith('http') ? href : 'https://tournaments.tennis.com.au' + href;
+                      return false;
+                    }
+                  });
+                  
+                  if (!profileRedirectUrl) {
+                    const firstPlayerLink = $player('a[href*="/player/"]').first().attr('href');
+                    if (firstPlayerLink) {
+                      profileRedirectUrl = firstPlayerLink.startsWith('http') ? firstPlayerLink : 'https://tournaments.tennis.com.au' + firstPlayerLink;
+                    }
+                  }
+                }
+
+                if (profileRedirectUrl) {
+                  // 2. Follow redirect to get final profile URL
+                  const redirectRes = await axios.get(profileRedirectUrl, {
+                    headers: { "User-Agent": "Mozilla/5.0" },
+                    timeout: 10000,
+                    maxRedirects: 5
+                  });
+                  finalProfileUrl = redirectRes.request.res.responseUrl || profileRedirectUrl;
+                }
+              }
+
+              if (finalProfileUrl) {
+                // 3. Scrape profile stats
+                const stats = await scrapePlayerProfile(finalProfileUrl, pl.name);
+                return {
+                  id: Math.random().toString(36).substring(7),
+                  name: pl.name,
+                  profileUrl: finalProfileUrl,
+                  ...stats
+                };
+              }
+
+              return { id: Math.random().toString(36).substring(7), name: pl.name };
+            } catch (e) {
+              console.error(`Failed to scrape player ${pl.name} from draw:`, e);
+              return { id: Math.random().toString(36).substring(7), name: pl.name };
+            }
+          })
+        )
+      );
+
+      res.json({ players: playersStats });
+    } catch (error) {
+      console.error("Draw check error:", error);
+      res.status(500).json({ error: "Failed to check draw stats" });
+    }
+  });
+
+  app.get("/api/saved-players", requireAuth, async (req, res) => {
+    const players = await getSavedPlayers(req, res);
+    res.json(players);
+  });
+
+  app.post("/api/refresh-player/:id", requireAuth, async (req, res) => {
+    const { id } = req.params;
+    const players = await getSavedPlayers(req, res);
+    const playerIndex = players.findIndex((p: any) => p.id === id);
     
-    await savePlayers(updatedPlayers);
-    res.json(updatedPlayers);
+    if (playerIndex === -1) {
+      return res.status(404).json({ error: "Player not found" });
+    }
+    
+    const p = players[playerIndex];
+    if (!p.url) {
+      return res.json(p);
+    }
+    
+    try {
+      const updatedStats = await scrapePlayerProfile(p.url, p.name);
+      const updatedPlayer = { ...p, ...updatedStats, name: p.name };
+      players[playerIndex] = updatedPlayer;
+      await savePlayers(req, res, players);
+      res.json(updatedPlayer);
+    } catch (e) {
+      console.error(`Failed to refresh player ${p.name}:`, e);
+      res.status(500).json({ error: "Failed to refresh player" });
+    }
   });
 
   app.post("/api/saved-players", requireAuth, async (req, res) => {
@@ -634,7 +984,9 @@ async function startServer() {
       ];
       
       const newPlayers = [];
-      const players = await getSavedPlayers();
+      const players = await getSavedPlayers(req, res);
+      
+      let playerAlreadyExists = false;
       
       for (const platform of platforms) {
         try {
@@ -650,6 +1002,13 @@ async function startServer() {
           
           if (href && href.includes('/player-profile/')) {
             const profileUrl = `${platform.baseUrl}${href}`;
+            
+            // Check if player already exists
+            const exists = players.some((p: any) => p.url === profileUrl || (p.name.toLowerCase() === name.toLowerCase() && p.source === platform.id));
+            if (exists) {
+              playerAlreadyExists = true;
+              continue; // Skip adding duplicate
+            }
             
             // 2. Scrape the profile
             const stats = await scrapePlayerProfile(profileUrl, name);
@@ -670,10 +1029,13 @@ async function startServer() {
       }
       
       if (newPlayers.length === 0) {
+        if (playerAlreadyExists) {
+          return res.status(400).json({ error: "Player already added" });
+        }
         return res.status(404).json({ error: "Player not found on Tennis Australia or HKTA" });
       }
       
-      await savePlayers(players);
+      await savePlayers(req, res, players);
       res.json(newPlayers);
       
     } catch (error) {
@@ -684,9 +1046,9 @@ async function startServer() {
 
   app.delete("/api/saved-players/:id", requireAuth, async (req, res) => {
     const { id } = req.params;
-    let players = await getSavedPlayers();
+    let players = await getSavedPlayers(req, res);
     players = players.filter((p: any) => p.id !== id);
-    await savePlayers(players);
+    await savePlayers(req, res, players);
     res.json({ success: true });
   });
 
@@ -695,8 +1057,20 @@ async function startServer() {
     if (!Array.isArray(players)) {
       return res.status(400).json({ error: "Players array is required" });
     }
-    await savePlayers(players);
+    await savePlayers(req, res, players);
     res.json({ success: true });
+  });
+
+  app.get("/api/download-project", (req, res) => {
+    const filePath = path.join(process.cwd(), "public", "project.zip");
+    res.download(filePath, "jc-tennis-project.zip", (err) => {
+      if (err) {
+        console.error("Error downloading file:", err);
+        if (!res.headersSent) {
+          res.status(404).send("File not found");
+        }
+      }
+    });
   });
 
   // Vite middleware for development

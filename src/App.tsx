@@ -18,13 +18,14 @@ import { MonthTabs } from "./components/MonthTabs";
 import { PlayerWatch } from "./components/PlayerWatch";
 import { PlayerScreen } from "./components/PlayerScreen";
 import { TournamentScreen } from "./components/TournamentScreen";
+import { DrawChecker } from "./components/DrawChecker";
 import { Login } from "./components/Login";
 
 export default function App() {
   const [user, setUser] = useState<{ email: string; name: string; picture: string } | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
 
-  const [activeTab, setActiveTab] = useState<"tournaments" | "player-watch" | "player-screen" | "tournament-screen">("tournaments");
+  const [activeTab, setActiveTab] = useState<"tournaments" | "player-watch" | "player-screen" | "tournament-screen" | "draw-checker">("tournaments");
   const [allTournaments, setAllTournaments] = useState<Tournament[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -42,8 +43,14 @@ export default function App() {
     try {
       const res = await fetch('/api/auth/me');
       if (res.ok) {
-        const data = await res.json();
-        setUser(data.user);
+        const resClone = res.clone();
+        try {
+          const data = await res.json();
+          setUser(data.user);
+        } catch (e) {
+          console.error("Failed to parse /api/auth/me JSON. Response text:", await resClone.text());
+          setUser(null);
+        }
       } else {
         setUser(null);
       }
@@ -192,26 +199,41 @@ export default function App() {
     <div className="min-h-screen bg-gray-950 text-gray-100 font-sans selection:bg-blue-500/30">
       {/* Header */}
       <header className="bg-gray-900/80 backdrop-blur-xl border-b border-gray-800 sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-8">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-sm">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <path d="M6 3.5a9 9 0 0 1 0 17"></path>
-                  <path d="M18 3.5a9 9 0 0 0 0 17"></path>
-                </svg>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-0 sm:h-16 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-8 w-full sm:w-auto">
+            <div className="flex items-center justify-between w-full sm:w-auto">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-sm shrink-0">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M6 3.5a9 9 0 0 1 0 17"></path>
+                    <path d="M18 3.5a9 9 0 0 0 0 17"></path>
+                  </svg>
+                </div>
+                <div>
+                  <h1 className="text-[17px] font-semibold tracking-tight leading-tight text-white">JC Tennis</h1>
+                  <p className="text-[11px] text-gray-400 font-medium uppercase tracking-wider">Tournament Planner</p>
+                </div>
               </div>
-              <div>
-                <h1 className="text-[17px] font-semibold tracking-tight leading-tight text-white">JC Tennis</h1>
-                <p className="text-[11px] text-gray-400 font-medium uppercase tracking-wider">Tournament Planner</p>
+              
+              <div className="flex items-center gap-3 sm:hidden">
+                {user.picture && (
+                  <img src={user.picture} alt={user.name} className="w-7 h-7 rounded-full" referrerPolicy="no-referrer" />
+                )}
+                <button
+                  onClick={handleLogout}
+                  className="p-1.5 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
+                  title="Sign out"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
               </div>
             </div>
 
-            <nav className="flex items-center gap-1 bg-gray-800/50 p-1 rounded-lg">
+            <nav className="flex items-center gap-1 bg-gray-800/50 p-1 rounded-lg overflow-x-auto w-full sm:w-auto no-scrollbar">
               <button
                 onClick={() => setActiveTab("tournaments")}
-                className={`px-4 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${
+                className={`px-3 sm:px-4 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
                   activeTab === "tournaments" 
                     ? "bg-gray-700 text-white shadow-sm" 
                     : "text-gray-400 hover:text-gray-200"
@@ -221,7 +243,7 @@ export default function App() {
               </button>
               <button
                 onClick={() => setActiveTab("player-watch")}
-                className={`px-4 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${
+                className={`px-3 sm:px-4 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
                   activeTab === "player-watch" 
                     ? "bg-white/10 text-white shadow-sm" 
                     : "text-gray-400 hover:text-gray-200"
@@ -231,7 +253,7 @@ export default function App() {
               </button>
               <button
                 onClick={() => setActiveTab("player-screen")}
-                className={`px-4 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${
+                className={`px-3 sm:px-4 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
                   activeTab === "player-screen" 
                     ? "bg-white/10 text-white shadow-sm" 
                     : "text-gray-400 hover:text-gray-200"
@@ -241,7 +263,7 @@ export default function App() {
               </button>
               <button
                 onClick={() => setActiveTab("tournament-screen")}
-                className={`px-4 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${
+                className={`px-3 sm:px-4 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
                   activeTab === "tournament-screen" 
                     ? "bg-white/10 text-white shadow-sm" 
                     : "text-gray-400 hover:text-gray-200"
@@ -249,15 +271,34 @@ export default function App() {
               >
                 Tournament Screen
               </button>
+              <button
+                onClick={() => setActiveTab("draw-checker")}
+                className={`px-3 sm:px-4 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
+                  activeTab === "draw-checker" 
+                    ? "bg-white/10 text-white shadow-sm" 
+                    : "text-gray-400 hover:text-gray-200"
+                }`}
+              >
+                Draw Checker
+              </button>
             </nav>
           </div>
           
-          <div className="flex items-center gap-4">
+          <div className="hidden sm:flex items-center gap-4">
+            <a
+              href="/project.zip"
+              download="jc-tennis-project.zip"
+              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-md transition-colors flex items-center gap-2"
+              title="Download Project Source Code"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+              Download Code
+            </a>
             <div className="flex items-center gap-2">
               {user.picture && (
                 <img src={user.picture} alt={user.name} className="w-6 h-6 rounded-full" referrerPolicy="no-referrer" />
               )}
-              <span className="text-sm font-medium text-gray-300 hidden sm:block">{user.name}</span>
+              <span className="text-sm font-medium text-gray-300">{user.name}</span>
             </div>
             <button
               onClick={handleLogout}
@@ -386,7 +427,11 @@ export default function App() {
         </div>
 
         <div className={activeTab === "tournament-screen" ? "block" : "hidden"}>
-          <TournamentScreen />
+          <TournamentScreen isActive={activeTab === "tournament-screen"} />
+        </div>
+
+        <div className={activeTab === "draw-checker" ? "block" : "hidden"}>
+          <DrawChecker />
         </div>
 
       {/* Footer */}

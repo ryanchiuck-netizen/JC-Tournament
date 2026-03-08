@@ -5,7 +5,13 @@ export async function fetchTournaments(): Promise<StaticData> {
   if (!response.ok) {
     throw new Error('Data not available yet. Scraper might be running.');
   }
-  return response.json();
+  try {
+    return await response.json();
+  } catch (e) {
+    const text = await response.text();
+    console.error("fetchTournaments failed to parse JSON. Response text:", text);
+    throw e;
+  }
 }
 
 export async function fetchPlayers(): Promise<string[]> {
@@ -13,7 +19,13 @@ export async function fetchPlayers(): Promise<string[]> {
   if (!response.ok) {
     return [];
   }
-  return response.json();
+  try {
+    return await response.json();
+  } catch (e) {
+    const text = await response.text();
+    console.error("fetchPlayers failed to parse JSON. Response text:", text);
+    throw e;
+  }
 }
 
 export function getFullLink(link: string, source: "HK" | "AUS") {
@@ -27,7 +39,13 @@ export async function searchPlayer(name: string): Promise<PlayerWatchResult> {
   if (!response.ok) {
     throw new Error('Failed to search for player');
   }
-  return response.json();
+  try {
+    return await response.json();
+  } catch (e) {
+    const text = await response.text();
+    console.error("searchPlayer failed to parse JSON. Response text:", text);
+    throw e;
+  }
 }
 export function getGoogleCalendarLink(tournament: { name: string; dates: string; mapsLink?: string; link: string; source: "HK" | "AUS" }) {
   const { name, dates, mapsLink } = tournament;

@@ -1,5 +1,5 @@
 {
-  "name": "Secure Gmail Login",
-  "description": "A secure login portal restricted to specific Gmail accounts with an admin dashboard for tracking login history.",
+  "name": "JC Tournament Planner",
+  "description": "An app to track JC's tournaments in Australia and Hong Kong",
   "requestFramePermissions": []
 }

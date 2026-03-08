@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Trophy, Calendar, MapPin, Users, ChevronDown, ChevronUp, CalendarPlus } from 'lucide-react';
 import { getGoogleCalendarLink } from '../services/tournamentService';
+import { saveToGoogleSheets } from '../services/googleSheetsService';
 import { Tournament } from '../types';
 
 interface JoinedPlayer {
@@ -30,7 +31,7 @@ interface TournamentWithPlayers {
   joinedPlayers: JoinedPlayer[];
 }
 
-function TournamentItem({ t, index }: { t: TournamentWithPlayers, index: number }) {
+function TournamentItem({ t, index }: { t: TournamentWithPlayers, index: number, key?: any }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const domain = t.tournament.source === "HK" ? "hkta.tournamentsoftware.com" : "tournaments.tennis.com.au";
   const tournamentUrl = `https://${domain}${t.tournament.link}`;
@@ -140,7 +141,7 @@ function TournamentItem({ t, index }: { t: TournamentWithPlayers, index: number 
   );
 }
 
-export function TournamentScreen() {
+export function TournamentScreen({ isActive }: { isActive?: boolean }) {
   const [tournaments, setTournaments] = useState<TournamentWithPlayers[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -149,11 +150,18 @@ export function TournamentScreen() {
 
   useEffect(() => {
     const fetchTournaments = async () => {
+      setLoading(true);
       try {
         const res = await fetch('/api/tournaments-for-players');
         if (res.ok) {
-          const data = await res.json();
-          setTournaments(data.tournaments || []);
+          const resClone = res.clone();
+          try {
+            const data = await res.json();
+            setTournaments(data.tournaments || []);
+          } catch (e) {
+            console.error("Failed to parse /api/tournaments-for-players JSON. Response text:", await resClone.text());
+            setError("Failed to fetch tournaments");
+          }
         } else {
           setError("Failed to fetch tournaments");
         }
@@ -164,8 +172,11 @@ export function TournamentScreen() {
         setLoading(false);
       }
     };
-    fetchTournaments();
-  }, []);
+    
+    if (isActive !== false) {
+      fetchTournaments();
+    }
+  }, [isActive]);
 
   if (loading) {
     return (
@@ -232,13 +243,13 @@ export function TournamentScreen() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
           <h2 className="text-xl font-semibold text-white flex items-center gap-2">
             <Calendar className="w-5 h-5 text-blue-400" />
             Upcoming Tournaments
           </h2>
-          <label className="flex items-center gap-2 cursor-pointer bg-gray-900/50 px-3 py-1.5 rounded-lg border border-gray-800 hover:bg-gray-800 transition-colors">
+          <label className="flex items-center gap-2 cursor-pointer bg-gray-900/50 px-3 py-1.5 rounded-lg border border-gray-800 hover:bg-gray-800 transition-colors w-fit">
             <div className="relative">
               <input 
                 type="checkbox" 
@@ -252,12 +263,12 @@ export function TournamentScreen() {
             <span className="text-sm font-medium text-gray-300">Not Joined</span>
           </label>
         </div>
-        <div className="text-sm text-gray-400 bg-gray-900/50 px-3 py-1.5 rounded-lg border border-gray-800">
+        <div className="text-sm text-gray-400 bg-gray-900/50 px-3 py-1.5 rounded-lg border border-gray-800 w-fit">
           Found {filteredTournaments.length} tournament{filteredTournaments.length !== 1 ? 's' : ''}
         </div>
       </div>
 
-      <div className="flex space-x-1 bg-gray-900/50 p-1 rounded-xl border border-gray-800 w-fit">
+      <div className="flex flex-wrap gap-1 bg-gray-900/50 p-1 rounded-xl border border-gray-800 w-fit">
         <button
           onClick={() => setActiveTab('HK')}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${

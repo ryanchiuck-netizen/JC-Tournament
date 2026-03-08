@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { User, Plus, X, Trophy, GripVertical } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { User, Plus, X, Trophy, GripVertical, ArrowUp, ArrowDown } from 'lucide-react';
+import { saveToGoogleSheets } from '../services/googleSheetsService';
 import {
   DndContext,
   closestCenter,
@@ -41,19 +42,24 @@ function PlayerTournamentsModal({ player, onClose }: { player: SavedPlayer, onCl
       try {
         const res = await fetch(`/api/player-watch?name=${encodeURIComponent(player.name)}&source=${encodeURIComponent(player.source || '')}`);
         if (res.ok) {
-          const data = await res.json();
-          const futureTournaments = data.matches.filter((m: any) => {
-            if (!m.tournamentDates) return false;
-            const parts = m.tournamentDates.split(' to ');
-            const dateToParse = parts[parts.length - 1].trim();
-            const [day, month, year] = dateToParse.split('/');
-            if (!day || !month || !year) return false;
-            const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            return date >= today;
-          });
-          setTournaments(futureTournaments);
+          const resClone = res.clone();
+          try {
+            const data = await res.json();
+            const futureTournaments = data.matches.filter((m: any) => {
+              if (!m.tournamentDates) return false;
+              const parts = m.tournamentDates.split(' to ');
+              const dateToParse = parts[parts.length - 1].trim();
+              const [day, month, year] = dateToParse.split('/');
+              if (!day || !month || !year) return false;
+              const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              return date >= today;
+            });
+            setTournaments(futureTournaments);
+          } catch (e) {
+            console.error("Failed to parse /api/player-watch JSON. Response text:", await resClone.text());
+          }
         }
       } catch (e) {
         console.error("Failed to fetch player tournaments", e);
@@ -121,7 +127,7 @@ function PlayerTournamentsModal({ player, onClose }: { player: SavedPlayer, onCl
   );
 }
 
-function SortablePlayerRow({ player, removePlayer, onRowClick, activeTab }: { player: SavedPlayer, removePlayer: (id: string) => void, onRowClick: (player: SavedPlayer) => void, activeTab: 'TA' | 'HKTA' }) {
+function SortablePlayerRow({ player, removePlayer, onRowClick, activeTab, isRefreshing }: { player: SavedPlayer, removePlayer: (id: string) => void | Promise<void>, onRowClick: (player: SavedPlayer) => void, activeTab: 'TA' | 'HKTA', isRefreshing?: boolean, key?: any }) {
   const {
     attributes,
     listeners,
@@ -156,10 +162,14 @@ function SortablePlayerRow({ player, removePlayer, onRowClick, activeTab }: { pl
       </td>
       <td className="px-6 py-4 whitespace-nowrap">
         <div className="flex items-center">
-          <div className="h-8 w-8 rounded-full bg-gray-800 flex items-center justify-center border border-gray-700 mr-3">
-            <span className="text-xs font-medium text-gray-300">
-              {player.name.charAt(0).toUpperCase()}
-            </span>
+          <div className="relative h-8 w-8 rounded-full bg-gray-800 flex items-center justify-center border border-gray-700 mr-3">
+            {isRefreshing ? (
+              <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <span className="text-xs font-medium text-gray-300">
+                {player.name.charAt(0).toUpperCase()}
+              </span>
+            )}
           </div>
           <div className="flex flex-col">
             <div className="text-sm font-medium text-gray-200 flex items-center gap-2">
@@ -235,6 +245,31 @@ export function PlayerScreen() {
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedPlayer, setSelectedPlayer] = useState<SavedPlayer | null>(null);
+  const [refreshingIds, setRefreshingIds] = useState<Set<string>>(new Set());
+
+  type SortField = 'name' | 'utrSingles' | 'wtnSingles' | 'points' | 'rank' | 'winLossYTD' | 'winLossCareer' | 'championships' | 'custom';
+  const [sortField, setSortField] = useState<SortField>('custom');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+
+  // When activeTab changes, reset sort to default
+  useEffect(() => {
+    if (activeTab === 'TA') {
+      setSortField('utrSingles');
+      setSortDirection('desc');
+    } else {
+      setSortField('rank');
+      setSortDirection('asc');
+    }
+  }, [activeTab]);
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection(field === 'rank' || field === 'name' ? 'asc' : 'desc');
+    }
+  };
 
   // Load from server on mount
   useEffect(() => {
@@ -242,8 +277,18 @@ export function PlayerScreen() {
       try {
         const res = await fetch('/api/saved-players');
         if (res.ok) {
-          const data = await res.json();
-          setPlayers(data);
+          const resClone = res.clone();
+          try {
+            const data = await res.json();
+            setPlayers(data);
+            
+            // Trigger background refresh
+            data.forEach((player: SavedPlayer) => {
+              refreshPlayer(player.id);
+            });
+          } catch (e) {
+            console.error("Failed to parse /api/saved-players JSON. Response text:", await resClone.text());
+          }
         }
       } catch (e) {
         console.error("Failed to fetch saved players", e);
@@ -253,6 +298,25 @@ export function PlayerScreen() {
     };
     fetchPlayers();
   }, []);
+
+  const refreshPlayer = async (id: string) => {
+    setRefreshingIds(prev => new Set(prev).add(id));
+    try {
+      const res = await fetch(`/api/refresh-player/${id}`, { method: 'POST' });
+      if (res.ok) {
+        const updatedPlayer = await res.json();
+        setPlayers(prev => prev.map(p => p.id === id ? updatedPlayer : p));
+      }
+    } catch (e) {
+      console.error(`Failed to refresh player ${id}`, e);
+    } finally {
+      setRefreshingIds(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }
+  };
 
   const handleAddPlayer = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -269,12 +333,24 @@ export function PlayerScreen() {
       });
       
       if (res.ok) {
-        const newPlayers = await res.json();
-        setPlayers([...players, ...newPlayers]);
-        setNewName('');
+        const resClone = res.clone();
+        try {
+          const newPlayers = await res.json();
+          setPlayers([...players, ...newPlayers]);
+          setNewName('');
+        } catch (e) {
+          console.error("Failed to parse POST /api/saved-players JSON. Response text:", await resClone.text());
+          setError("Failed to add player");
+        }
       } else {
-        const data = await res.json();
-        setError(data.error || "Failed to add player");
+        const resClone = res.clone();
+        try {
+          const data = await res.json();
+          setError(data.error || "Failed to add player");
+        } catch (e) {
+          console.error("Failed to parse POST /api/saved-players error JSON. Response text:", await resClone.text());
+          setError("Failed to add player");
+        }
       }
     } catch (e) {
       console.error("Failed to add player", e);
@@ -309,18 +385,17 @@ export function PlayerScreen() {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
-      const filteredPlayers = players.filter(p => p.source === activeTab);
-      const oldIndex = filteredPlayers.findIndex((p) => p.id === active.id);
-      const newIndex = filteredPlayers.findIndex((p) => p.id === over.id);
+      const currentList = sortedPlayers;
+      const oldIndex = currentList.findIndex((p) => p.id === active.id);
+      const newIndex = currentList.findIndex((p) => p.id === over.id);
       
-      const newFilteredPlayers = arrayMove(filteredPlayers, oldIndex, newIndex);
+      const newFilteredPlayers = arrayMove(currentList, oldIndex, newIndex);
       const otherPlayers = players.filter(p => p.source !== activeTab);
       
-      // We append the other players at the end. Since they are filtered out anyway,
-      // their absolute position relative to the active tab players doesn't matter.
       const newPlayers = [...newFilteredPlayers, ...otherPlayers];
       
       setPlayers(newPlayers);
+      setSortField('custom');
       
       try {
         await fetch('/api/saved-players/reorder', {
@@ -336,6 +411,84 @@ export function PlayerScreen() {
 
   const filteredPlayers = players.filter(p => p.source === activeTab);
 
+  const sortedPlayers = useMemo(() => {
+    if (sortField === 'custom') return filteredPlayers;
+
+    return [...filteredPlayers].sort((a, b) => {
+      let aVal: any = a[sortField as keyof SavedPlayer];
+      let bVal: any = b[sortField as keyof SavedPlayer];
+
+      const parseNum = (val: any, isRank: boolean) => {
+        if (!val || val === '-') return isRank ? Infinity : -Infinity;
+        const num = parseFloat(val.toString().replace(/[^\d.-]/g, ''));
+        return isNaN(num) ? (isRank ? Infinity : -Infinity) : num;
+      };
+
+      if (sortField === 'utrSingles' || sortField === 'wtnSingles' || sortField === 'points' || sortField === 'rank') {
+        aVal = parseNum(aVal, sortField === 'rank');
+        bVal = parseNum(bVal, sortField === 'rank');
+      } else if (sortField === 'winLossYTD' || sortField === 'winLossCareer') {
+        const parseWinRatio = (val: any) => {
+          if (!val || val === '-') return -1;
+          const parts = val.toString().split('/');
+          if (parts.length === 2) {
+            const wins = parseFloat(parts[0]);
+            const losses = parseFloat(parts[1]);
+            const total = wins + losses;
+            return total === 0 ? 0 : wins / total;
+          }
+          return -1;
+        };
+        aVal = parseWinRatio(aVal);
+        bVal = parseWinRatio(bVal);
+      } else if (sortField === 'championships') {
+        const countChamps = (val: any) => {
+          if (!val || val === '-') return 0;
+          return val.toString().split('\n').filter((s: string) => s.trim().length > 0).length;
+        };
+        aVal = countChamps(aVal);
+        bVal = countChamps(bVal);
+      } else {
+        aVal = (aVal || '').toString().toLowerCase();
+        bVal = (bVal || '').toString().toLowerCase();
+      }
+
+      if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
+      if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [filteredPlayers, sortField, sortDirection]);
+
+  useEffect(() => {
+    if (players.length > 0) {
+      saveToGoogleSheets('Player Screen', players).catch(console.error);
+    }
+  }, [players]);
+
+  const SortableHeader = ({ field, label, align = 'center' }: { field: SortField, label: string, align?: 'left' | 'center' | 'right' }) => {
+    const isActive = sortField === field;
+    return (
+      <th 
+        scope="col" 
+        className={`px-6 py-4 text-${align} text-xs font-semibold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white transition-colors group select-none`}
+        onClick={() => handleSort(field)}
+      >
+        <div className={`flex items-center gap-1 justify-${align === 'center' ? 'center' : align === 'right' ? 'end' : 'start'}`}>
+          {label}
+          <div className={`flex flex-col transition-opacity ${isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-50'}`}>
+            {isActive && sortDirection === 'asc' ? (
+              <ArrowUp className="w-3 h-3 text-blue-400" />
+            ) : isActive && sortDirection === 'desc' ? (
+              <ArrowDown className="w-3 h-3 text-blue-400" />
+            ) : (
+              <ArrowDown className="w-3 h-3" />
+            )}
+          </div>
+        </div>
+      </th>
+    );
+  };
+
   return (
     <div className="space-y-6">
       <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 shadow-sm">
@@ -349,39 +502,37 @@ export function PlayerScreen() {
           </div>
         </div>
 
-        <form onSubmit={handleAddPlayer} className="flex flex-col gap-3 mb-8">
-          <div className="flex gap-3">
-            <div className="relative flex-1 max-w-2xl">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <User className="h-5 w-5 text-gray-500" />
-              </div>
-              <input
-                type="text"
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                placeholder="Enter player name to search on TA & HKTA (e.g. Jordan Chiu)"
-                className="block w-full pl-10 pr-3 py-2.5 border border-gray-700 rounded-xl leading-5 bg-gray-800 text-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all shadow-inner"
-              />
+        <form onSubmit={handleAddPlayer} className="flex flex-col sm:flex-row gap-3 mb-8">
+          <div className="relative flex-1 w-full sm:max-w-2xl">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <User className="h-5 w-5 text-gray-500" />
             </div>
-            <button
-              type="submit"
-              disabled={!newName.trim() || adding}
-              className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-800 disabled:text-gray-500 text-white text-sm font-medium rounded-xl transition-colors shadow-sm whitespace-nowrap"
-            >
-              {adding ? (
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <Plus className="w-4 h-4" />
-              )}
-              {adding ? 'Searching...' : 'Search & Add'}
-            </button>
+            <input
+              type="text"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              placeholder="Enter player name to search on TA & HKTA (e.g. Jordan Chiu)"
+              className="block w-full pl-10 pr-3 py-2.5 border border-gray-700 rounded-xl leading-5 bg-gray-800 text-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all shadow-inner"
+            />
           </div>
-          {error && (
-            <p className="text-sm text-red-400 mt-1">{error}</p>
-          )}
+          <button
+            type="submit"
+            disabled={!newName.trim() || adding}
+            className="flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-800 disabled:text-gray-500 text-white text-sm font-medium rounded-xl transition-colors shadow-sm whitespace-nowrap shrink-0"
+          >
+            {adding ? (
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <Plus className="w-4 h-4" />
+            )}
+            {adding ? 'Searching...' : 'Search & Add'}
+          </button>
         </form>
+        {error && (
+          <p className="text-sm text-red-400 mb-4 -mt-4">{error}</p>
+        )}
 
-        <div className="flex space-x-2 mb-4">
+        <div className="flex flex-wrap gap-2 mb-4">
           <button
             onClick={() => setActiveTab('TA')}
             className={`px-4 py-2 rounded-lg font-medium transition-colors ${
@@ -415,36 +566,20 @@ export function PlayerScreen() {
                 <thead className="bg-gray-900/50">
                 <tr>
                   <th scope="col" className="px-2 py-4 w-10"></th>
-                  <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                    Player Name
-                  </th>
-                  <th scope="col" className="px-6 py-4 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                    {activeTab === 'TA' ? 'UTR for Singles' : 'WTN Singles'}
-                  </th>
+                  <SortableHeader field="name" label="Player Name" align="left" />
+                  <SortableHeader field={activeTab === 'TA' ? 'utrSingles' : 'wtnSingles'} label={activeTab === 'TA' ? 'UTR for Singles' : 'WTN Singles'} />
                   {activeTab === 'TA' && (
-                    <th scope="col" className="px-6 py-4 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                      Points
-                    </th>
+                    <SortableHeader field="points" label="Points" />
                   )}
                   {activeTab === 'HKTA' && (
                     <>
-                      <th scope="col" className="px-6 py-4 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                        Rank
-                      </th>
-                      <th scope="col" className="px-6 py-4 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                        Points
-                      </th>
+                      <SortableHeader field="rank" label="Rank" />
+                      <SortableHeader field="points" label="Points" />
                     </>
                   )}
-                  <th scope="col" className="px-6 py-4 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                    Win:Loss YTD
-                  </th>
-                  <th scope="col" className="px-6 py-4 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                    Win:Loss Career
-                  </th>
-                  <th scope="col" className="px-6 py-4 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                    Championships in Total
-                  </th>
+                  <SortableHeader field="winLossYTD" label="Win:Loss YTD" />
+                  <SortableHeader field="winLossCareer" label="Win:Loss Career" />
+                  <SortableHeader field="championships" label="Championships in Total" />
                   <th scope="col" className="px-6 py-4 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">
                     Action
                   </th>
@@ -460,7 +595,7 @@ export function PlayerScreen() {
                       </div>
                     </td>
                   </tr>
-                ) : filteredPlayers.length === 0 ? (
+                ) : sortedPlayers.length === 0 ? (
                   <tr>
                     <td colSpan={activeTab === 'HKTA' ? 9 : 8} className="px-6 py-12 text-center text-sm text-gray-500">
                       <div className="flex flex-col items-center justify-center gap-2">
@@ -472,11 +607,18 @@ export function PlayerScreen() {
                   </tr>
                 ) : (
                   <SortableContext
-                    items={filteredPlayers.map(p => p.id)}
+                    items={sortedPlayers.map(p => p.id)}
                     strategy={verticalListSortingStrategy}
                   >
-                    {filteredPlayers.map((player) => (
-                      <SortablePlayerRow key={player.id} player={player} removePlayer={removePlayer} onRowClick={setSelectedPlayer} activeTab={activeTab} />
+                    {sortedPlayers.map((player) => (
+                      <SortablePlayerRow 
+                        key={player.id} 
+                        player={player} 
+                        removePlayer={removePlayer} 
+                        onRowClick={setSelectedPlayer} 
+                        activeTab={activeTab} 
+                        isRefreshing={refreshingIds.has(player.id)}
+                      />
                     ))}
                   </SortableContext>
                 )}
