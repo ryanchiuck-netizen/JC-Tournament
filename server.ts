@@ -2,7 +2,7 @@ import express from "express";
 import { createServer as createViteServer } from "vite";
 import fs from "fs/promises";
 import path from "path";
-import { runScraper } from "./scraper.js";
+import { runScraper } from "./scraper.ts";
 import cron from "node-cron";
 import axios from "axios";
 import * as cheerio from "cheerio";
