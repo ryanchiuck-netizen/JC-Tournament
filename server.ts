@@ -36,9 +36,11 @@ async function startServer() {
 
   // Auth Routes
   app.get("/api/auth/url", (req, res) => {
-    // Ensure no trailing slash on APP_URL
-    const baseUrl = (process.env.APP_URL || "").replace(/\/$/, "");
-    const redirectUri = `${baseUrl}/api/auth/callback`;
+    const redirectUri = req.query.redirectUri as string;
+    
+    if (!redirectUri) {
+      return res.status(400).json({ error: "redirectUri is required" });
+    }
     
     const params = new URLSearchParams({
       client_id: process.env.GOOGLE_CLIENT_ID || "",
@@ -53,9 +55,12 @@ async function startServer() {
 
   app.get(["/api/auth/callback", "/api/auth/callback/"], async (req, res) => {
     const { code } = req.query;
-    // Ensure no trailing slash on APP_URL
-    const baseUrl = (process.env.APP_URL || "").replace(/\/$/, "");
-    const redirectUri = `${baseUrl}/api/auth/callback`;
+    
+    // In the callback, we need to reconstruct the redirect URI exactly as it was sent
+    // We can infer it from the request protocol and host
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+    const host = req.headers['x-forwarded-host'] || req.get('host');
+    const redirectUri = `${protocol}://${host}/api/auth/callback`;
 
     try {
       // Exchange code for token
@@ -95,21 +100,21 @@ async function startServer() {
 
       // Set cookie
       res.cookie("auth_token", token, {
-        secure: true,
-        sameSite: "none",
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
         httpOnly: true,
         maxAge: 7 * 24 * 60 * 60 * 1000
       });
       res.cookie("drive_access_token", tokenRes.data.access_token, {
-        secure: true,
-        sameSite: "none",
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
         httpOnly: true,
         maxAge: 7 * 24 * 60 * 60 * 1000
       });
       if (tokenRes.data.refresh_token) {
         res.cookie("drive_refresh_token", tokenRes.data.refresh_token, {
-          secure: true,
-          sameSite: "none",
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
           httpOnly: true,
           maxAge: 7 * 24 * 60 * 60 * 1000
         });
@@ -150,18 +155,18 @@ async function startServer() {
 
   app.post("/api/auth/logout", (req, res) => {
     res.clearCookie("auth_token", {
-      secure: true,
-      sameSite: "none",
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
       httpOnly: true,
     });
     res.clearCookie("drive_access_token", {
-      secure: true,
-      sameSite: "none",
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
       httpOnly: true,
     });
     res.clearCookie("drive_refresh_token", {
-      secure: true,
-      sameSite: "none",
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
       httpOnly: true,
     });
     res.json({ success: true });
@@ -463,10 +468,10 @@ async function startServer() {
 
     oauth2Client.on('tokens', (tokens) => {
       if (tokens.refresh_token) {
-        res.cookie("drive_refresh_token", tokens.refresh_token, { secure: true, sameSite: "none", httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 });
+        res.cookie("drive_refresh_token", tokens.refresh_token, { secure: process.env.NODE_ENV === "production", sameSite: "lax", httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 });
       }
       if (tokens.access_token) {
-        res.cookie("drive_access_token", tokens.access_token, { secure: true, sameSite: "none", httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 });
+        res.cookie("drive_access_token", tokens.access_token, { secure: process.env.NODE_ENV === "production", sameSite: "lax", httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 });
       }
     });
 
