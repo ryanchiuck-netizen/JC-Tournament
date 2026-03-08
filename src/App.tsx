@@ -4,7 +4,8 @@ import {
   AlertCircle, 
   Filter,
   RefreshCw,
-  Clock
+  Clock,
+  LogOut
 } from "lucide-react";
 import { AnimatePresence } from "motion/react";
 import * as XLSX from 'xlsx';
@@ -18,8 +19,12 @@ import { PlayerWatch } from "./components/PlayerWatch";
 import { PlayerScreen } from "./components/PlayerScreen";
 import { TournamentScreen } from "./components/TournamentScreen";
 import { DrawChecker } from "./components/DrawChecker";
+import { Login } from "./components/Login";
 
 export default function App() {
+  const [user, setUser] = useState<{ email: string; name: string; picture: string } | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
   const [activeTab, setActiveTab] = useState<"tournaments" | "player-watch" | "player-screen" | "tournament-screen" | "draw-checker">("tournaments");
   const [allTournaments, setAllTournaments] = useState<Tournament[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,7 +39,39 @@ export default function App() {
   const currentMonthIndex = new Date('2026-03-04').getMonth();
   const [selectedMonth, setSelectedMonth] = useState<number | 'ALL'>(currentMonthIndex);
 
+  const checkAuth = async () => {
+    try {
+      const res = await fetch('/api/auth/me', { credentials: 'include' });
+      if (res.ok) {
+        const resClone = res.clone();
+        try {
+          const data = await res.json();
+          setUser(data.user);
+        } catch (e) {
+          console.error("Failed to parse /api/auth/me JSON. Response text:", await resClone.text());
+          setUser(null);
+        }
+      } else {
+        setUser(null);
+      }
+    } catch (err) {
+      setUser(null);
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  const handleLogout = async () => {
+    await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+    setUser(null);
+  };
+
   const fetchStaticData = async () => {
+    if (!user) return;
     setLoading(true);
     setError(null);
     try {
@@ -52,14 +89,16 @@ export default function App() {
   };
 
   useEffect(() => {
-    fetchStaticData();
-    
-    const intervalId = setInterval(() => {
+    if (user) {
       fetchStaticData();
-    }, 60 * 60 * 1000);
-    
-    return () => clearInterval(intervalId);
-  }, []);
+      
+      const intervalId = setInterval(() => {
+        fetchStaticData();
+      }, 60 * 60 * 1000);
+      
+      return () => clearInterval(intervalId);
+    }
+  }, [user]);
 
   // Filter tournaments based on region, ageFilter, searchTerm, and month
   const filteredTournaments = useMemo(() => {
@@ -144,6 +183,18 @@ export default function App() {
     XLSX.writeFile(wb, "Tournaments_2026.xlsx");
   };
 
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Login onLoginSuccess={checkAuth} />;
+  }
+
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100 font-sans selection:bg-blue-500/30">
       {/* Header */}
@@ -163,6 +214,19 @@ export default function App() {
                   <h1 className="text-[17px] font-semibold tracking-tight leading-tight text-white">JC Tennis</h1>
                   <p className="text-[11px] text-gray-400 font-medium uppercase tracking-wider">Tournament Planner</p>
                 </div>
+              </div>
+              
+              <div className="flex items-center gap-3 sm:hidden">
+                {user.picture && (
+                  <img src={user.picture} alt={user.name} className="w-7 h-7 rounded-full" referrerPolicy="no-referrer" />
+                )}
+                <button
+                  onClick={handleLogout}
+                  className="p-1.5 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
+                  title="Sign out"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
               </div>
             </div>
 
@@ -218,6 +282,22 @@ export default function App() {
                 Draw Checker
               </button>
             </nav>
+          </div>
+          
+          <div className="hidden sm:flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              {user.picture && (
+                <img src={user.picture} alt={user.name} className="w-6 h-6 rounded-full" referrerPolicy="no-referrer" />
+              )}
+              <span className="text-sm font-medium text-gray-300">{user.name}</span>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
+              title="Sign out"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </header>

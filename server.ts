@@ -18,6 +18,96 @@ async function startServer() {
   app.use(cookieParser());
   app.use(express.json());
 
+  const ALLOWED_EMAILS = ["ryan.chiu.ck@gmail.com", "annycheng68@gmail.com"];
+  const JWT_SECRET = process.env.JWT_SECRET || "dev-secret-key-12345";
+
+  // Middleware to check auth
+  const requireAuth = (req: any, res: any, next: any) => {
+    const token = req.cookies.auth_token;
+    if (!token) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET);
+      req.user = decoded;
+      next();
+    } catch (err) {
+      res.status(401).json({ error: "Invalid token" });
+    }
+  };
+
+  // Auth Routes
+  app.get("/api/auth/url", (req, res) => {
+    const redirectUri = req.query.redirectUri as string;
+    if (!redirectUri) return res.status(400).json({ error: "redirectUri is required" });
+    
+    const params = new URLSearchParams({
+      client_id: process.env.GOOGLE_CLIENT_ID || "",
+      redirect_uri: redirectUri,
+      response_type: "code",
+      scope: "email profile https://www.googleapis.com/auth/drive.file",
+      access_type: "offline",
+      prompt: "consent",
+      state: redirectUri
+    });
+    res.json({ url: `https://accounts.google.com/o/oauth2/v2/auth?${params}` });
+  });
+
+  app.get(["/api/auth/callback", "/api/auth/callback/"], async (req, res) => {
+    const { code, state, error } = req.query;
+    if (error) {
+      return res.send(`<html><body><script>if(window.opener){window.opener.postMessage({type:'OAUTH_AUTH_ERROR',error:'Google Auth Error'},'*');window.close();}</script></body></html>`);
+    }
+    
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+    const host = req.headers['x-forwarded-host'] || req.get('host');
+    const inferredRedirectUri = `${protocol}://${host}/api/auth/callback`;
+    const redirectUri = (state as string) || inferredRedirectUri;
+
+    try {
+      const tokenRes = await axios.post("https://oauth2.googleapis.com/token", {
+        client_id: process.env.GOOGLE_CLIENT_ID,
+        client_secret: process.env.GOOGLE_CLIENT_SECRET,
+        code,
+        grant_type: "authorization_code",
+        redirect_uri: redirectUri
+      });
+
+      const { access_token } = tokenRes.data;
+      const userRes = await axios.get("https://www.googleapis.com/oauth2/v2/userinfo", {
+        headers: { Authorization: `Bearer ${access_token}` }
+      });
+
+      const email = userRes.data.email?.toLowerCase().trim();
+      if (!ALLOWED_EMAILS.includes(email)) {
+        return res.send(`<html><body><script>if(window.opener){window.opener.postMessage({type:'OAUTH_AUTH_ERROR',error:'Email not authorized'},'*');window.close();}</script></body></html>`);
+      }
+
+      const token = jwt.sign({ email, name: userRes.data.name, picture: userRes.data.picture }, JWT_SECRET, { expiresIn: "7d" });
+
+      res.cookie("auth_token", token, { secure: true, sameSite: "none", httpOnly: true, maxAge: 7*24*60*60*1000, path: '/' });
+      res.cookie("drive_access_token", tokenRes.data.access_token, { secure: true, sameSite: "none", httpOnly: true, maxAge: 7*24*60*60*1000, path: '/' });
+      if (tokenRes.data.refresh_token) {
+        res.cookie("drive_refresh_token", tokenRes.data.refresh_token, { secure: true, sameSite: "none", httpOnly: true, maxAge: 7*24*60*60*1000, path: '/' });
+      }
+
+      res.send(`<html><body><script>if(window.opener){window.opener.postMessage({type:'OAUTH_AUTH_SUCCESS'},'*');window.close();}else{window.location.href='/';}</script></body></html>`);
+    } catch (error: any) {
+      res.send(`<html><body><script>if(window.opener){window.opener.postMessage({type:'OAUTH_AUTH_ERROR',error:'Authentication failed'},'*');window.close();}</script></body></html>`);
+    }
+  });
+
+  app.get("/api/auth/me", requireAuth, (req: any, res) => {
+    res.json({ user: req.user });
+  });
+
+  app.post("/api/auth/logout", (req, res) => {
+    res.clearCookie("auth_token", { secure: true, sameSite: "none", httpOnly: true, path: '/' });
+    res.clearCookie("drive_access_token", { secure: true, sameSite: "none", httpOnly: true, path: '/' });
+    res.clearCookie("drive_refresh_token", { secure: true, sameSite: "none", httpOnly: true, path: '/' });
+    res.json({ success: true });
+  });
+
   // Run scraper on startup if data doesn't exist
   const dataPath = path.join(process.cwd(), "public", "tournaments.json");
   
@@ -46,7 +136,7 @@ async function startServer() {
   });
 
   // API route to get the static tournaments data
-  app.get("/api/tournaments/static", async (req, res) => {
+  app.get("/api/tournaments/static", requireAuth, async (req, res) => {
     try {
       const data = await fs.readFile(dataPath, "utf-8");
       const parsed = JSON.parse(data);
@@ -63,7 +153,7 @@ async function startServer() {
   });
 
   // API route to get player names for autofill
-  app.get("/api/players", async (req, res) => {
+  app.get("/api/players", requireAuth, async (req, res) => {
     try {
       const playersPath = path.join(process.cwd(), "public", "players.json");
       const data = await fs.readFile(playersPath, "utf-8");
@@ -75,7 +165,7 @@ async function startServer() {
   });
 
   // API route for Player Watch
-  app.get("/api/player-watch", async (req, res) => {
+  app.get("/api/player-watch", requireAuth, async (req, res) => {
     const playerName = req.query.name as string;
     const playerSource = req.query.source as string;
     if (!playerName) {
@@ -165,7 +255,7 @@ async function startServer() {
     }
   });
 
-  app.get("/api/tournaments-for-players", async (req, res) => {
+  app.get("/api/tournaments-for-players", requireAuth, async (req, res) => {
     try {
       const savedPlayers = await getSavedPlayers(req, res);
       if (!savedPlayers || savedPlayers.length === 0) {
@@ -296,7 +386,7 @@ async function startServer() {
 
   // --- Global Saved Players Routes ---
   const savedPlayersPath = path.join(process.cwd(), "public", "saved-players.json");
-  
+
   // Lock to prevent concurrent writes to Google Drive
   let driveWriteLock = Promise.resolve();
 
@@ -324,9 +414,27 @@ async function startServer() {
     return google.drive({ 
       version: 'v3', 
       auth: oauth2Client,
-      // Increase timeout to 60 seconds for better stability
       timeout: 60000 
     });
+  };
+
+  const getOrCreateFolder = async (drive: any, folderName: string) => {
+    const res = await drive.files.list({
+      q: `name='${folderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
+      spaces: 'drive',
+      fields: 'files(id, name)'
+    });
+    if (res.data.files && res.data.files.length > 0) {
+      return res.data.files[0].id;
+    }
+    const createRes = await drive.files.create({
+      requestBody: {
+        name: folderName,
+        mimeType: 'application/vnd.google-apps.folder'
+      },
+      fields: 'id'
+    });
+    return createRes.data.id;
   };
 
   const getSavedPlayers = async (req: any, res: any) => {
@@ -337,14 +445,14 @@ async function startServer() {
         players = JSON.parse(data);
       } else {
         const drive = getDriveClient(req, res);
-        
         const maxRetries = 5;
         let lastError: any = null;
         
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
           try {
+            const folderId = await getOrCreateFolder(drive, 'Google AI Studio');
             const response = await drive.files.list({
-              q: "name='saved-players.json' and trashed=false",
+              q: `name='saved-players.json' and '${folderId}' in parents and trashed=false`,
               spaces: 'drive',
               fields: 'files(id, name)'
             });
@@ -420,31 +528,30 @@ async function startServer() {
         return;
       }
 
-      const drive = getDriveClient(req, res);
-      const response = await drive.files.list({
-        q: "name='saved-players.json' and trashed=false",
-        spaces: 'drive',
-        fields: 'files(id, name)'
-      });
-
-      const files = response.data.files;
-      const fileMetadata = {
-        name: 'saved-players.json',
-        mimeType: 'application/json'
-      };
-      
-      const media = {
-        mimeType: 'application/json',
-        body: JSON.stringify(players, null, 2)
-      };
-
       const maxRetries = 5;
       for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
           const drive = getDriveClient(req, res);
           
-          // Use the lock to ensure sequential writes
           await (driveWriteLock = driveWriteLock.then(async () => {
+            const folderId = await getOrCreateFolder(drive, 'Google AI Studio');
+            const response = await drive.files.list({
+              q: `name='saved-players.json' and '${folderId}' in parents and trashed=false`,
+              spaces: 'drive',
+              fields: 'files(id, name)'
+            });
+
+            const files = response.data.files;
+            const fileMetadata = {
+              name: 'saved-players.json',
+              parents: [folderId]
+            };
+            
+            const media = {
+              mimeType: 'application/json',
+              body: JSON.stringify(players, null, 2)
+            };
+
             if (!files || files.length === 0) {
               await drive.files.create({
                 requestBody: fileMetadata,
@@ -459,11 +566,10 @@ async function startServer() {
               });
             }
           }).catch(err => {
-            // If the lock-protected operation fails, we still want to proceed with retries
             throw err;
           }));
           
-          break; // Success, exit retry loop
+          break; // Success
         } catch (err: any) {
           const errMsg = (err.response?.data?.error?.message || err.message || String(err)).toLowerCase();
           const isRateLimit = errMsg.includes("rate limit");
@@ -479,12 +585,11 @@ async function startServer() {
             err.name === 'AbortError';
 
           if (isTransient && attempt < maxRetries) {
-            // Wait longer for rate limits
             const delay = isRateLimit ? 5000 * attempt : 2000 * attempt;
             console.log(`Transient error writing to Drive (Attempt ${attempt}): ${errMsg}. Retrying in ${delay}ms...`);
             await new Promise(resolve => setTimeout(resolve, delay));
           } else {
-            throw err; // Rethrow if not transient or out of retries
+            throw err;
           }
         }
       }
@@ -658,7 +763,7 @@ async function startServer() {
     };
   }
 
-  app.post("/api/check-draw", async (req, res) => {
+  app.post("/api/check-draw", requireAuth, async (req, res) => {
     const { url } = req.body;
     if (!url || typeof url !== 'string') {
       return res.status(400).json({ error: "Draw URL is required" });
@@ -790,12 +895,12 @@ async function startServer() {
     }
   });
 
-  app.get("/api/saved-players", async (req, res) => {
+  app.get("/api/saved-players", requireAuth, async (req, res) => {
     const players = await getSavedPlayers(req, res);
     res.json(players);
   });
 
-  app.post("/api/refresh-player/:id", async (req, res) => {
+  app.post("/api/refresh-player/:id", requireAuth, async (req, res) => {
     const { id } = req.params;
     const players = await getSavedPlayers(req, res);
     const playerIndex = players.findIndex((p: any) => p.id === id);
@@ -821,7 +926,7 @@ async function startServer() {
     }
   });
 
-  app.post("/api/saved-players", async (req, res) => {
+  app.post("/api/saved-players", requireAuth, async (req, res) => {
     const { name } = req.body;
     if (!name || typeof name !== 'string') {
       return res.status(400).json({ error: "Player name is required" });
@@ -895,7 +1000,7 @@ async function startServer() {
     }
   });
 
-  app.delete("/api/saved-players/:id", async (req, res) => {
+  app.delete("/api/saved-players/:id", requireAuth, async (req, res) => {
     const { id } = req.params;
     let players = await getSavedPlayers(req, res);
     players = players.filter((p: any) => p.id !== id);
@@ -903,7 +1008,7 @@ async function startServer() {
     res.json({ success: true });
   });
 
-  app.put("/api/saved-players/reorder", async (req, res) => {
+  app.put("/api/saved-players/reorder", requireAuth, async (req, res) => {
     const { players } = req.body;
     if (!Array.isArray(players)) {
       return res.status(400).json({ error: "Players array is required" });
