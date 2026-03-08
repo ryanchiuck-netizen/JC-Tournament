@@ -285,15 +285,6 @@ export default function App() {
           </div>
           
           <div className="hidden sm:flex items-center gap-4">
-            <a
-              href="/project.zip"
-              download="jc-tennis-project.zip"
-              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-md transition-colors flex items-center gap-2"
-              title="Download Project Source Code"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-              Download Code
-            </a>
             <div className="flex items-center gap-2">
               {user.picture && (
                 <img src={user.picture} alt={user.name} className="w-6 h-6 rounded-full" referrerPolicy="no-referrer" />
