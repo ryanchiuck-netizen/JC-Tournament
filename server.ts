@@ -48,19 +48,35 @@ async function startServer() {
       response_type: "code",
       scope: "email profile https://www.googleapis.com/auth/drive.file",
       access_type: "offline",
-      prompt: "consent"
+      prompt: "consent",
+      state: redirectUri
     });
     res.json({ url: `https://accounts.google.com/o/oauth2/v2/auth?${params}` });
   });
 
   app.get(["/api/auth/callback", "/api/auth/callback/"], async (req, res) => {
-    const { code } = req.query;
+    const { code, state, error } = req.query;
+    
+    if (error) {
+      return res.send(`
+        <html><body>
+          <script>
+            if (window.opener) {
+              window.opener.postMessage({ type: 'OAUTH_AUTH_ERROR', error: 'Google Auth Error: ' + ${JSON.stringify(error)} }, '*');
+              window.close();
+            }
+          </script>
+          <p>Authentication failed. You can close this window.</p>
+        </body></html>
+      `);
+    }
     
     // In the callback, we need to reconstruct the redirect URI exactly as it was sent
-    // We can infer it from the request protocol and host
+    // We use the state parameter if available, otherwise fallback to inferring it
     const protocol = req.headers['x-forwarded-proto'] || req.protocol;
     const host = req.headers['x-forwarded-host'] || req.get('host');
-    const redirectUri = `${protocol}://${host}/api/auth/callback`;
+    const inferredRedirectUri = `${protocol}://${host}/api/auth/callback`;
+    const redirectUri = (state as string) || inferredRedirectUri;
 
     try {
       // Exchange code for token
@@ -79,14 +95,14 @@ async function startServer() {
         headers: { Authorization: `Bearer ${access_token}` }
       });
 
-      const email = userRes.data.email;
+      const email = userRes.data.email?.toLowerCase().trim();
 
       if (!ALLOWED_EMAILS.includes(email)) {
         return res.send(`
           <html><body>
             <script>
               if (window.opener) {
-                window.opener.postMessage({ type: 'OAUTH_AUTH_ERROR', error: 'Email not authorized' }, '*');
+                window.opener.postMessage({ type: 'OAUTH_AUTH_ERROR', error: 'Email not authorized: ' + email }, '*');
                 window.close();
               }
             </script>
@@ -135,11 +151,12 @@ async function startServer() {
       `);
     } catch (error: any) {
       console.error("OAuth error:", error.response?.data || error.message);
+      const errorDetails = error.response?.data?.error_description || error.response?.data?.error || error.message || 'Unknown error';
       res.send(`
         <html><body>
           <script>
             if (window.opener) {
-              window.opener.postMessage({ type: 'OAUTH_AUTH_ERROR', error: 'Authentication failed' }, '*');
+              window.opener.postMessage({ type: 'OAUTH_AUTH_ERROR', error: 'Authentication failed: ' + ${JSON.stringify(errorDetails)} }, '*');
               window.close();
             }
           </script>
