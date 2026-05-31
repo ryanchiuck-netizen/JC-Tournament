@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Trophy, Calendar, MapPin, Users, ChevronDown, ChevronUp, CalendarPlus } from 'lucide-react';
 import { getGoogleCalendarLink } from '../services/tournamentService';
-import { saveToGoogleSheets } from '../services/googleSheetsService';
 import { Tournament } from '../types';
 
 interface JoinedPlayer {
@@ -31,7 +30,7 @@ interface TournamentWithPlayers {
   joinedPlayers: JoinedPlayer[];
 }
 
-function TournamentItem({ t, index }: { t: TournamentWithPlayers, index: number, key?: any }) {
+function TournamentItem({ t }: { t: TournamentWithPlayers, key?: any }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const domain = t.tournament.source === "HK" ? "hkta.tournamentsoftware.com" : "tournaments.tennis.com.au";
   const tournamentUrl = `https://${domain}${t.tournament.link}`;
@@ -234,7 +233,7 @@ export function TournamentScreen({ isActive }: { isActive?: boolean }) {
       <div className="space-y-4">
         <div className="grid gap-6">
           {list.map((t, i) => (
-            <TournamentItem key={i} t={t} index={i} />
+            <TournamentItem key={i} t={t} />
           ))}
         </div>
       </div>

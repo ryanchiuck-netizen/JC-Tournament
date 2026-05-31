@@ -8,8 +8,7 @@ import axios from "axios";
 import * as cheerio from "cheerio";
 import pLimit from "p-limit";
 import cookieParser from "cookie-parser";
-import jwt from "jsonwebtoken";
-import { google } from "googleapis";
+import { createClient } from "@supabase/supabase-js";
 
 async function startServer() {
   const app = express();
@@ -18,95 +17,21 @@ async function startServer() {
   app.use(cookieParser());
   app.use(express.json());
 
-  const ALLOWED_EMAILS = ["ryan.chiu.ck@gmail.com", "annycheng68@gmail.com"];
-  const JWT_SECRET = process.env.JWT_SECRET || "dev-secret-key-12345";
+  // Initialize Supabase Client
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+  const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
 
-  // Middleware to check auth
+  if (supabase) {
+    console.log("Supabase client initialized successfully. Connected to:", supabaseUrl);
+  } else {
+    console.log("Supabase environment variables not found. Falling back to local saved-players.json format.");
+  }
+
+  // Middleware to check auth (disabled)
   const requireAuth = (req: any, res: any, next: any) => {
-    const token = req.cookies.auth_token;
-    if (!token) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
-    try {
-      const decoded = jwt.verify(token, JWT_SECRET);
-      req.user = decoded;
-      next();
-    } catch (err) {
-      res.status(401).json({ error: "Invalid token" });
-    }
+    next();
   };
-
-  // Auth Routes
-  app.get("/api/auth/url", (req, res) => {
-    const redirectUri = req.query.redirectUri as string;
-    if (!redirectUri) return res.status(400).json({ error: "redirectUri is required" });
-    
-    const params = new URLSearchParams({
-      client_id: process.env.GOOGLE_CLIENT_ID || "",
-      redirect_uri: redirectUri,
-      response_type: "code",
-      scope: "email profile https://www.googleapis.com/auth/drive.file",
-      access_type: "offline",
-      prompt: "consent",
-      state: redirectUri
-    });
-    res.json({ url: `https://accounts.google.com/o/oauth2/v2/auth?${params}` });
-  });
-
-  app.get(["/api/auth/callback", "/api/auth/callback/"], async (req, res) => {
-    const { code, state, error } = req.query;
-    if (error) {
-      return res.send(`<html><body><script>if(window.opener){window.opener.postMessage({type:'OAUTH_AUTH_ERROR',error:'Google Auth Error'},'*');window.close();}</script></body></html>`);
-    }
-    
-    const protocol = req.headers['x-forwarded-proto'] || req.protocol;
-    const host = req.headers['x-forwarded-host'] || req.get('host');
-    const inferredRedirectUri = `${protocol}://${host}/api/auth/callback`;
-    const redirectUri = (state as string) || inferredRedirectUri;
-
-    try {
-      const tokenRes = await axios.post("https://oauth2.googleapis.com/token", {
-        client_id: process.env.GOOGLE_CLIENT_ID,
-        client_secret: process.env.GOOGLE_CLIENT_SECRET,
-        code,
-        grant_type: "authorization_code",
-        redirect_uri: redirectUri
-      });
-
-      const { access_token } = tokenRes.data;
-      const userRes = await axios.get("https://www.googleapis.com/oauth2/v2/userinfo", {
-        headers: { Authorization: `Bearer ${access_token}` }
-      });
-
-      const email = userRes.data.email?.toLowerCase().trim();
-      if (!ALLOWED_EMAILS.includes(email)) {
-        return res.send(`<html><body><script>if(window.opener){window.opener.postMessage({type:'OAUTH_AUTH_ERROR',error:'Email not authorized'},'*');window.close();}</script></body></html>`);
-      }
-
-      const token = jwt.sign({ email, name: userRes.data.name, picture: userRes.data.picture }, JWT_SECRET, { expiresIn: "7d" });
-
-      res.cookie("auth_token", token, { secure: true, sameSite: "none", httpOnly: true, maxAge: 7*24*60*60*1000, path: '/' });
-      res.cookie("drive_access_token", tokenRes.data.access_token, { secure: true, sameSite: "none", httpOnly: true, maxAge: 7*24*60*60*1000, path: '/' });
-      if (tokenRes.data.refresh_token) {
-        res.cookie("drive_refresh_token", tokenRes.data.refresh_token, { secure: true, sameSite: "none", httpOnly: true, maxAge: 7*24*60*60*1000, path: '/' });
-      }
-
-      res.send(`<html><body><script>if(window.opener){window.opener.postMessage({type:'OAUTH_AUTH_SUCCESS'},'*');window.close();}else{window.location.href='/';}</script></body></html>`);
-    } catch (error: any) {
-      res.send(`<html><body><script>if(window.opener){window.opener.postMessage({type:'OAUTH_AUTH_ERROR',error:'Authentication failed'},'*');window.close();}</script></body></html>`);
-    }
-  });
-
-  app.get("/api/auth/me", requireAuth, (req: any, res) => {
-    res.json({ user: req.user });
-  });
-
-  app.post("/api/auth/logout", (req, res) => {
-    res.clearCookie("auth_token", { secure: true, sameSite: "none", httpOnly: true, path: '/' });
-    res.clearCookie("drive_access_token", { secure: true, sameSite: "none", httpOnly: true, path: '/' });
-    res.clearCookie("drive_refresh_token", { secure: true, sameSite: "none", httpOnly: true, path: '/' });
-    res.json({ success: true });
-  });
 
   // Run scraper on startup if data doesn't exist
   const dataPath = path.join(process.cwd(), "public", "tournaments.json");
@@ -135,8 +60,8 @@ async function startServer() {
     timezone: "Asia/Hong_Kong"
   });
 
-  // API route to get the static tournaments data
-  app.get("/api/tournaments/static", requireAuth, async (req, res) => {
+  // API route to get the static tournaments data (and support legacy route)
+  const getTournamentsHandler = async (req: any, res: any) => {
     try {
       const data = await fs.readFile(dataPath, "utf-8");
       const parsed = JSON.parse(data);
@@ -150,7 +75,10 @@ async function startServer() {
         message: "Data not available yet. Scraper is running."
       });
     }
-  });
+  };
+
+  app.get("/api/tournaments/static", requireAuth, getTournamentsHandler);
+  app.get("/api/tournaments", requireAuth, getTournamentsHandler);
 
   // API route to get player names for autofill
   app.get("/api/players", requireAuth, async (req, res) => {
@@ -187,6 +115,14 @@ async function startServer() {
           if (playerSource) {
             if (tournament.source === "HK" && playerSource !== "HKTA") return;
             if (tournament.source === "AUS" && playerSource !== "TA") return;
+          }
+
+          // If we have pre-scraped players, filter. If empty or absent, we assume they could be in it.
+          if (tournament.players && tournament.players.length > 0) {
+            const isMatch = tournament.players.some((tPlayerName: string) => 
+               queryParts.every(part => tPlayerName.toLowerCase().replace(/[,.]/g, '').includes(part))
+            );
+            if (!isMatch) return;
           }
 
           const domain = tournament.source === "HK" ? "hkta.tournamentsoftware.com" : "tournaments.tennis.com.au";
@@ -280,89 +216,106 @@ async function startServer() {
 
       const limit = pLimit(5);
       const results: any[] = [];
+      const searchTasks: any[] = [];
 
-      const searchTasks = futureTournaments.map((tournament: any) => 
-        limit(async () => {
-          const domain = tournament.source === "HK" ? "hkta.tournamentsoftware.com" : "tournaments.tennis.com.au";
-          const playersUrl = `https://${domain}/tournament/${tournament.link.split("id=")[1]}/Players/GetPlayersContent`;
-          
-          try {
-            const response = await axios.get(playersUrl, {
-              headers: {
-                "User-Agent": "Mozilla/5.0",
-                "X-Requested-With": "XMLHttpRequest"
-              },
-              timeout: 10000
-            });
+      for (const tournament of futureTournaments) {
+        // Find which savedPlayers are likely in this tournament
+        const likelyPlayers = savedPlayers.filter((player: any) => {
+          if (tournament.source === "HK" && player.source !== "HKTA") return false;
+          if (tournament.source === "AUS" && player.source !== "TA") return false;
 
-            const dataLower = response.data.toLowerCase().replace(/[,.]/g, '');
-            const $ = cheerio.load(response.data);
+          // If we have pre-scraped players, filter. If empty or absent, we must assume they could be in it.
+          if (tournament.players && tournament.players.length > 0) {
+            const cleanPlayerName = player.name.replace(/\[.*?\]|\(.*?\)/g, '').replace(/[,.]/g, '').trim();
+            const queryParts = cleanPlayerName.toLowerCase().split(/\s+/);
+            return tournament.players.some((tPlayerName: string) => 
+               queryParts.every(part => tPlayerName.toLowerCase().replace(/[,.]/g, '').includes(part))
+            );
+          }
+          return true;
+        });
+
+        if (likelyPlayers.length === 0) continue;
+
+        searchTasks.push(
+          limit(async () => {
+            const domain = tournament.source === "HK" ? "hkta.tournamentsoftware.com" : "tournaments.tennis.com.au";
+            const playersUrl = `https://${domain}/tournament/${tournament.link.split("id=")[1]}/Players/GetPlayersContent`;
             
-            const joinedPlayers: any[] = [];
+            try {
+              const response = await axios.get(playersUrl, {
+                headers: {
+                  "User-Agent": "Mozilla/5.0",
+                  "X-Requested-With": "XMLHttpRequest"
+                },
+                timeout: 10000
+              });
 
-            for (const player of savedPlayers) {
-              // Check source match
-              if (tournament.source === "HK" && player.source !== "HKTA") continue;
-              if (tournament.source === "AUS" && player.source !== "TA") continue;
+              const dataLower = response.data.toLowerCase().replace(/[,.]/g, '');
+              const $ = cheerio.load(response.data);
+              
+              const joinedPlayers: any[] = [];
 
-              const cleanPlayerName = player.name.replace(/\[.*?\]|\(.*?\)/g, '').replace(/[,.]/g, '').trim();
-              const queryParts = cleanPlayerName.toLowerCase().split(/\s+/);
+              for (const player of likelyPlayers) {
+                const cleanPlayerName = player.name.replace(/\[.*?\]|\(.*?\)/g, '').replace(/[,.]/g, '').trim();
+                const queryParts = cleanPlayerName.toLowerCase().split(/\s+/);
 
-              const quickMatch = queryParts.every(part => dataLower.includes(part));
+                const quickMatch = queryParts.every(part => dataLower.includes(part));
 
-              if (quickMatch) {
-                let playerDetailLink = "";
+                if (quickMatch) {
+                  let playerDetailLink = "";
 
-                $("li.js-alphabet-list-item").each((i, el) => {
-                  const name = $(el).find(".media__title").text().trim().toLowerCase().replace(/[,.]/g, '');
-                  if (queryParts.every(part => name.includes(part))) {
-                    playerDetailLink = $(el).find(".media__title a").attr("href") || "";
-                    return false; // break
-                  }
-                });
-
-                if (playerDetailLink) {
-                  const fullPlayerUrl = `https://${domain}${playerDetailLink}`;
-                  const detailResponse = await axios.get(fullPlayerUrl, {
-                    headers: { "User-Agent": "Mozilla/5.0" },
-                    timeout: 10000
-                  });
-                  const $detail = cheerio.load(detailResponse.data);
-                  
-                  const draws: any[] = [];
-                  $detail(".media__subheading").each((i, el) => {
-                    const firstLink = $detail(el).find("a").first();
-                    if (firstLink.length > 0) {
-                      const drawName = firstLink.text().trim();
-                      const drawLink = firstLink.attr("href");
-                      draws.push({
-                        drawName: drawName,
-                        drawLink: drawLink ? `https://${domain}${drawLink}` : undefined
-                      });
+                  $("li.js-alphabet-list-item").each((i, el) => {
+                    const name = $(el).find(".media__title").text().trim().toLowerCase().replace(/[,.]/g, '');
+                    if (queryParts.every(part => name.includes(part))) {
+                      playerDetailLink = $(el).find(".media__title a").attr("href") || "";
+                      return false; // break
                     }
                   });
 
-                  if (draws.length > 0) {
-                    joinedPlayers.push({
-                      player,
-                      draws
+                  if (playerDetailLink) {
+                    const fullPlayerUrl = `https://${domain}${playerDetailLink}`;
+                    const detailResponse = await axios.get(fullPlayerUrl, {
+                      headers: { "User-Agent": "Mozilla/5.0" },
+                      timeout: 10000
                     });
+                    const $detail = cheerio.load(detailResponse.data);
+                    
+                    const draws: any[] = [];
+                    $detail(".media__subheading").each((i, el) => {
+                      const firstLink = $detail(el).find("a").first();
+                      if (firstLink.length > 0) {
+                        const drawName = firstLink.text().trim();
+                        const drawLink = firstLink.attr("href");
+                        draws.push({
+                          drawName: drawName,
+                          drawLink: drawLink ? `https://${domain}${drawLink}` : undefined
+                        });
+                      }
+                    });
+
+                    if (draws.length > 0) {
+                      joinedPlayers.push({
+                        player,
+                        draws
+                      });
+                    }
                   }
                 }
               }
-            }
 
-            if (joinedPlayers.length > 0) {
-              results.push({
-                tournament,
-                joinedPlayers
-              });
+              if (joinedPlayers.length > 0) {
+                results.push({
+                  tournament,
+                  joinedPlayers
+                });
+              }
+            } catch (e) {
+              // Skip failed requests
             }
-          } catch (e) {
-            // Skip failed requests
-          }
-        })
-      );
+          })
+        );
+      }
 
       await Promise.all(searchTasks);
       
@@ -387,120 +340,96 @@ async function startServer() {
   // --- Global Saved Players Routes ---
   const savedPlayersPath = path.join(process.cwd(), "public", "saved-players.json");
 
-  // Lock to prevent concurrent writes to Google Drive
-  let driveWriteLock = Promise.resolve();
+  // Automatic migration/sync on startup: Local file -> Supabase
+  const syncLocalToSupabase = async () => {
+    if (!supabase) return;
+    try {
+      const { count, error } = await supabase
+        .from("saved_players")
+        .select("id", { count: "exact", head: true });
 
-  const getDriveClient = (req: any, res: any) => {
-    const oauth2Client = new google.auth.OAuth2(
-      process.env.GOOGLE_CLIENT_ID,
-      process.env.GOOGLE_CLIENT_SECRET,
-      `${(process.env.APP_URL || "").replace(/\/$/, "")}/api/auth/callback`
-    );
+      if (!error && (count === 0 || count === null)) {
+        console.log("Supabase saved_players table is empty. Syncing local players...");
+        try {
+          const rawData = await fs.readFile(savedPlayersPath, "utf-8");
+          const localPlayers = JSON.parse(rawData);
+          if (localPlayers && localPlayers.length > 0) {
+            const rows = localPlayers.map((p: any, index: number) => ({
+              id: p.id,
+              name: p.name,
+              url: p.url || null,
+              source: p.source || null,
+              utr_singles: p.utrSingles || "-",
+              wtn_singles: p.wtnSingles || "-",
+              win_loss_ytd: p.winLossYTD || "-",
+              win_loss_career: p.winLossCareer || "-",
+              championships: p.championships || "-",
+              rank: p.rank || "-",
+              points: p.points || "-",
+              sort_order: p.sort_order !== undefined ? p.sort_order : index,
+            }));
 
-    oauth2Client.setCredentials({
-      access_token: req.cookies.drive_access_token,
-      refresh_token: req.cookies.drive_refresh_token
-    });
+            const { error: upsertError } = await supabase
+              .from("saved_players")
+              .upsert(rows, { onConflict: "id" });
 
-    oauth2Client.on('tokens', (tokens) => {
-      if (tokens.refresh_token) {
-        res.cookie("drive_refresh_token", tokens.refresh_token, { secure: true, sameSite: "none", httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000, path: '/' });
+            if (upsertError) {
+              console.error("Failed to migrate local players to Supabase:", upsertError.message);
+            } else {
+              console.log(`Successfully migrated ${localPlayers.length} players to Supabase!`);
+            }
+          }
+        } catch (fsErr) {
+          // Local file might not exist yet, which is fine
+        }
       }
-      if (tokens.access_token) {
-        res.cookie("drive_access_token", tokens.access_token, { secure: true, sameSite: "none", httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000, path: '/' });
-      }
-    });
-
-    return google.drive({ 
-      version: 'v3', 
-      auth: oauth2Client,
-      timeout: 60000 
-    });
-  };
-
-  const getOrCreateFolder = async (drive: any, folderName: string) => {
-    const res = await drive.files.list({
-      q: `name='${folderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
-      spaces: 'drive',
-      fields: 'files(id, name)'
-    });
-    if (res.data.files && res.data.files.length > 0) {
-      return res.data.files[0].id;
+    } catch (err: any) {
+      console.warn("Could not sync local data to Supabase (Ensure your saved_players table is configured in your Supabase SQL editor):", err.message || err);
     }
-    const createRes = await drive.files.create({
-      requestBody: {
-        name: folderName,
-        mimeType: 'application/vnd.google-apps.folder'
-      },
-      fields: 'id'
-    });
-    return createRes.data.id;
   };
+
+  syncLocalToSupabase();
 
   const getSavedPlayers = async (req: any, res: any) => {
     let players: any[] = [];
-    try {
-      if (!req.cookies.drive_access_token) {
-        const data = await fs.readFile(savedPlayersPath, "utf-8");
-        players = JSON.parse(data);
-      } else {
-        const drive = getDriveClient(req, res);
-        const maxRetries = 5;
-        let lastError: any = null;
-        
-        for (let attempt = 1; attempt <= maxRetries; attempt++) {
-          try {
-            const folderId = await getOrCreateFolder(drive, 'Google AI Studio');
-            const response = await drive.files.list({
-              q: `name='saved-players.json' and '${folderId}' in parents and trashed=false`,
-              spaces: 'drive',
-              fields: 'files(id, name)'
-            });
+    if (supabase) {
+      try {
+        const { data, error } = await supabase
+          .from("saved_players")
+          .select("*")
+          .order("sort_order", { ascending: true });
 
-            const files = response.data.files;
-            if (!files || files.length === 0) {
-              players = [];
-            } else {
-              const fileId = files[0].id;
-              const fileRes = await drive.files.get({
-                fileId: fileId!,
-                alt: 'media'
-              }, { responseType: 'json' });
+        if (error) {
+          console.warn("Failed to get players from Supabase, falling back to local files:", error.message);
+          throw error;
+        }
 
-              players = fileRes.data || [];
-            }
-            lastError = null;
-            break; // Success
-          } catch (err: any) {
-            lastError = err;
-            const errMsg = (err.response?.data?.error?.message || err.message || String(err)).toLowerCase();
-            const isRateLimit = errMsg.includes("rate limit");
-            const isTransient = 
-              errMsg.includes("transient failure") || 
-              errMsg.includes("socket hang up") || 
-              errMsg.includes("econnreset") || 
-              errMsg.includes("etimedout") ||
-              isRateLimit ||
-              errMsg.includes("aborted") ||
-              err.code === 'ECONNRESET' ||
-              err.code === 'ETIMEDOUT' ||
-              err.name === 'AbortError';
-
-            if (isTransient && attempt < maxRetries) {
-              const delay = isRateLimit ? 5000 * attempt : 2000 * attempt;
-              console.log(`Transient error reading from Drive (Attempt ${attempt}): ${errMsg}. Retrying in ${delay}ms...`);
-              await new Promise(resolve => setTimeout(resolve, delay));
-            } else {
-              throw err;
-            }
-          }
+        if (data) {
+          players = data.map((row: any) => ({
+            id: row.id,
+            name: row.name,
+            url: row.url || undefined,
+            source: row.source || undefined,
+            utrSingles: row.utr_singles || "-",
+            wtnSingles: row.wtn_singles || "-",
+            winLossYTD: row.win_loss_ytd || "-",
+            winLossCareer: row.win_loss_career || "-",
+            championships: row.championships || "-",
+            rank: row.rank || "-",
+            points: row.points || "-",
+            sort_order: row.sort_order ?? undefined,
+          }));
+        }
+      } catch (err) {
+        // Fallback to local files
+        try {
+          const data = await fs.readFile(savedPlayersPath, "utf-8");
+          players = JSON.parse(data);
+        } catch {
+          players = [];
         }
       }
-    } catch (e: any) {
-      const errorMessage = e.response?.data?.error?.message || e.message || String(e);
-      if (!errorMessage.includes("Google Drive API has not been used")) {
-        console.error("Error reading from Google Drive:", errorMessage);
-      }
+    } else {
       try {
         const data = await fs.readFile(savedPlayersPath, "utf-8");
         players = JSON.parse(data);
@@ -521,82 +450,179 @@ async function startServer() {
   };
 
   const savePlayers = async (req: any, res: any, players: any[]) => {
+    // Save to local backup file as offline/failover secondary copy
     try {
       await fs.writeFile(savedPlayersPath, JSON.stringify(players, null, 2));
+    } catch (e: any) {
+      console.error("Error writing saved-players local backup:", e.message || String(e));
+    }
 
-      if (!req.cookies.drive_access_token) {
-        return;
+    if (supabase) {
+      try {
+        const rows = players.map((p: any, index: number) => ({
+          id: p.id,
+          name: p.name,
+          url: p.url || null,
+          source: p.source || null,
+          utr_singles: p.utrSingles || "-",
+          wtn_singles: p.wtnSingles || "-",
+          win_loss_ytd: p.winLossYTD || "-",
+          win_loss_career: p.winLossCareer || "-",
+          championships: p.championships || "-",
+          rank: p.rank || "-",
+          points: p.points || "-",
+          sort_order: p.sort_order !== undefined ? p.sort_order : index,
+        }));
+
+        const { error } = await supabase
+          .from("saved_players")
+          .upsert(rows, { onConflict: "id" });
+
+        if (error) {
+          console.error("Error saving players to Supabase:", error.message);
+        }
+      } catch (err: any) {
+        console.error("Supabase write failed:", err.message || err);
       }
+    }
+  };
 
-      const maxRetries = 5;
-      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+  // --- Saved Draws Helpers & Sync ---
+  const savedDrawsPath = path.join(process.cwd(), "public", "saved-draws.json");
+
+  // Sync saved draws from local file -> Supabase on startup
+  const syncLocalDrawsToSupabase = async () => {
+    if (!supabase) return;
+    try {
+      const { count, error } = await supabase
+        .from("saved_draws")
+        .select("id", { count: "exact", head: true });
+
+      if (!error && (count === 0 || count === null)) {
+        console.log("Supabase saved_draws table is empty. Syncing local draws...");
         try {
-          const drive = getDriveClient(req, res);
-          
-          await (driveWriteLock = driveWriteLock.then(async () => {
-            const folderId = await getOrCreateFolder(drive, 'Google AI Studio');
-            const response = await drive.files.list({
-              q: `name='saved-players.json' and '${folderId}' in parents and trashed=false`,
-              spaces: 'drive',
-              fields: 'files(id, name)'
-            });
+          const rawData = await fs.readFile(savedDrawsPath, "utf-8");
+          const { draws } = JSON.parse(rawData);
+          if (draws && draws.length > 0) {
+            const rows = draws.map((d: any, index: number) => ({
+              id: d.id,
+              name: d.name,
+              url: d.url,
+              region: d.region || "AUS",
+              players: d.players || [],
+              sort_order: d.sort_order !== undefined ? d.sort_order : index,
+            }));
 
-            const files = response.data.files;
-            const fileMetadata = {
-              name: 'saved-players.json',
-              parents: [folderId]
-            };
-            
-            const media = {
-              mimeType: 'application/json',
-              body: JSON.stringify(players, null, 2)
-            };
+            const { error: upsertError } = await supabase
+              .from("saved_draws")
+              .upsert(rows, { onConflict: "id" });
 
-            if (!files || files.length === 0) {
-              await drive.files.create({
-                requestBody: fileMetadata,
-                media: media,
-                fields: 'id'
-              });
+            if (upsertError) {
+              console.error("Failed to migrate local draws to Supabase:", upsertError.message);
             } else {
-              const fileId = files[0].id;
-              await drive.files.update({
-                fileId: fileId!,
-                media: media
-              });
+              console.log(`Successfully migrated ${draws.length} draws to Supabase!`);
             }
-          }).catch(err => {
-            throw err;
-          }));
-          
-          break; // Success
-        } catch (err: any) {
-          const errMsg = (err.response?.data?.error?.message || err.message || String(err)).toLowerCase();
-          const isRateLimit = errMsg.includes("rate limit");
-          const isTransient = 
-            errMsg.includes("transient failure") || 
-            errMsg.includes("socket hang up") || 
-            errMsg.includes("econnreset") || 
-            errMsg.includes("etimedout") ||
-            isRateLimit ||
-            errMsg.includes("aborted") ||
-            err.code === 'ECONNRESET' ||
-            err.code === 'ETIMEDOUT' ||
-            err.name === 'AbortError';
-
-          if (isTransient && attempt < maxRetries) {
-            const delay = isRateLimit ? 5000 * attempt : 2000 * attempt;
-            console.log(`Transient error writing to Drive (Attempt ${attempt}): ${errMsg}. Retrying in ${delay}ms...`);
-            await new Promise(resolve => setTimeout(resolve, delay));
-          } else {
-            throw err;
           }
+        } catch (fsErr) {
+          // Local file might not exist yet, which is fine
         }
       }
+    } catch (err: any) {
+      console.warn("Could not sync local draws to Supabase:", err.message || err);
+    }
+  };
+
+  syncLocalDrawsToSupabase();
+
+  const getSavedDraws = async (req: any, res: any) => {
+    let draws: any[] = [];
+    let updatedAt: string = new Date().toISOString();
+
+    if (supabase) {
+      try {
+        const { data, error } = await supabase
+          .from("saved_draws")
+          .select("*")
+          .order("sort_order", { ascending: true });
+
+        if (error) {
+          console.warn("Failed to get draws from Supabase, falling back to local files:", error.message);
+          throw error;
+        }
+
+        if (data) {
+          draws = data.map((row: any) => ({
+            id: row.id,
+            name: row.name,
+            url: row.url,
+            region: row.region || "AUS",
+            players: row.players || [],
+            sort_order: row.sort_order ?? undefined,
+          }));
+          updatedAt = new Date().toISOString();
+        }
+      } catch (err) {
+        // Fallback to local files
+        try {
+          const raw = await fs.readFile(savedDrawsPath, "utf-8");
+          const parsed = JSON.parse(raw);
+          draws = parsed.draws || [];
+          updatedAt = parsed.updatedAt || updatedAt;
+        } catch {
+          draws = [];
+        }
+      }
+    } else {
+      try {
+        const raw = await fs.readFile(savedDrawsPath, "utf-8");
+        const parsed = JSON.parse(raw);
+        draws = parsed.draws || [];
+        updatedAt = parsed.updatedAt || updatedAt;
+      } catch {
+        draws = [];
+      }
+    }
+
+    // Deduplicate draws by URL
+    const uniqueDrawsMap = new Map();
+    for (const draw of draws) {
+      const key = draw.url;
+      if (!uniqueDrawsMap.has(key)) {
+        uniqueDrawsMap.set(key, draw);
+      }
+    }
+    return { draws: Array.from(uniqueDrawsMap.values()), updatedAt };
+  };
+
+  const saveSavedDraws = async (req: any, res: any, draws: any[]) => {
+    const updatedAt = new Date().toISOString();
+    // Save to local backup file
+    try {
+      await fs.writeFile(savedDrawsPath, JSON.stringify({ draws, updatedAt }, null, 2));
     } catch (e: any) {
-      const errorMessage = e.response?.data?.error?.message || e.message || String(e);
-      if (!errorMessage.includes("Google Drive API has not been used")) {
-        console.error("Error writing to Google Drive:", errorMessage);
+      console.error("Error writing saved-draws local backup:", e.message || String(e));
+    }
+
+    if (supabase) {
+      try {
+        const rows = draws.map((d: any, index: number) => ({
+          id: d.id,
+          name: d.name,
+          url: d.url,
+          region: d.region || "AUS",
+          players: d.players || [],
+          sort_order: d.sort_order !== undefined ? d.sort_order : index,
+        }));
+
+        const { error } = await supabase
+          .from("saved_draws")
+          .upsert(rows, { onConflict: "id" });
+
+        if (error) {
+          console.error("Error saving draws to Supabase:", error.message);
+        }
+      } catch (err: any) {
+        console.error("Supabase draws write failed:", err.message || err);
       }
     }
   };
@@ -798,6 +824,33 @@ async function startServer() {
         }
       });
 
+      // Check for draw name / tournament name
+      let drawNameCandidate = $("h2").text().trim() || $(".media__title").first().text().trim();
+      if (drawNameCandidate.includes('- Draws - ')) {
+        drawNameCandidate = drawNameCandidate.split('- Draws - ')[1];
+      }
+      
+      let tournamentName = '';
+      let tournamentDate = '';
+
+      try {
+        const tournamentIdMatch = url.match(/id=([a-zA-Z0-9\-]+)/);
+        if (tournamentIdMatch) {
+          const tDomain = url.includes("hkta") ? "hkta.tournamentsoftware.com" : "tournaments.tennis.com.au";
+          const tUrl = `https://${tDomain}/sport/tournament.aspx?id=${tournamentIdMatch[1]}`;
+          const tRes = await axios.get(tUrl, { headers: { "User-Agent": "Mozilla/5.0" }, timeout: 10000 });
+          const $t = cheerio.load(tRes.data);
+          
+          tournamentName = $t(".media__title").first().text().trim();
+          const items = $t(".media__content small, .media__content .text-muted, .text-muted.media__subheading, .media__title + span, span[class*=\"date\"]").map((_, e)=>$t(e).text().trim()).get();
+          if (items.length > 1) {
+            tournamentDate = items[1]; // Typically "6 Jul to 10 Jul" etc
+          }
+        }
+      } catch (e: any) {
+        console.warn("Failed to fetch tournament metadata", e.message);
+      }
+
       if (playerLinks.length === 0) {
         return res.json({ players: [] });
       }
@@ -888,7 +941,12 @@ async function startServer() {
         )
       );
 
-      res.json({ players: playersStats });
+      res.json({ 
+        players: playersStats,
+        drawName: drawNameCandidate,
+        tournamentName,
+        tournamentDate
+      });
     } catch (error) {
       console.error("Draw check error:", error);
       res.status(500).json({ error: "Failed to check draw stats" });
@@ -1002,6 +1060,15 @@ async function startServer() {
 
   app.delete("/api/saved-players/:id", requireAuth, async (req, res) => {
     const { id } = req.params;
+    
+    if (supabase) {
+      try {
+        await supabase.from("saved_players").delete().eq("id", id);
+      } catch (err: any) {
+        console.error("Error deleting from Supabase database:", err.message || err);
+      }
+    }
+
     let players = await getSavedPlayers(req, res);
     players = players.filter((p: any) => p.id !== id);
     await savePlayers(req, res, players);
@@ -1015,6 +1082,102 @@ async function startServer() {
     }
     await savePlayers(req, res, players);
     res.json({ success: true });
+  });
+
+  // --- Saved Draws API Endpoints ---
+  app.get("/api/saved-draws", requireAuth, async (req, res) => {
+    try {
+      const data = await getSavedDraws(req, res);
+      res.json(data);
+    } catch (err: any) {
+      console.error("Failed to query saved draws:", err);
+      res.status(500).json({ error: "Failed to query saved draws" });
+    }
+  });
+
+  app.post("/api/saved-draws", requireAuth, async (req, res) => {
+    const { url, region, name, players } = req.body;
+    if (!url || !name) {
+      return res.status(400).json({ error: "Draw URL and name are required" });
+    }
+
+    try {
+      const { draws } = await getSavedDraws(req, res);
+      const existingIndex = draws.findIndex((d: any) => d.url === url);
+      const newDraw = {
+        id: existingIndex >= 0 ? draws[existingIndex].id : (Date.now().toString() + Math.random().toString(36).substring(7)),
+        name,
+        url,
+        region: region || "AUS",
+        players: players || [],
+        sort_order: existingIndex >= 0 ? draws[existingIndex].sort_order : draws.length
+      };
+
+      if (existingIndex >= 0) {
+        draws[existingIndex] = newDraw;
+      } else {
+        draws.push(newDraw);
+      }
+
+      await saveSavedDraws(req, res, draws);
+      const currentData = await getSavedDraws(req, res);
+      res.json(currentData);
+    } catch (error) {
+      console.error("Failed to save draw:", error);
+      res.status(500).json({ error: "Failed to save draw" });
+    }
+  });
+
+  app.delete("/api/saved-draws/:id", requireAuth, async (req, res) => {
+    const { id } = req.params;
+
+    if (supabase) {
+      try {
+        await supabase.from("saved_draws").delete().eq("id", id);
+      } catch (err: any) {
+        console.error("Error deleting from Supabase database:", err.message || err);
+      }
+    }
+
+    const { draws } = await getSavedDraws(req, res);
+    const filteredDraws = draws.filter((d: any) => d.id !== id);
+    await saveSavedDraws(req, res, filteredDraws);
+    const currentData = await getSavedDraws(req, res);
+    res.json(currentData);
+  });
+
+  app.put("/api/saved-draws/reorder", requireAuth, async (req, res) => {
+    const { draws } = req.body;
+    if (!Array.isArray(draws)) {
+      return res.status(400).json({ error: "Draws array is required" });
+    }
+    await saveSavedDraws(req, res, draws);
+    const currentData = await getSavedDraws(req, res);
+    res.json(currentData);
+  });
+
+  app.put("/api/saved-draws/:id/players", requireAuth, async (req, res) => {
+    const { id } = req.params;
+    const { players } = req.body;
+    if (!Array.isArray(players)) {
+      return res.status(400).json({ error: "Players array is required" });
+    }
+
+    try {
+      const { draws } = await getSavedDraws(req, res);
+      const drawIndex = draws.findIndex((d: any) => d.id === id);
+      if (drawIndex === -1) {
+        return res.status(404).json({ error: "Draw not found" });
+      }
+
+      draws[drawIndex].players = players;
+      await saveSavedDraws(req, res, draws);
+      const currentData = await getSavedDraws(req, res);
+      res.json(currentData);
+    } catch (error) {
+      console.error("Failed to update players in draw:", error);
+      res.status(500).json({ error: "Failed to update players in draw" });
+    }
   });
 
   app.get("/api/download-project", (req, res) => {

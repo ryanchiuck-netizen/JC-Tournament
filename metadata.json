@@ -1,5 +1,6 @@
 {
   "name": "JC Tournament Planner",
   "description": "An app to track JC's tournaments in Australia and Hong Kong",
-  "requestFramePermissions": []
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

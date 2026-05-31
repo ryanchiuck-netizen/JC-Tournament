@@ -10,7 +10,6 @@ interface FilterBarProps {
   searchTerm: string;
   setSearchTerm: (term: string) => void;
   handleExport: () => void;
-  loading: boolean;
 }
 
 export const FilterBar: React.FC<FilterBarProps> = ({
@@ -20,8 +19,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   setWithin120km,
   searchTerm,
   setSearchTerm,
-  handleExport,
-  loading
+  handleExport
 }) => {
   return (
     <div className="flex flex-col gap-6 mb-6">
