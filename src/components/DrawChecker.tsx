@@ -11,7 +11,8 @@ import {
   RefreshCw, 
   GripVertical, 
   Clock,
-  Calendar
+  Calendar,
+  ArrowUpDown
 } from 'lucide-react';
 import { 
   DndContext, 
@@ -56,6 +57,7 @@ interface SavedDraw {
   players: PlayerStats[];
   created_at?: string;
   lastUpdated?: string;
+  sort_order?: number;
 }
 
 interface SortableDrawItemProps {
@@ -77,6 +79,8 @@ function SortableDrawItem({
   onDelete,
   renderPlayerTable
 }: SortableDrawItemProps) {
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+
   const {
     attributes,
     listeners,
@@ -101,7 +105,13 @@ function SortableDrawItem({
   }, [draw.players]);
 
   const drawDateMatch = draw.url.match(/#date=(.*)$/);
-  const drawDate = drawDateMatch ? decodeURIComponent(drawDateMatch[1]) : '';
+  let drawDate = drawDateMatch ? decodeURIComponent(drawDateMatch[1]) : '';
+  if (!drawDate) {
+    const nameMatch = draw.name.match(/\b\d{1,2}(?:-\d{1,2})?\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b/i);
+    if (nameMatch) {
+      drawDate = nameMatch[0];
+    }
+  }
   const displayUrl = draw.url.split('#')[0]; // Clean url for linking
 
   return (
@@ -144,14 +154,15 @@ function SortableDrawItem({
                 {draw.name}
               </h4>
               {drawDate && (
-                <span className="text-sm font-medium text-blue-400 whitespace-nowrap">
-                  ({drawDate})
+                <span className="inline-flex items-center gap-1 text-[11px] font-semibold bg-gray-800 text-blue-300 border border-gray-700 px-2 py-0.5 rounded-lg whitespace-nowrap">
+                  <Calendar className="w-3 h-3 text-blue-400" />
+                  {drawDate}
                 </span>
               )}
               {hasJordan && (
-                <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                  <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse" />
-                  Jordan Joined
+                <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold bg-yellow-500/25 text-yellow-400 border border-yellow-500/40 px-2.5 py-0.5 rounded-full uppercase tracking-wider animate-pulse">
+                  <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-ping shrink-0" />
+                  JORDAN JOINED
                 </span>
               )}
             </div>
@@ -177,19 +188,47 @@ function SortableDrawItem({
         <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
           <button
             onClick={() => onRefresh(draw)}
-            disabled={isRefreshing}
+            disabled={isRefreshing || showConfirmDelete}
             className="p-2 text-gray-500 hover:text-blue-400 hover:bg-blue-400/10 rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
             title="Refresh draw data"
           >
             <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`} />
           </button>
-          <button
-            onClick={() => onDelete(draw.id)}
-            className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors cursor-pointer"
-            title="Delete saved draw"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
+          {showConfirmDelete ? (
+            <div className="flex items-center gap-1 bg-gray-950 p-1 rounded-lg border border-red-500/30">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(draw.id);
+                  setShowConfirmDelete(false);
+                }}
+                className="px-2 py-1 text-[10px] font-bold bg-red-600 hover:bg-red-500 text-white rounded transition-colors uppercase cursor-pointer"
+                title="Confirm delete"
+              >
+                Delete?
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowConfirmDelete(false);
+                }}
+                className="px-2 py-1 text-[10px] font-medium text-gray-400 hover:text-gray-200 hover:bg-gray-800 rounded transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowConfirmDelete(true);
+              }}
+              className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors cursor-pointer"
+              title="Delete saved draw"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </div>
 
@@ -331,6 +370,7 @@ export function DrawChecker() {
   // Saved Draws Section
   const [savedDraws, setSavedDraws] = useState<SavedDraw[]>([]);
   const [region, setRegion] = useState<'AUS' | 'HKTA'>('AUS');
+  const [drawSortOrder, setDrawSortOrder] = useState<'asc' | 'desc'>('asc');
   const [expandedDraws, setExpandedDraws] = useState<Set<string>>(new Set());
   const [refreshingDraws, setRefreshingDraws] = useState<Set<string>>(new Set());
   const [savedDrawsLastUpdated, setSavedDrawsLastUpdated] = useState<string>('');
@@ -389,7 +429,20 @@ export function DrawChecker() {
           setPlayers(data.players || []);
           let title = '';
           if (data.tournamentName && data.drawName) {
-            title = `${data.tournamentName} - ${data.drawName}`;
+            const tName = data.tournamentName.trim();
+            const dName = data.drawName.trim();
+            if (tName.toLowerCase() === dName.toLowerCase()) {
+              title = tName;
+            } else if (dName.toLowerCase().includes(tName.toLowerCase())) {
+              title = dName;
+            } else if (tName.toLowerCase().includes(dName.toLowerCase())) {
+              title = tName;
+            } else if (dName.endsWith(tName)) {
+              const cleanedD = dName.substring(0, dName.length - tName.length).trim().replace(/[-–—\s]+$/, '').trim();
+              title = cleanedD ? `${tName} - ${cleanedD}` : tName;
+            } else {
+              title = `${tName} - ${dName}`;
+            }
           } else {
             title = data.drawName || data.name || 'Saved Draw';
           }
@@ -468,7 +521,6 @@ export function DrawChecker() {
   };
 
   const handleDeleteDraw = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this saved draw?")) return;
     try {
       const res = await fetch(`/api/saved-draws/${id}`, {
         method: 'DELETE'
@@ -502,11 +554,16 @@ export function DrawChecker() {
       if (res.ok) {
         const data = await res.json();
         const resolvedRegion = draw.url.includes("hkta.tournamentsoftware.com") ? "HKTA" : "AUS";
+        let finalUrl = draw.url;
+        if (data.tournamentDate && !finalUrl.includes('#date=')) {
+          finalUrl += `#date=${encodeURIComponent(data.tournamentDate)}`;
+        }
+
         const saveRes = await fetch('/api/saved-draws', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            url: draw.url,
+            url: finalUrl,
             region: resolvedRegion,
             name: draw.name,
             players: data.players
@@ -809,31 +866,120 @@ export function DrawChecker() {
       .filter(d => d.region === region)
       .sort((a, b) => {
         // Attempt to parse dates from the 'url' hash
-        const getDrawDate = (url: string) => {
-          const match = url.match(/#date=(.*)$/);
+        const getDrawDate = (urlStr: string) => {
+          const match = urlStr.match(/#date=(.*)$/);
           if (!match) return 0;
-          let dateStr = decodeURIComponent(match[1]);
-          // Take the first part of date range if multiple e.g. "6 Jul to 10 Jul"
-          dateStr = dateStr.split(' to ')[0].trim();
-          
-          let parsed = Date.parse(dateStr);
-          if (isNaN(parsed)) {
-            // Append current year if missing
-            parsed = Date.parse(`${dateStr} ${new Date().getFullYear()}`);
+          let dateStr = decodeURIComponent(match[1]).trim();
+          if (!dateStr) return 0;
+
+          // Extract year if present
+          let year = new Date().getFullYear();
+          const yearMatch = dateStr.match(/\b(20\d{2})\b/);
+          if (yearMatch) {
+            year = parseInt(yearMatch[1], 10);
           }
-          return isNaN(parsed) ? 0 : parsed;
+
+          // Remove the year from dateStr to simplify parsing, but remember it
+          dateStr = dateStr.replace(/\b20\d{2}\b/g, '').replace(/,/g, '').trim();
+
+          const months = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+          const monthsFull = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"];
+
+          const getMonthIndex = (str: string): number => {
+            const s = str.toLowerCase();
+            let idx = months.findIndex(m => s.includes(m));
+            if (idx === -1) {
+              idx = monthsFull.findIndex(m => s.includes(m));
+            }
+            return idx;
+          };
+
+          // 1. Day range with single month: e.g. "21-22 Jun" or "21 - 22 Jun"
+          const dayRangeSingleMonth = dateStr.match(/^(\d{1,2})\s*[-–—to/\s]+\s*(\d{1,2})\s+([a-zA-Z]{3,10})$/i);
+          if (dayRangeSingleMonth) {
+            const day = parseInt(dayRangeSingleMonth[1], 10);
+            const monthIdx = getMonthIndex(dayRangeSingleMonth[3]);
+            if (monthIdx !== -1) {
+              return new Date(year, monthIdx, day).getTime();
+            }
+          }
+
+          // 2. Month with day range: e.g. "Jun 21-22"
+          const monthDayRange = dateStr.match(/^([a-zA-Z]{3,10})\s+(\d{1,2})\s*[-–—to/\s]+\s*(\d{1,2})$/i);
+          if (monthDayRange) {
+            const monthIdx = getMonthIndex(monthDayRange[1]);
+            const day = parseInt(monthDayRange[2], 10);
+            if (monthIdx !== -1) {
+              return new Date(year, monthIdx, day).getTime();
+            }
+          }
+
+          // 3. Full range "6 Jul to 10 Jul" -> split by to/and/or hyphens
+          if (dateStr.includes(" to ") || dateStr.includes(" - ") || dateStr.includes(" – ") || dateStr.includes(" — ")) {
+            const parts = dateStr.split(/\s+(?:to|-|–|—)\s+/i);
+            if (parts.length > 0) {
+              const startPart = parts[0].trim();
+              
+              const dayMonth = startPart.match(/^(\d{1,2})\s+([a-zA-Z]{3,10})$/i);
+              if (dayMonth) {
+                const day = parseInt(dayMonth[1], 10);
+                const monthIdx = getMonthIndex(dayMonth[2]);
+                if (monthIdx !== -1) {
+                  return new Date(year, monthIdx, day).getTime();
+                }
+              }
+              const monthDay = startPart.match(/^([a-zA-Z]{3,10})\s+(\d{1,2})$/i);
+              if (monthDay) {
+                const monthIdx = getMonthIndex(monthDay[1]);
+                const day = parseInt(monthDay[2], 10);
+                if (monthIdx !== -1) {
+                  return new Date(year, monthIdx, day).getTime();
+                }
+              }
+            }
+          }
+
+          // 4. Just DD MMM (e.g. "21 Jun") or MMM DD (e.g. "Jun 21")
+          const singleDayMonth = dateStr.match(/^(\d{1,2})\s+([a-zA-Z]{3,10})$/i);
+          if (singleDayMonth) {
+            const day = parseInt(singleDayMonth[1], 10);
+            const monthIdx = getMonthIndex(singleDayMonth[2]);
+            if (monthIdx !== -1) {
+              return new Date(year, monthIdx, day).getTime();
+            }
+          }
+
+          const singleMonthDay = dateStr.match(/^([a-zA-Z]{3,10})\s+(\d{1,2})$/i);
+          if (singleMonthDay) {
+            const monthIdx = getMonthIndex(singleMonthDay[1]);
+            const day = parseInt(singleMonthDay[2], 10);
+            if (monthIdx !== -1) {
+              return new Date(year, monthIdx, day).getTime();
+            }
+          }
+
+          // Fallback to standard parsing
+          let rawParsed = Date.parse(`${dateStr} ${year}`);
+          if (!isNaN(rawParsed)) return rawParsed;
+
+          return 0;
         };
         
         const dateA = getDrawDate(a.url);
         const dateB = getDrawDate(b.url);
         
+        if (dateA === 0 && dateB !== 0) return 1;
+        if (dateB === 0 && dateA !== 0) return -1;
+        
         if (dateA !== dateB) {
-          return dateB - dateA; // Descending order (newest first)
+          return drawSortOrder === 'asc' ? dateA - dateB : dateB - dateA;
         }
         
-        return (a.sort_order ?? 0) - (b.sort_order ?? 0);
+        return drawSortOrder === 'asc'
+          ? (a.sort_order ?? 0) - (b.sort_order ?? 0)
+          : (b.sort_order ?? 0) - (a.sort_order ?? 0);
       });
-  }, [savedDraws, region]);
+  }, [savedDraws, region, drawSortOrder]);
 
   return (
     <div className="space-y-6">
@@ -929,19 +1075,32 @@ export function DrawChecker() {
             )}
           </h3>
           
-          <div className="flex bg-gray-900/50 p-1 rounded-xl border border-gray-800 shadow-sm self-start sm:self-auto">
-            <button 
-              onClick={() => setRegion("AUS")}
-              className={`px-4 py-1.5 text-xs font-bold uppercase tracking-wider rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${region === "AUS" ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-400 hover:text-gray-200'}`}
+          <div className="flex flex-wrap items-center gap-3 self-start sm:self-auto">
+            <button
+              onClick={() => {
+                setDrawSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+              }}
+              className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold bg-gray-900 hover:bg-gray-800 border border-gray-800 hover:border-gray-700 text-gray-350 rounded-lg transition-all cursor-pointer shadow-sm"
+              title="Toggle chronological saved draws sorting"
             >
-              <span>🇦🇺</span> Australia
+              <ArrowUpDown className="w-3.5 h-3.5 text-blue-400" />
+              <span>Sort Date: {drawSortOrder === 'asc' ? 'Earliest First' : 'Latest First'}</span>
             </button>
-            <button 
-              onClick={() => setRegion("HKTA")}
-              className={`px-4 py-1.5 text-xs font-bold uppercase tracking-wider rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${region === "HKTA" ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-400 hover:text-gray-200'}`}
-            >
-              <span>🇭🇰</span> Hong Kong
-            </button>
+
+            <div className="flex bg-gray-900/50 p-1 rounded-xl border border-gray-800 shadow-sm">
+              <button 
+                onClick={() => setRegion("AUS")}
+                className={`px-4 py-1.5 text-xs font-bold uppercase tracking-wider rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${region === "AUS" ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-400 hover:text-gray-200'}`}
+              >
+                <span>🇦🇺</span> Australia
+              </button>
+              <button 
+                onClick={() => setRegion("HKTA")}
+                className={`px-4 py-1.5 text-xs font-bold uppercase tracking-wider rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${region === "HKTA" ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-400 hover:text-gray-200'}`}
+              >
+                <span>🇭🇰</span> Hong Kong
+              </button>
+            </div>
           </div>
         </div>
 

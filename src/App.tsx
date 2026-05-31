@@ -182,26 +182,6 @@ export default function App() {
                 Tournaments
               </button>
               <button
-                onClick={() => setActiveTab("player-watch")}
-                className={`px-3 sm:px-4 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
-                  activeTab === "player-watch" 
-                    ? "bg-white/10 text-white shadow-sm" 
-                    : "text-gray-400 hover:text-gray-200"
-                }`}
-              >
-                Player Search
-              </button>
-              <button
-                onClick={() => setActiveTab("player-screen")}
-                className={`px-3 sm:px-4 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
-                  activeTab === "player-screen" 
-                    ? "bg-white/10 text-white shadow-sm" 
-                    : "text-gray-400 hover:text-gray-200"
-                }`}
-              >
-                Player Screen
-              </button>
-              <button
                 onClick={() => setActiveTab("tournament-screen")}
                 className={`px-3 sm:px-4 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
                   activeTab === "tournament-screen" 
@@ -220,6 +200,26 @@ export default function App() {
                 }`}
               >
                 Draw Checker
+              </button>
+              <button
+                onClick={() => setActiveTab("player-screen")}
+                className={`px-3 sm:px-4 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
+                  activeTab === "player-screen" 
+                    ? "bg-white/10 text-white shadow-sm" 
+                    : "text-gray-400 hover:text-gray-200"
+                }`}
+              >
+                Player Screen
+              </button>
+              <button
+                onClick={() => setActiveTab("player-watch")}
+                className={`px-3 sm:px-4 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
+                  activeTab === "player-watch" 
+                    ? "bg-white/10 text-white shadow-sm" 
+                    : "text-gray-400 hover:text-gray-200"
+                }`}
+              >
+                Player Search
               </button>
             </nav>
           </div>

@@ -35,27 +35,56 @@ async function startServer() {
 
   // Run scraper on startup if data doesn't exist
   const dataPath = path.join(process.cwd(), "public", "tournaments.json");
+  const tournamentsPlayersCachePath = path.join(process.cwd(), "public", "tournaments-for-players.json");
   
   let isScraping = false;
+  let refreshTournamentsForPlayersCache: () => Promise<any>;
 
   const checkAndScrape = async () => {
     try {
       await fs.access(dataPath);
       console.log("tournaments.json exists. Skipping initial scrape.");
+      try {
+        await fs.access(tournamentsPlayersCachePath);
+      } catch {
+        // Build initial cache after a delay if tournaments.json exists but cache doesn't
+        setTimeout(() => {
+          if (refreshTournamentsForPlayersCache) {
+            console.log("tournaments-for-players.json not found. Generating initial cache...");
+            refreshTournamentsForPlayersCache().catch(console.error);
+          }
+        }, 3000);
+      }
     } catch {
       console.log("tournaments.json not found. Running initial scrape...");
       isScraping = true;
-      runScraper().finally(() => { isScraping = false; });
+      runScraper()
+        .then(async () => {
+          if (refreshTournamentsForPlayersCache) {
+            await refreshTournamentsForPlayersCache().catch(console.error);
+          }
+        })
+        .finally(() => { isScraping = false; });
     }
   };
   
   checkAndScrape();
   
-  // Schedule daily scrape at 2 AM Hong Kong time
-  cron.schedule('0 2 * * *', () => {
-    console.log("Running daily scrape at 2 AM HKT...");
+  // Schedule daily scrapes at 9 AM, 1 PM, and 6 PM HKT
+  cron.schedule('0 9,13,18 * * *', () => {
+    console.log("Running scheduled scrape at 9 AM/1 PM/6 PM HKT...");
     isScraping = true;
-    runScraper().finally(() => { isScraping = false; });
+    runScraper()
+      .then(async () => {
+        if (refreshTournamentsForPlayersCache) {
+          try {
+            await refreshTournamentsForPlayersCache();
+          } catch (e) {
+            console.error("Scheduled background cache rebuild failed:", e);
+          }
+        }
+      })
+      .finally(() => { isScraping = false; });
   }, {
     timezone: "Asia/Hong_Kong"
   });
@@ -192,10 +221,265 @@ async function startServer() {
   });
 
   app.get("/api/tournaments-for-players", requireAuth, async (req, res) => {
+    const forceRefresh = req.query.refresh === "true";
     try {
-      const savedPlayers = await getSavedPlayers(req, res);
+      if (forceRefresh) {
+        console.log("Forced live update of tournaments-for-players cache...");
+        const data = await refreshTournamentsForPlayersCache();
+        return res.json(data);
+      }
+
+      // Try reading from cache file first
+      try {
+        const cachedContent = await fs.readFile(tournamentsPlayersCachePath, "utf-8");
+        return res.json(JSON.parse(cachedContent));
+      } catch {
+        // If cache doesn't exist, calculate it once
+        console.log("No cache found for tournaments-for-players. Doing on-demand calculation...");
+        const data = await refreshTournamentsForPlayersCache();
+        return res.json(data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch tournaments for players", error);
+      res.status(500).json({ error: "Failed to fetch tournaments for players" });
+    }
+  });
+
+  // --- Global Saved Players Routes ---
+  const savedPlayersPath = path.join(process.cwd(), "public", "saved-players.json");
+
+  // Automatic migration/sync on startup: Local file -> Supabase
+  const syncLocalToSupabase = async () => {
+    if (!supabase) return;
+    try {
+      const { count, error } = await supabase
+        .from("saved_players")
+        .select("id", { count: "exact", head: true });
+
+      if (!error && (count === 0 || count === null)) {
+        console.log("Supabase saved_players table is empty. Syncing local players...");
+        try {
+          const rawData = await fs.readFile(savedPlayersPath, "utf-8");
+          const localPlayers = JSON.parse(rawData);
+          if (localPlayers && localPlayers.length > 0) {
+            const rows = localPlayers.map((p: any, index: number) => ({
+              id: p.id,
+              name: p.name,
+              url: p.url || null,
+              source: p.source || null,
+              utr_singles: p.utrSingles || "-",
+              wtn_singles: p.wtnSingles || "-",
+              win_loss_ytd: p.winLossYTD || "-",
+              win_loss_career: p.winLossCareer || "-",
+              championships: p.championships || "-",
+              rank: p.rank || "-",
+              points: p.points || "-",
+              sort_order: p.sort_order !== undefined ? p.sort_order : index,
+            }));
+
+            const { error: upsertError } = await supabase
+              .from("saved_players")
+              .upsert(rows, { onConflict: "id" });
+
+            if (upsertError) {
+              console.error("Failed to migrate local players to Supabase:", upsertError.message);
+            } else {
+              console.log(`Successfully migrated ${localPlayers.length} players to Supabase!`);
+            }
+          }
+        } catch (fsErr) {
+          // Local file might not exist yet, which is fine
+        }
+      }
+    } catch (err: any) {
+      console.warn("Could not sync local data to Supabase (Ensure your saved_players table is configured in your Supabase SQL editor):", err.message || err);
+    }
+  };
+
+  syncLocalToSupabase();
+
+  const getSavedPlayers = async (req: any, res: any) => {
+    let players: any[] = [];
+    if (supabase) {
+      try {
+        const { data, error } = await supabase
+          .from("saved_players")
+          .select("*")
+          .order("sort_order", { ascending: true });
+
+        if (error) {
+          if (error.message.includes("Could not find the table")) {
+            console.log("Supabase 'saved_players' table not found yet. Using local files fallback.");
+          } else {
+            console.log("Failed to get players from Supabase, falling back to local files:", error.message);
+          }
+          throw error;
+        }
+
+        if (data) {
+          players = data.map((row: any) => ({
+            id: row.id,
+            name: row.name,
+            url: row.url || undefined,
+            source: row.source || undefined,
+            utrSingles: row.utr_singles || "-",
+            wtnSingles: row.wtn_singles || "-",
+            winLossYTD: row.win_loss_ytd || "-",
+            winLossCareer: row.win_loss_career || "-",
+            championships: row.championships || "-",
+            rank: row.rank || "-",
+            points: row.points || "-",
+            sort_order: row.sort_order ?? undefined,
+          }));
+        }
+      } catch (err) {
+        // Fallback to local files
+        try {
+          const data = await fs.readFile(savedPlayersPath, "utf-8");
+          players = JSON.parse(data);
+        } catch {
+          players = [];
+        }
+      }
+    } else {
+      try {
+        const data = await fs.readFile(savedPlayersPath, "utf-8");
+        players = JSON.parse(data);
+      } catch {
+        players = [];
+      }
+    }
+
+    // Deduplicate players by URL (or name + source if URL is missing)
+    const uniquePlayersMap = new Map();
+    for (const player of players) {
+      const key = player.url || `${player.name}-${player.source}`;
+      if (!uniquePlayersMap.has(key)) {
+        uniquePlayersMap.set(key, player);
+      }
+    }
+    return Array.from(uniquePlayersMap.values());
+  };
+
+  const takePlayerSnapshot = async (playersList?: any[]) => {
+    try {
+      const players = playersList || await getSavedPlayers(null, null);
+      if (!players || players.length === 0) return;
+
+      const timestamp = new Date().toISOString();
+      const date = timestamp.split('T')[0];
+
+      const taPlayers = players.filter((p: any) => p.source === 'TA').map((p: any) => ({
+        id: p.id,
+        url: p.url,
+        name: p.name,
+        rank: p.rank || '-',
+        points: p.points || '-',
+        source: p.source || 'TA',
+        utrSingles: p.utrSingles || p.utr_singles || '-',
+        winLossYTD: p.winLossYTD || p.win_loss_ytd || '-',
+        winLossCareer: p.winLossCareer || p.win_loss_career || '-',
+        championships: p.championships || '-',
+      }));
+
+      const hktaPlayers = players.filter((p: any) => p.source === 'HKTA').map((p: any) => ({
+        id: p.id,
+        url: p.url,
+        name: p.name,
+        rank: p.rank || '-',
+        points: p.points || '-',
+        source: p.source || 'HKTA',
+        utrSingles: p.utrSingles || p.utr_singles || '-',
+        winLossYTD: p.winLossYTD || p.win_loss_ytd || '-',
+        winLossCareer: p.winLossCareer || p.win_loss_career || '-',
+        championships: p.championships || '-',
+      }));
+
+      const snapshotsPath = path.join(process.cwd(), "public", "player-snapshots.json");
+      let snapshots: any[] = [];
+      try {
+        const fileContent = await fs.readFile(snapshotsPath, "utf-8");
+        snapshots = JSON.parse(fileContent);
+      } catch (err) {
+        try {
+          const resp = await axios.get('https://jc-tournament-planner-569341375821.us-west1.run.app/api/player-snapshots', { timeout: 4000 });
+          if (Array.isArray(resp.data)) {
+            snapshots = resp.data;
+          }
+        } catch {
+          snapshots = [];
+        }
+      }
+
+      const existingIndex = snapshots.findIndex((s: any) => s.date === date);
+      const newSnapshot = {
+        date,
+        timestamp,
+        taPlayers,
+        hktaPlayers
+      };
+
+      if (existingIndex !== -1) {
+        snapshots[existingIndex] = newSnapshot;
+      } else {
+        snapshots.unshift(newSnapshot);
+      }
+
+      await fs.writeFile(snapshotsPath, JSON.stringify(snapshots, null, 2));
+      console.log(`[Snapshot] Daily snap taken for ${date}. Counts TA: ${taPlayers.length}, HKTA: ${hktaPlayers.length}`);
+    } catch (err: any) {
+      console.log("[Snapshot] Failed to take daily snapshot:", err.message || err);
+    }
+  };
+
+  const savePlayers = async (req: any, res: any, players: any[]) => {
+    // Save to local backup file as offline/failover secondary copy
+    try {
+      await fs.writeFile(savedPlayersPath, JSON.stringify(players, null, 2));
+    } catch (e: any) {
+      console.error("Error writing saved-players local backup:", e.message || String(e));
+    }
+
+    if (supabase) {
+      try {
+        const rows = players.map((p: any, index: number) => ({
+          id: p.id,
+          name: p.name,
+          url: p.url || null,
+          source: p.source || null,
+          utr_singles: p.utrSingles || "-",
+          wtn_singles: p.wtnSingles || "-",
+          win_loss_ytd: p.winLossYTD || "-",
+          win_loss_career: p.winLossCareer || "-",
+          championships: p.championships || "-",
+          rank: p.rank || "-",
+          points: p.points || "-",
+          sort_order: p.sort_order !== undefined ? p.sort_order : index,
+        }));
+
+        const { error } = await supabase
+          .from("saved_players")
+          .upsert(rows, { onConflict: "id" });
+
+        if (error) {
+          console.error("Error saving players to Supabase:", error.message);
+        }
+      } catch (err: any) {
+        console.error("Supabase write failed:", err.message || err);
+      }
+    }
+
+    // Trigger taking a daily player snapshots history entry
+    takePlayerSnapshot(players).catch(() => {});
+  };
+
+  refreshTournamentsForPlayersCache = async () => {
+    try {
+      console.log("Refreshing tournaments-for-players cache...");
+      const savedPlayers = await getSavedPlayers(null, null);
       if (!savedPlayers || savedPlayers.length === 0) {
-        return res.json({ tournaments: [] });
+        await fs.writeFile(tournamentsPlayersCachePath, JSON.stringify({ tournaments: [] }, null, 2));
+        return { tournaments: [] };
       }
 
       const data = await fs.readFile(dataPath, "utf-8");
@@ -224,7 +508,7 @@ async function startServer() {
           if (tournament.source === "HK" && player.source !== "HKTA") return false;
           if (tournament.source === "AUS" && player.source !== "TA") return false;
 
-          // If we have pre-scraped players, filter. If empty or absent, we must assume they could be in it.
+          // If we have pre-scraped players, filter.
           if (tournament.players && tournament.players.length > 0) {
             const cleanPlayerName = player.name.replace(/\[.*?\]|\(.*?\)/g, '').replace(/[,.]/g, '').trim();
             const queryParts = cleanPlayerName.toLowerCase().split(/\s+/);
@@ -330,160 +614,13 @@ async function startServer() {
         return parseDate(a.tournament.dates) - parseDate(b.tournament.dates);
       });
 
-      res.json({ tournaments: results });
+      const outputData = { tournaments: results, updatedAt: new Date().toISOString() };
+      await fs.writeFile(tournamentsPlayersCachePath, JSON.stringify(outputData, null, 2));
+      console.log("Cached tournaments-for-players list updated successfully.");
+      return outputData;
     } catch (error) {
-      console.error("Failed to fetch tournaments for players", error);
-      res.status(500).json({ error: "Failed to fetch tournaments for players" });
-    }
-  });
-
-  // --- Global Saved Players Routes ---
-  const savedPlayersPath = path.join(process.cwd(), "public", "saved-players.json");
-
-  // Automatic migration/sync on startup: Local file -> Supabase
-  const syncLocalToSupabase = async () => {
-    if (!supabase) return;
-    try {
-      const { count, error } = await supabase
-        .from("saved_players")
-        .select("id", { count: "exact", head: true });
-
-      if (!error && (count === 0 || count === null)) {
-        console.log("Supabase saved_players table is empty. Syncing local players...");
-        try {
-          const rawData = await fs.readFile(savedPlayersPath, "utf-8");
-          const localPlayers = JSON.parse(rawData);
-          if (localPlayers && localPlayers.length > 0) {
-            const rows = localPlayers.map((p: any, index: number) => ({
-              id: p.id,
-              name: p.name,
-              url: p.url || null,
-              source: p.source || null,
-              utr_singles: p.utrSingles || "-",
-              wtn_singles: p.wtnSingles || "-",
-              win_loss_ytd: p.winLossYTD || "-",
-              win_loss_career: p.winLossCareer || "-",
-              championships: p.championships || "-",
-              rank: p.rank || "-",
-              points: p.points || "-",
-              sort_order: p.sort_order !== undefined ? p.sort_order : index,
-            }));
-
-            const { error: upsertError } = await supabase
-              .from("saved_players")
-              .upsert(rows, { onConflict: "id" });
-
-            if (upsertError) {
-              console.error("Failed to migrate local players to Supabase:", upsertError.message);
-            } else {
-              console.log(`Successfully migrated ${localPlayers.length} players to Supabase!`);
-            }
-          }
-        } catch (fsErr) {
-          // Local file might not exist yet, which is fine
-        }
-      }
-    } catch (err: any) {
-      console.warn("Could not sync local data to Supabase (Ensure your saved_players table is configured in your Supabase SQL editor):", err.message || err);
-    }
-  };
-
-  syncLocalToSupabase();
-
-  const getSavedPlayers = async (req: any, res: any) => {
-    let players: any[] = [];
-    if (supabase) {
-      try {
-        const { data, error } = await supabase
-          .from("saved_players")
-          .select("*")
-          .order("sort_order", { ascending: true });
-
-        if (error) {
-          console.warn("Failed to get players from Supabase, falling back to local files:", error.message);
-          throw error;
-        }
-
-        if (data) {
-          players = data.map((row: any) => ({
-            id: row.id,
-            name: row.name,
-            url: row.url || undefined,
-            source: row.source || undefined,
-            utrSingles: row.utr_singles || "-",
-            wtnSingles: row.wtn_singles || "-",
-            winLossYTD: row.win_loss_ytd || "-",
-            winLossCareer: row.win_loss_career || "-",
-            championships: row.championships || "-",
-            rank: row.rank || "-",
-            points: row.points || "-",
-            sort_order: row.sort_order ?? undefined,
-          }));
-        }
-      } catch (err) {
-        // Fallback to local files
-        try {
-          const data = await fs.readFile(savedPlayersPath, "utf-8");
-          players = JSON.parse(data);
-        } catch {
-          players = [];
-        }
-      }
-    } else {
-      try {
-        const data = await fs.readFile(savedPlayersPath, "utf-8");
-        players = JSON.parse(data);
-      } catch {
-        players = [];
-      }
-    }
-
-    // Deduplicate players by URL (or name + source if URL is missing)
-    const uniquePlayersMap = new Map();
-    for (const player of players) {
-      const key = player.url || `${player.name}-${player.source}`;
-      if (!uniquePlayersMap.has(key)) {
-        uniquePlayersMap.set(key, player);
-      }
-    }
-    return Array.from(uniquePlayersMap.values());
-  };
-
-  const savePlayers = async (req: any, res: any, players: any[]) => {
-    // Save to local backup file as offline/failover secondary copy
-    try {
-      await fs.writeFile(savedPlayersPath, JSON.stringify(players, null, 2));
-    } catch (e: any) {
-      console.error("Error writing saved-players local backup:", e.message || String(e));
-    }
-
-    if (supabase) {
-      try {
-        const rows = players.map((p: any, index: number) => ({
-          id: p.id,
-          name: p.name,
-          url: p.url || null,
-          source: p.source || null,
-          utr_singles: p.utrSingles || "-",
-          wtn_singles: p.wtnSingles || "-",
-          win_loss_ytd: p.winLossYTD || "-",
-          win_loss_career: p.winLossCareer || "-",
-          championships: p.championships || "-",
-          rank: p.rank || "-",
-          points: p.points || "-",
-          sort_order: p.sort_order !== undefined ? p.sort_order : index,
-        }));
-
-        const { error } = await supabase
-          .from("saved_players")
-          .upsert(rows, { onConflict: "id" });
-
-        if (error) {
-          console.error("Error saving players to Supabase:", error.message);
-        }
-      } catch (err: any) {
-        console.error("Supabase write failed:", err.message || err);
-      }
+      console.error("Failed to build tournaments-for-players cache", error);
+      throw error;
     }
   };
 
@@ -534,9 +671,191 @@ async function startServer() {
 
   syncLocalDrawsToSupabase();
 
+  function parseAndFormatDate(dateStr: string, tournamentName?: string): string {
+    if (!dateStr) return '';
+    let str = decodeURIComponent(dateStr).trim();
+    
+    // Extract year
+    let year = '';
+    // Check if string contains 4-digit year starting with 20
+    const yearInStrMatch = str.match(/\b(20[2-9][0-9])\b/);
+    if (yearInStrMatch) {
+      year = yearInStrMatch[1];
+      // Remove year from str for easier parsing
+      str = str.replace(year, '').replace(/,\s*$/, '').trim();
+    } else if (tournamentName) {
+      const yearInTNameMatch = tournamentName.match(/\b(20[2-9][0-9])\b/);
+      if (yearInTNameMatch) {
+        year = yearInTNameMatch[1];
+      }
+    }
+    
+    if (!year) {
+      year = new Date().getFullYear().toString();
+    }
+
+    // Normalize separators: replace 'to', '-', '–', '—' with ' - '
+    str = str.replace(/\s*(to|–|—|-)\s*/gi, ' - ');
+    
+    // If it's a numeric date like dd/mm/yyyy
+    const dmyMatch = str.match(/^(\d{1,2})[\/\.-](\d{1,2})(?:[\/\.-](\d{2,4}))?$/);
+    if (dmyMatch) {
+      const d = parseInt(dmyMatch[1], 10);
+      const m = parseInt(dmyMatch[2], 10);
+      const y = dmyMatch[3] ? (dmyMatch[3].length === 2 ? '20' + dmyMatch[3] : dmyMatch[3]) : year;
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      if (m >= 1 && m <= 12) {
+        return `${d} ${months[m - 1]} ${y}`;
+      }
+    }
+
+    // If it's numeric date range like "dd/mm/yyyy - dd/mm/yyyy"
+    const dmyRangeMatch = str.match(/^(\d{1,2})[\/\.-](\d{1,2})[\/\.-](\d{2,4})\s*-\s*(\d{1,2})[\/\.-](\d{1,2})[\/\.-](\d{2,4})$/);
+    if (dmyRangeMatch) {
+      const d1 = parseInt(dmyRangeMatch[1], 10);
+      const m1 = parseInt(dmyRangeMatch[2], 10);
+      const y1 = dmyRangeMatch[3].length === 2 ? '20' + dmyRangeMatch[3] : dmyRangeMatch[3];
+      const d2 = parseInt(dmyRangeMatch[4], 10);
+      const m2 = parseInt(dmyRangeMatch[5], 10);
+      const y2 = dmyRangeMatch[6].length === 2 ? '20' + dmyRangeMatch[6] : dmyRangeMatch[6];
+      
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      if (m1 >= 1 && m1 <= 12 && m2 >= 1 && m2 <= 12) {
+        if (m1 === m2 && y1 === y2) {
+          return `${d1} - ${d2} ${months[m1 - 1]} ${y1}`;
+        } else {
+          return `${d1} ${months[m1 - 1]} - ${d2} ${months[m2 - 1]} ${y2}`;
+        }
+      }
+    }
+
+    const monthsMap: Record<string, string> = {
+      jan: 'Jan', feb: 'Feb', mar: 'Mar', apr: 'Apr', may: 'May', jun: 'Jun',
+      jul: 'Jul', aug: 'Aug', sep: 'Sep', oct: 'Oct', nov: 'Nov', dec: 'Dec',
+      january: 'Jan', february: 'Feb', march: 'Mar', april: 'Apr', june: 'Jun',
+      july: 'Jul', august: 'Aug', september: 'Sep', october: 'Oct', november: 'Nov', december: 'Dec'
+    };
+
+    const getMonthAbbrev = (mStr: string): string => {
+      const key = mStr.toLowerCase().trim();
+      return monthsMap[key] || mStr;
+    };
+
+    // Check for formats like "21 - 22 Jun" or "21-22 Jun"
+    const dayDayMonthMatch = str.match(/^(\d{1,2})\s*-\s*(\d{1,2})\s+([a-zA-Z]{3,10})$/i);
+    if (dayDayMonthMatch) {
+      const d1 = dayDayMonthMatch[1];
+      const d2 = dayDayMonthMatch[2];
+      const m = getMonthAbbrev(dayDayMonthMatch[3]);
+      return `${d1} - ${d2} ${m} ${year}`;
+    }
+
+    // Check for formats like "Jun 21-22" or "Jun 21 - 22"
+    const monthDayDayMatch = str.match(/^([a-zA-Z]{3,10})\s+(\d{1,2})\s*-\s*(\d{1,2})$/i);
+    if (monthDayDayMatch) {
+      const m = getMonthAbbrev(monthDayDayMatch[1]);
+      const d1 = monthDayDayMatch[2];
+      const d2 = monthDayDayMatch[3];
+      return `${d1} - ${d2} ${m} ${year}`;
+    }
+
+    // Check for formats like "5 Jun - 8 Jun"
+    const dayMonthDayMonthMatch = str.match(/^(\d{1,2})\s+([a-zA-Z]{3,10})\s*-\s*(\d{1,2})\s+([a-zA-Z]{3,10})$/i);
+    if (dayMonthDayMonthMatch) {
+      const d1 = dayMonthDayMonthMatch[1];
+      const m1 = getMonthAbbrev(dayMonthDayMonthMatch[2]);
+      const d2 = dayMonthDayMonthMatch[3];
+      const m2 = getMonthAbbrev(dayMonthDayMonthMatch[4]);
+      if (m1 === m2) {
+        return `${d1} - ${d2} ${m1} ${year}`;
+      }
+      return `${d1} ${m1} - ${d2} ${m2} ${year}`;
+    }
+
+    // Check for format "21 Jun"
+    const dayMonthMatch = str.match(/^(\d{1,2})\s+([a-zA-Z]{3,10})$/i);
+    if (dayMonthMatch) {
+      const d = dayMonthMatch[1];
+      const m = getMonthAbbrev(dayMonthMatch[2]);
+      return `${d} ${m} ${year}`;
+    }
+
+    // Check for format "Jun 21"
+    const monthDayMatch = str.match(/^([a-zA-Z]{3,10})\s+(\d{1,2})$/i);
+    if (monthDayMatch) {
+      const m = getMonthAbbrev(monthDayMatch[1]);
+      const d = monthDayMatch[2];
+      return `${d} ${m} ${year}`;
+    }
+
+    // Fallback: simple cleanup
+    let finalStr = str;
+    for (const [full, abbrev] of Object.entries(monthsMap)) {
+      if (full.length > 3) {
+        finalStr = finalStr.replace(new RegExp(`\\b${full}\\b`, 'gi'), abbrev);
+      }
+    }
+
+    if (finalStr && !finalStr.includes(year)) {
+      return `${finalStr} ${year}`;
+    }
+
+    return finalStr || '';
+  }
+
+  function normalizeDrawName(name: string): string {
+    if (!name) return 'Saved Draw';
+    let cleaned = name.trim();
+    
+    // Split by hyphen variations
+    let parts = cleaned.split(/\s+[-–—]\s+/).map(p => p.trim()).filter(Boolean);
+    
+    // Deduplicate consecutive identical parts
+    let uniqueParts: string[] = [];
+    for (const part of parts) {
+      if (uniqueParts.length === 0 || uniqueParts[uniqueParts.length - 1].toLowerCase() !== part.toLowerCase()) {
+        uniqueParts.push(part);
+      }
+    }
+    
+    cleaned = uniqueParts.join(' - ');
+
+    // Deduplicate wrap-around/duplicate at the end
+    // e.g. "Some Tournament Name - BS U10 Some Tournament Name"
+    for (let len = 5; len < cleaned.length / 2; len++) {
+      const suffix = cleaned.substring(cleaned.length - len);
+      const prefix = cleaned.substring(0, len);
+      if (suffix.toLowerCase() === prefix.toLowerCase()) {
+        const remaining = cleaned.substring(0, cleaned.length - len).trim().replace(/[-–—\s]+$/, '').trim();
+        if (remaining.toLowerCase().startsWith(prefix.toLowerCase())) {
+          let eventPart = remaining.substring(prefix.length).trim().replace(/^[-–—\s]+/, '').trim();
+          if (eventPart) {
+            return `${prefix} - ${eventPart}`;
+          }
+        }
+      }
+    }
+
+    return cleaned;
+  }
+
+  function normalizeUrl(urlStr: string): string {
+    if (!urlStr) return '';
+    return urlStr.split('#')[0].toLowerCase().trim();
+  }
+
   const getSavedDraws = async (req: any, res: any) => {
     let draws: any[] = [];
     let updatedAt: string = new Date().toISOString();
+
+    // Load tournaments for lazy date lookup
+    let cachedTournaments: any[] = [];
+    try {
+      const rawT = await fs.readFile(dataPath, "utf-8");
+      cachedTournaments = JSON.parse(rawT).tournaments || [];
+    } catch (err) {
+      console.warn("Could not read tournaments.json for metadata lookup", err);
+    }
 
     if (supabase) {
       try {
@@ -583,15 +902,93 @@ async function startServer() {
       }
     }
 
-    // Deduplicate draws by URL
+    // Clean up, format event names, and backfill dates
+    let hasChanges = false;
+    const formattedDraws = draws.map((draw: any) => {
+      let updatedDraw = { ...draw };
+      
+      // Clean up draw name
+      const normalizedName = normalizeDrawName(updatedDraw.name);
+      if (normalizedName !== updatedDraw.name) {
+        updatedDraw.name = normalizedName;
+        hasChanges = true;
+      }
+
+      // Check if URL has a date, otherwise try to lookup from cachedTournaments
+      let urlWithHash = updatedDraw.url || '';
+      let baseUrl = urlWithHash.split('#')[0];
+      let hash = urlWithHash.split('#')[1] || '';
+      let dateFromUrl = '';
+      
+      const dateMatch = hash.match(/date=(.*)$/i);
+      if (dateMatch) {
+        dateFromUrl = decodeURIComponent(dateMatch[1]);
+      } else {
+        // Try to match tournament ID in cachedTournaments
+        const idMatch = baseUrl.match(/id=([a-zA-Z0-9\-]+)/i);
+        if (idMatch) {
+          const idValue = idMatch[1].toLowerCase();
+          const matchedTournament = cachedTournaments.find((t: any) => {
+            if (!t.link) return false;
+            const tMatch = t.link.match(/id=([a-zA-Z0-9\-]+)/i);
+            return tMatch && tMatch[1].toLowerCase() === idValue;
+          });
+          if (matchedTournament && matchedTournament.dates) {
+            dateFromUrl = matchedTournament.dates;
+          }
+        }
+      }
+
+      // Process and format the date
+      if (dateFromUrl) {
+        const parsedDate = parseAndFormatDate(dateFromUrl, updatedDraw.name);
+        if (parsedDate) {
+          const newUrl = `${baseUrl}#date=${encodeURIComponent(parsedDate)}`;
+          if (newUrl !== updatedDraw.url) {
+            updatedDraw.url = newUrl;
+            hasChanges = true;
+          }
+        }
+      }
+
+      return updatedDraw;
+    });
+
+    // Deduplicate draws by normalized URL, preferring URLs with #date=
     const uniqueDrawsMap = new Map();
-    for (const draw of draws) {
-      const key = draw.url;
-      if (!uniqueDrawsMap.has(key)) {
+    for (const draw of formattedDraws) {
+      if (!draw.url) continue;
+      const key = normalizeUrl(draw.url);
+      const existing = uniqueDrawsMap.get(key);
+      if (!existing || (!existing.url.includes('#date=') && draw.url.includes('#date='))) {
         uniqueDrawsMap.set(key, draw);
       }
     }
-    return { draws: Array.from(uniqueDrawsMap.values()), updatedAt };
+    
+    const finalDraws = Array.from(uniqueDrawsMap.values());
+    
+    // If we changed names or backfilled dates, save the cleaned-up list!
+    if (hasChanges || finalDraws.length !== draws.length) {
+      try {
+        await fs.writeFile(savedDrawsPath, JSON.stringify({ draws: finalDraws, updatedAt }, null, 2));
+        if (supabase) {
+          const rows = finalDraws.map((d: any, index: number) => ({
+            id: d.id,
+            name: d.name,
+            url: d.url,
+            region: d.region || "AUS",
+            players: d.players || [],
+            sort_order: d.sort_order !== undefined ? d.sort_order : index,
+            updated_at: updatedAt,
+          }));
+          await supabase.from("saved_draws").upsert(rows);
+        }
+      } catch (e) {
+        console.error("Failed to persist normalized draws on lookup:", e);
+      }
+    }
+
+    return { draws: finalDraws, updatedAt };
   };
 
   const saveSavedDraws = async (req: any, res: any, draws: any[]) => {
@@ -953,9 +1350,294 @@ async function startServer() {
     }
   });
 
+  // --- Notifications History & Changes Tracking ---
+  const notificationsHistoryPath = path.join(process.cwd(), "public", "notifications-history.json");
+
+  function getPlayerChanges(oldPlayer: any, newPlayer: any): any[] {
+    const changes: any[] = [];
+    const timestamp = new Date().toISOString();
+    const date = timestamp.split('T')[0];
+    const source = newPlayer.source || oldPlayer.source || 'TA';
+    const player = newPlayer.name;
+
+    // 1. UTR Changes
+    if (oldPlayer.utrSingles && newPlayer.utrSingles && oldPlayer.utrSingles !== '-' && newPlayer.utrSingles !== '-' && oldPlayer.utrSingles !== newPlayer.utrSingles) {
+      changes.push({
+        id: `${player}-UTR-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+        player,
+        title: `${player} - UTR Changed`,
+        body: `UTR singles changed from ${oldPlayer.utrSingles} to ${newPlayer.utrSingles}`,
+        type: 'UTR',
+        source,
+        date,
+        timestamp
+      });
+    }
+
+    // WTN Changes (maps to UTR filter type in UI)
+    if (oldPlayer.wtnSingles && newPlayer.wtnSingles && oldPlayer.wtnSingles !== '-' && newPlayer.wtnSingles !== '-' && oldPlayer.wtnSingles !== newPlayer.wtnSingles) {
+      changes.push({
+        id: `${player}-WTN-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+        player,
+        title: `${player} - WTN Changed`,
+        body: `WTN singles changed from ${oldPlayer.wtnSingles} to ${newPlayer.wtnSingles}`,
+        type: 'UTR',
+        source,
+        date,
+        timestamp
+      });
+    }
+
+    // 2. Points Changes
+    if (oldPlayer.points && newPlayer.points && oldPlayer.points !== '-' && newPlayer.points !== '-' && oldPlayer.points !== newPlayer.points) {
+      changes.push({
+        id: `${player}-Points-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+        player,
+        title: `${player} - Points Changed`,
+        body: `Points changed from ${oldPlayer.points} to ${newPlayer.points}`,
+        type: 'Points',
+        source,
+        date,
+        timestamp
+      });
+    }
+
+    // 3. Rank Changes
+    if (oldPlayer.rank && newPlayer.rank && oldPlayer.rank !== '-' && newPlayer.rank !== '-' && oldPlayer.rank !== newPlayer.rank) {
+      changes.push({
+        id: `${player}-Rank-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+        player,
+        title: `${player} - Rank Changed`,
+        body: `Rank changed from ${oldPlayer.rank} to ${newPlayer.rank}`,
+        type: 'Rank',
+        source,
+        date,
+        timestamp
+      });
+    }
+
+    // 4. WinLoss YTD Changes
+    if (oldPlayer.winLossYTD && newPlayer.winLossYTD && oldPlayer.winLossYTD !== '-' && newPlayer.winLossYTD !== '-' && oldPlayer.winLossYTD !== newPlayer.winLossYTD) {
+      changes.push({
+        id: `${player}-WinLossYTD-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+        player,
+        title: `${player} - YTD Win-Loss Changed`,
+        body: `YTD Win-Loss changed from ${oldPlayer.winLossYTD} to ${newPlayer.winLossYTD}`,
+        type: 'WinLoss',
+        source,
+        date,
+        timestamp
+      });
+    }
+
+    // 5. WinLoss Career Changes
+    if (oldPlayer.winLossCareer && newPlayer.winLossCareer && oldPlayer.winLossCareer !== '-' && newPlayer.winLossCareer !== '-' && oldPlayer.winLossCareer !== newPlayer.winLossCareer) {
+      changes.push({
+        id: `${player}-WinLossCareer-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+        player,
+        title: `${player} - Career Win-Loss Changed`,
+        body: `Career Win-Loss changed from ${oldPlayer.winLossCareer} to ${newPlayer.winLossCareer}`,
+        type: 'WinLoss',
+        source,
+        date,
+        timestamp
+      });
+    }
+
+    // 6. Championships Changes
+    if (oldPlayer.championships && newPlayer.championships && oldPlayer.championships !== '-' && newPlayer.championships !== '-' && oldPlayer.championships !== newPlayer.championships) {
+      changes.push({
+        id: `${player}-Championships-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+        player,
+        title: `${player} - Championships Updated`,
+        body: `Championships updated:\nFrom:\n${oldPlayer.championships}\n\nTo:\n${newPlayer.championships}`,
+        type: 'Championships',
+        source,
+        date,
+        timestamp
+      });
+    }
+
+    return changes;
+  }
+
+  const getNotificationsHistory = async (req: any, res: any) => {
+    let notifications: any[] = [];
+    if (supabase) {
+      try {
+        const { data, error } = await supabase
+          .from("notifications_history")
+          .select("*")
+          .order("timestamp", { ascending: false });
+
+        if (error) {
+          if (error.message.includes("Could not find the table")) {
+            console.log("Supabase 'notifications_history' table not found yet. Using local files fallback.");
+          } else {
+            console.log("Failed to get notifications from Supabase, falling back to local files:", error.message);
+          }
+          throw error;
+        }
+
+        if (data) {
+          notifications = data.map((row: any) => ({
+            id: row.id,
+            player: row.player,
+            title: row.title,
+            body: row.body,
+            type: row.type,
+            source: row.source,
+            date: row.date,
+            timestamp: row.timestamp || row.created_at,
+          }));
+        }
+      } catch (err) {
+        try {
+          const data = await fs.readFile(notificationsHistoryPath, "utf-8");
+          notifications = JSON.parse(data);
+        } catch {
+          notifications = [];
+        }
+      }
+    } else {
+      try {
+        const data = await fs.readFile(notificationsHistoryPath, "utf-8");
+        notifications = JSON.parse(data);
+      } catch {
+        notifications = [];
+      }
+    }
+    return notifications;
+  };
+
+  const saveNotificationsHistory = async (req: any, res: any, notifications: any[]) => {
+    try {
+      await fs.writeFile(notificationsHistoryPath, JSON.stringify(notifications, null, 2));
+    } catch (e: any) {
+      console.log("Error writing notifications local backup:", e.message || String(e));
+    }
+
+    if (supabase) {
+      try {
+        const rows = notifications.map((n: any) => ({
+          id: n.id,
+          player: n.player,
+          title: n.title,
+          body: n.body,
+          type: n.type,
+          source: n.source,
+          date: n.date,
+          timestamp: n.timestamp,
+        }));
+
+        const { error } = await supabase
+          .from("notifications_history")
+          .upsert(rows, { onConflict: "id" });
+
+        if (error) {
+          if (error.message.includes("Could not find the table")) {
+            console.log("Supabase 'notifications_history' table not found. Skipping Supabase backup (local save succeeded).");
+          } else {
+            console.log("Error saving notifications to Supabase:", error.message);
+          }
+        }
+      } catch (err: any) {
+        console.log("Supabase notifications write failed:", err.message || err);
+      }
+    }
+  };
+
+  // Sync notifications from local file -> Supabase on startup
+  const syncLocalNotificationsToSupabase = async () => {
+    if (!supabase) return;
+    try {
+      const { count, error } = await supabase
+        .from("notifications_history")
+        .select("id", { count: "exact", head: true });
+
+      if (error) {
+        if (error.message.includes("Could not find the table")) {
+          console.log("Supabase 'notifications_history' table is not available yet. Using local backup storage.");
+        } else {
+          console.log("Could not inspect notifications_history table in Supabase:", error.message);
+        }
+        return;
+      }
+
+      if (count === 0 || count === null) {
+        console.log("Supabase notifications_history table is empty. Syncing local notifications...");
+        try {
+          const rawData = await fs.readFile(notificationsHistoryPath, "utf-8");
+          const localNotifications = JSON.parse(rawData);
+          if (localNotifications && localNotifications.length > 0) {
+            const rows = localNotifications.map((n: any) => ({
+              id: n.id,
+              player: n.player,
+              title: n.title,
+              body: n.body,
+              type: n.type,
+              source: n.source,
+              date: n.date,
+              timestamp: n.timestamp,
+            }));
+
+            const { error: upsertError } = await supabase
+              .from("notifications_history")
+              .upsert(rows, { onConflict: "id" });
+
+            if (upsertError) {
+              console.log("Failed to migrate local notifications to Supabase:", upsertError.message);
+            } else {
+              console.log(`Successfully migrated ${localNotifications.length} notifications to Supabase!`);
+            }
+          }
+        } catch (fsErr) {
+          // Local file might not exist yet, which is fine
+        }
+      }
+    } catch (err: any) {
+      console.log("Could not sync local notifications to Supabase:", err.message || err);
+    }
+  };
+
+  syncLocalNotificationsToSupabase();
+
+  // Seed daily snapshot on server startup
+  takePlayerSnapshot().catch((err) => {
+    console.error("Startup snapshot trigger error:", err);
+  });
+
   app.get("/api/saved-players", requireAuth, async (req, res) => {
     const players = await getSavedPlayers(req, res);
     res.json(players);
+  });
+
+  app.get("/api/player-snapshots", requireAuth, async (req, res) => {
+    const snapshotsPath = path.join(process.cwd(), "public", "player-snapshots.json");
+    try {
+      let snapshots: any[] = [];
+      try {
+        const fileContent = await fs.readFile(snapshotsPath, "utf-8");
+        snapshots = JSON.parse(fileContent);
+      } catch (err) {
+        // Bootstrap by fetching from the live reference app
+        try {
+          const resp = await axios.get('https://jc-tournament-planner-569341375821.us-west1.run.app/api/player-snapshots', { timeout: 5005 });
+          if (Array.isArray(resp.data)) {
+            snapshots = resp.data;
+            // Save local cache so we don't have to fetch next time
+            await fs.writeFile(snapshotsPath, JSON.stringify(snapshots, null, 2));
+          }
+        } catch (fetchErr: any) {
+          console.log("Failed to bootstrap snapshots from reference app:", fetchErr.message);
+          snapshots = [];
+        }
+      }
+      res.json(snapshots);
+    } catch (err: any) {
+      console.error("Failed to fetch player snapshots:", err);
+      res.status(500).json({ error: "Failed to fetch player snapshots" });
+    }
   });
 
   app.post("/api/refresh-player/:id", requireAuth, async (req, res) => {
@@ -975,6 +1657,17 @@ async function startServer() {
     try {
       const updatedStats = await scrapePlayerProfile(p.url, p.name);
       const updatedPlayer = { ...p, ...updatedStats, name: p.name };
+      
+      const newChanges = getPlayerChanges(p, updatedPlayer);
+      if (newChanges.length > 0) {
+        let notifications = [];
+        try {
+          notifications = await getNotificationsHistory(req, res);
+        } catch (e) {}
+        notifications = [...newChanges, ...notifications];
+        await saveNotificationsHistory(req, res, notifications);
+      }
+
       players[playerIndex] = updatedPlayer;
       await savePlayers(req, res, players);
       res.json(updatedPlayer);
@@ -1103,14 +1796,24 @@ async function startServer() {
 
     try {
       const { draws } = await getSavedDraws(req, res);
-      const existingIndex = draws.findIndex((d: any) => d.url === url);
+      const existingIndex = draws.findIndex((d: any) => normalizeUrl(d.url) === normalizeUrl(url));
+      
+      let finalUrl = url;
+      if (existingIndex >= 0) {
+        // Preserve #date= if the new URL doesn't have it but the existing one does
+        const existingUrl = draws[existingIndex].url;
+        if (!finalUrl.includes('#date=') && existingUrl.includes('#date=')) {
+          finalUrl = existingUrl;
+        }
+      }
+
       const newDraw = {
         id: existingIndex >= 0 ? draws[existingIndex].id : (Date.now().toString() + Math.random().toString(36).substring(7)),
         name,
-        url,
+        url: finalUrl,
         region: region || "AUS",
         players: players || [],
-        sort_order: existingIndex >= 0 ? draws[existingIndex].sort_order : draws.length
+        sort_order: existingIndex >= 0 ? (draws[existingIndex].sort_order !== undefined ? draws[existingIndex].sort_order : existingIndex) : draws.length
       };
 
       if (existingIndex >= 0) {
@@ -1131,16 +1834,22 @@ async function startServer() {
   app.delete("/api/saved-draws/:id", requireAuth, async (req, res) => {
     const { id } = req.params;
 
+    const { draws } = await getSavedDraws(req, res);
+    const drawToDelete = draws.find((d: any) => d.id === id);
+
     if (supabase) {
       try {
         await supabase.from("saved_draws").delete().eq("id", id);
+        if (drawToDelete) {
+          // Also delete by URL to make sure we remove any other duplicates in Supabase
+          await supabase.from("saved_draws").delete().eq("url", drawToDelete.url);
+        }
       } catch (err: any) {
         console.error("Error deleting from Supabase database:", err.message || err);
       }
     }
 
-    const { draws } = await getSavedDraws(req, res);
-    const filteredDraws = draws.filter((d: any) => d.id !== id);
+    const filteredDraws = draws.filter((d: any) => d.id !== id && (!drawToDelete || normalizeUrl(d.url) !== normalizeUrl(drawToDelete.url)));
     await saveSavedDraws(req, res, filteredDraws);
     const currentData = await getSavedDraws(req, res);
     res.json(currentData);
@@ -1158,7 +1867,7 @@ async function startServer() {
 
   app.put("/api/saved-draws/:id/players", requireAuth, async (req, res) => {
     const { id } = req.params;
-    const { players } = req.body;
+    const { players, tournamentDate } = req.body;
     if (!Array.isArray(players)) {
       return res.status(400).json({ error: "Players array is required" });
     }
@@ -1171,12 +1880,115 @@ async function startServer() {
       }
 
       draws[drawIndex].players = players;
+      
+      // If we got a tournamentDate and the existing URL doesn't have a date hash, append it
+      if (tournamentDate && !draws[drawIndex].url.includes('#date=')) {
+        draws[drawIndex].url += `#date=${encodeURIComponent(tournamentDate)}`;
+      }
+
       await saveSavedDraws(req, res, draws);
       const currentData = await getSavedDraws(req, res);
       res.json(currentData);
     } catch (error) {
       console.error("Failed to update players in draw:", error);
       res.status(500).json({ error: "Failed to update players in draw" });
+    }
+  });
+
+  app.get("/api/notifications/history", requireAuth, async (req, res) => {
+    try {
+      const notifications = await getNotificationsHistory(req, res);
+      res.json(notifications);
+    } catch (err) {
+      console.error("Failed to get notifications history:", err);
+      res.status(500).json({ error: "Failed to query notifications history" });
+    }
+  });
+
+  app.post("/api/notifications/delete", requireAuth, async (req, res) => {
+    const { items } = req.body;
+    if (!Array.isArray(items)) {
+      return res.status(400).json({ error: "Items array is required" });
+    }
+
+    try {
+      let notifications = await getNotificationsHistory(req, res);
+      
+      if (supabase) {
+        try {
+          for (const item of items) {
+            await supabase
+              .from("notifications_history")
+              .delete()
+              .eq("date", item.date)
+              .eq("timestamp", item.timestamp);
+          }
+        } catch (err: any) {
+          console.error("Error deleting notifications from Supabase:", err.message || err);
+        }
+      }
+
+      notifications = notifications.filter(
+        (n: any) => !items.some((item: any) => item.date === n.date && item.timestamp === n.timestamp)
+      );
+
+      try {
+        await fs.writeFile(notificationsHistoryPath, JSON.stringify(notifications, null, 2));
+      } catch (e: any) {
+        console.error("Error writing notifications local backup:", e.message || String(e));
+      }
+
+      res.json({ success: true });
+    } catch (err) {
+      console.error("Failed to delete notifications:", err);
+      res.status(500).json({ error: "Failed to delete notifications" });
+    }
+  });
+
+  app.post("/api/admin/refresh-all", requireAuth, async (req, res) => {
+    try {
+      console.log("Triggering refresh of all saved players...");
+      const players = await getSavedPlayers(req, res);
+      let notifications: any[] = [];
+      try {
+        notifications = await getNotificationsHistory(req, res);
+      } catch (e) {
+        // Ignore
+      }
+
+      const limit = pLimit(2); // Concurrency limit of 2 to avoid slamming tennis systems and timeouts
+      const updatedPlayers = await Promise.all(
+        players.map((p: any) =>
+          limit(async () => {
+            if (!p.url) return p;
+            try {
+              const updatedStats = await scrapePlayerProfile(p.url, p.name);
+              const updatedPlayer = { ...p, ...updatedStats, name: p.name };
+              
+              const newChanges = getPlayerChanges(p, updatedPlayer);
+              if (newChanges.length > 0) {
+                notifications = [...newChanges, ...notifications];
+              }
+
+              return updatedPlayer;
+            } catch (e) {
+              console.error(`Failed to refresh player ${p.name} in refresh-all:`, e);
+              return p; // Return unchanged on failure
+            }
+          })
+        )
+      );
+
+      await savePlayers(req, res, updatedPlayers);
+
+      if (notifications.length > 0) {
+        await saveNotificationsHistory(req, res, notifications);
+      }
+
+      res.json({ success: true, count: updatedPlayers.length });
+    } catch (err: any) {
+      console.error("Refresh all failed:", err);
+      res.status(500).json({ error: "Failed to refresh players" });
     }
   });
 
