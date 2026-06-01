@@ -10,6 +10,9 @@ interface FilterBarProps {
   searchTerm: string;
   setSearchTerm: (term: string) => void;
   handleExport: () => void;
+  auState: string;
+  setAuState: (state: string) => void;
+  showStateFilter: boolean;
 }
 
 export const FilterBar: React.FC<FilterBarProps> = ({
@@ -19,7 +22,10 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   setWithin120km,
   searchTerm,
   setSearchTerm,
-  handleExport
+  handleExport,
+  auState,
+  setAuState,
+  showStateFilter
 }) => {
   return (
     <div className="flex flex-col gap-6 mb-6">
@@ -56,6 +62,27 @@ export const FilterBar: React.FC<FilterBarProps> = ({
             />
             Within 120km
           </label>
+
+          {showStateFilter && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-400 font-medium whitespace-nowrap">State:</span>
+              <select
+                value={auState}
+                onChange={(e) => setAuState(e.target.value)}
+                className="px-3 py-1.5 text-sm font-medium rounded-xl transition-all bg-gray-900 border border-gray-805 text-gray-200 hover:border-gray-700 hover:bg-gray-800/40 outline-none focus:ring-2 focus:ring-blue-500/50 cursor-pointer"
+              >
+                <option value="ALL">All States</option>
+                <option value="NSW">NSW</option>
+                <option value="VIC">VIC</option>
+                <option value="QLD">QLD</option>
+                <option value="WA">WA</option>
+                <option value="SA">SA</option>
+                <option value="ACT">ACT</option>
+                <option value="TAS">TAS</option>
+                <option value="NT">NT</option>
+              </select>
+            </div>
+          )}
         </div>
 
         <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">

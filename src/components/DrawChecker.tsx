@@ -108,8 +108,11 @@ function SortableDrawItem({
   let drawDate = drawDateMatch ? decodeURIComponent(drawDateMatch[1]) : '';
   if (!drawDate) {
     const nameMatch = draw.name.match(/\b\d{1,2}(?:-\d{1,2})?\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b/i);
+    const ddMmYyyyMatch = draw.name.match(/\b\d{1,2}\/\d{1,2}\/\d{4}\b/);
     if (nameMatch) {
       drawDate = nameMatch[0];
+    } else if (ddMmYyyyMatch) {
+      drawDate = ddMmYyyyMatch[0];
     }
   }
   const displayUrl = draw.url.split('#')[0]; // Clean url for linking
@@ -871,6 +874,26 @@ export function DrawChecker() {
           if (!match) return 0;
           let dateStr = decodeURIComponent(match[1]).trim();
           if (!dateStr) return 0;
+          
+          const originalDateStr = dateStr;
+
+          // 5. DD/MM/YYYY format or DD/MM/YYYY to DD/MM/YYYY
+          const ddMmyYyyyMatch = originalDateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+          if (ddMmyYyyyMatch) {
+            const day = parseInt(ddMmyYyyyMatch[1], 10);
+            const month = parseInt(ddMmyYyyyMatch[2], 10) - 1; // 0-indexed
+            const yearMatched = parseInt(ddMmyYyyyMatch[3], 10);
+            return new Date(yearMatched, month, day).getTime();
+          }
+
+          // 6. YYYY-MM-DD format
+          const yyyyMmDdMatch = originalDateStr.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+          if (yyyyMmDdMatch) {
+            const yearMatched = parseInt(yyyyMmDdMatch[1], 10);
+            const month = parseInt(yyyyMmDdMatch[2], 10) - 1;
+            const day = parseInt(yyyyMmDdMatch[3], 10);
+            return new Date(yearMatched, month, day).getTime();
+          }
 
           // Extract year if present
           let year = new Date().getFullYear();

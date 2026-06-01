@@ -9,23 +9,27 @@ export interface Tournament {
   link: string;
   ageGroup: string;
   source: "HK" | "AUS";
+  location?: string;
   distance?: string;
   mapsLink?: string;
   closingDeadline?: string;
 }
 
-async function fetchPage(url: string, page: number, source: "HK" | "AUS"): Promise<{ tournaments: Tournament[], players: string[] }> {
+async function fetchPage(
+  url: string,
+  page: number,
+  source: "HK" | "AUS",
+  existingLinks: Set<string> = new Set(),
+  startDate: string = "2026-01-01",
+  endDate: string = "2036-12-31",
+  existingDetails: Record<string, { mapsLink?: string; closingDeadline?: string; location?: string }> = {}
+): Promise<{ tournaments: Tournament[], players: string[] }> {
   const params = new URLSearchParams();
   params.append("Page", page.toString());
   params.append("TournamentExtendedFilter.SportID", "0");
   params.append("TournamentFilter.DateFilterType", "0");
-  params.append("TournamentFilter.StartDate", "2026-01-01");
-  params.append("TournamentFilter.EndDate", "2026-12-31");
-  
-  if (source === "AUS") {
-    params.append("TournamentExtendedFilter.OrganizationStateList[0]", "NSW");
-    params.append("TournamentFilter.PostalCode", "2032");
-  }
+  params.append("TournamentFilter.StartDate", startDate);
+  params.append("TournamentFilter.EndDate", endDate);
 
   const response = await axios.post(url, params.toString(), {
     headers: {
@@ -37,12 +41,14 @@ async function fetchPage(url: string, page: number, source: "HK" | "AUS"): Promi
   });
 
   const $ = cheerio.load(response.data);
-  const playersSet = new Set<string>();
+  const results: Tournament[] = [];
 
   const items = $("li.list__item").toArray();
-  const results: Tournament[] = await Promise.all(items.map(async (el) => {
+  for (const el of items) {
     const nameEl = $(el).find("h4 a");
     const name = nameEl.text().trim();
+    if (!name) continue;
+
     const link = nameEl.attr("href") || "";
     const dates = $(el).find("time").map((_, t) => $(t).text().trim()).get().join(" to ") || $(el).find(".media__subheading").text().trim();
     
@@ -69,7 +75,6 @@ async function fetchPage(url: string, page: number, source: "HK" | "AUS"): Promi
     if (isU10) ageGroups.push("U10");
     if (isU12) ageGroups.push("U12");
 
-    // If it's a junior tournament but doesn't specify age, assume it has both U10 and U12
     if (ageGroups.length === 0) {
       if (nameLower.includes("novice")) {
         ageGroups.push("U10");
@@ -105,9 +110,6 @@ async function fetchPage(url: string, page: number, source: "HK" | "AUS"): Promi
     const ageGroup = ageGroups.join(", ");
 
     let distance = undefined;
-    let mapsLink = undefined;
-    let closingDeadline = undefined;
-    
     if (source === "AUS") {
       const subheading = $(el).find(".media__subheading").text();
       const match = subheading.match(/\(([\d.]+\s*km)\)/i);
@@ -115,20 +117,202 @@ async function fetchPage(url: string, page: number, source: "HK" | "AUS"): Promi
         distance = match[1];
       }
     }
-      
-    if (link) {
+
+    const locationSpan = $(el).find(".media__subheading").first().find(".nav-link__value");
+    const tLocationText = locationSpan.length > 0 ? locationSpan.text().trim() : $(el).find(".media__subheading").first().text().trim();
+    const locationClean = tLocationText.replace(/\s+/g, " ").trim();
+
+    // Re-use already populated parameters if they exist in tournaments.json
+    let mapsLink = existingDetails[link]?.mapsLink;
+    let closingDeadline = existingDetails[link]?.closingDeadline;
+
+    if (!mapsLink && locationClean) {
+      if (source === "AUS") {
+        mapsLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(locationClean + ", Australia")}`;
+      } else {
+        mapsLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(locationClean + ", Hong Kong")}`;
+      }
+    }
+
+    results.push({
+      name,
+      dates,
+      link,
+      ageGroup,
+      source,
+      location: locationClean,
+      distance,
+      mapsLink,
+      closingDeadline
+    });
+  }
+
+  return {
+    tournaments: results,
+    players: []
+  };
+}
+
+export async function runScraper() {
+  console.log("Starting daily high-speed scraper...");
+  const allTournaments: Tournament[] = [];
+  const allPlayers = new Set<string>();
+
+  const dataPath = path.join(process.cwd(), "public", "tournaments.json");
+  const playersPath = path.join(process.cwd(), "public", "players.json");
+
+  // Load existing details to avoid re-scraping and preserve manual edits
+  let existingDetails: Record<string, { mapsLink?: string; closingDeadline?: string; location?: string }> = {};
+  try {
+    const rawContent = await fs.readFile(dataPath, "utf-8");
+    const parsed = JSON.parse(rawContent);
+    if (parsed && Array.isArray(parsed.tournaments)) {
+      for (const t of parsed.tournaments) {
+        if (t.link) {
+          existingDetails[t.link] = {
+            mapsLink: t.mapsLink,
+            closingDeadline: t.closingDeadline,
+            location: t.location
+          };
+        }
+      }
+    }
+    console.log(`Reused detail maps/deadlines for ${Object.keys(existingDetails).length} existing tournaments.`);
+  } catch {
+    // File doesn't exist yet, start clean
+  }
+
+  try {
+    // 1. Scrape HK
+    let page = 1;
+    let hasMore = true;
+    while (hasMore) {
+      console.log(`Fetching HK page ${page}...`);
+      const { tournaments } = await fetchPage(
+        "https://hkta.tournamentsoftware.com/find/tournament/DoSearch", 
+        page, 
+        "HK", 
+        new Set(allTournaments.map(t => t.link)),
+        "2026-01-01",
+        "2036-12-31",
+        existingDetails
+      );
+
+      if (tournaments.length === 0) {
+        hasMore = false;
+      } else {
+        const newResults = tournaments.filter(nr => !allTournaments.some(at => at.link === nr.link));
+        if (newResults.length === 0) {
+          hasMore = false;
+        } else {
+          allTournaments.push(...newResults);
+          page++;
+        }
+      }
+      if (page > 20) hasMore = false;
+      await new Promise(resolve => setTimeout(resolve, 200));
+    }
+
+    // Save initial HK data
+    await fs.writeFile(dataPath, JSON.stringify({
+      lastUpdated: new Date().toISOString(),
+      tournaments: allTournaments
+    }, null, 2));
+
+    // 2. Scrape AUS month-by-month for the current year (2026) to bypass the 400 results filter cap
+    const year = 2026;
+    const dateRanges: { start: string; end: string }[] = [];
+    for (let month = 1; month <= 12; month++) {
+      const startDay = "01";
+      const startMonth = month.toString().padStart(2, "0");
+      const endDay = new Date(year, month, 0).getDate().toString().padStart(2, "0");
+      dateRanges.push({
+        start: `${year}-${startMonth}-${startDay}`,
+        end: `${year}-${startMonth}-${endDay}`
+      });
+    }
+    // Include 2027-2028 as well
+    dateRanges.push({
+      start: `${year + 1}-01-01`,
+      end: `${year + 2}-12-31`
+    });
+
+    for (const range of dateRanges) {
+      console.log(`Starting AUS search for range: ${range.start} to ${range.end}...`);
+      let rangePage = 1;
+      let rangeHasMore = true;
+      while (rangeHasMore) {
+        console.log(`Fetching AUS range ${range.start} to ${range.end}, page ${rangePage}...`);
+        const { tournaments } = await fetchPage(
+          "https://tournaments.tennis.com.au/find/tournament/DoSearch",
+          rangePage,
+          "AUS",
+          new Set(allTournaments.map(t => t.link)),
+          range.start,
+          range.end,
+          existingDetails
+        );
+
+        if (tournaments.length === 0) {
+          rangeHasMore = false;
+        } else {
+          const newResults = tournaments.filter(nr => !allTournaments.some(at => at.link === nr.link));
+          if (newResults.length === 0) {
+            rangeHasMore = false;
+          } else {
+            allTournaments.push(...newResults);
+            
+            // Write progressively so that tournaments load IMMEDIATELY in the frontend!
+            await fs.writeFile(dataPath, JSON.stringify({
+              lastUpdated: new Date().toISOString(),
+              tournaments: allTournaments
+            }, null, 2));
+            
+            rangePage++;
+          }
+        }
+        if (rangePage > 100) rangeHasMore = false;
+        await new Promise(resolve => setTimeout(resolve, 200));
+      }
+    }
+
+    console.log(`Initial listing scrape complete. Saved ${allTournaments.length} tournaments.`);
+
+    // 3. Sequential Background Detail Enrichment (Closing Deadlines) for Upcoming/Future Tournaments
+    const nowLocal = new Date();
+    nowLocal.setHours(0, 0, 0, 0);
+
+    const upcomingTournaments = allTournaments.filter(t => {
+      if (t.closingDeadline) return false;
+      if (!t.dates) return false;
+
       try {
-        const idMatch = link.match(/id=([^&]+)/i);
+        const parts = t.dates.split(" to ");
+        const dateToParse = parts[parts.length - 1].trim();
+        const [day, month, dYear] = dateToParse.split("/");
+        if (!day || !month || !dYear) return false;
+        const endDate = new Date(parseInt(dYear, 10), parseInt(month, 10) - 1, parseInt(day, 10));
+        return endDate >= nowLocal;
+      } catch {
+        return false;
+      }
+    });
+
+    console.log(`Background enricher: Found ${upcomingTournaments.length} upcoming tournaments to process.`);
+
+    let enrichCount = 0;
+    for (const t of upcomingTournaments) {
+      try {
+        const idMatch = t.link.match(/id=([^&]+)/i);
         if (idMatch) {
           const tournamentId = idMatch[1];
-          const domain = source === "HK" ? "hkta.tournamentsoftware.com" : "tournaments.tennis.com.au";
+          const domain = t.source === "HK" ? "hkta.tournamentsoftware.com" : "tournaments.tennis.com.au";
           const tournamentUrl = `https://${domain}/tournament/${tournamentId}`;
-          const playersUrl = `https://${domain}/tournament/${tournamentId}/Players/GetPlayersContent`;
-            
-          // Fetch tournament page for deadline and maps
-          const tRes = await axios.get(tournamentUrl, { timeout: 5000 });
+
+          console.log(`Background enriching (${enrichCount + 1}/${upcomingTournaments.length}): ${t.name}...`);
+          const tRes = await axios.get(tournamentUrl, { timeout: 6000 });
           const $t = cheerio.load(tRes.data);
-          
+
           $t("*").each((_, tEl) => {
             const text = $t(tEl).clone().children().remove().end().text().trim();
             if (text === "Closing deadline" || text === "Entry deadline") {
@@ -140,135 +324,36 @@ async function fetchPage(url: string, page: number, source: "HK" | "AUS"): Promi
                 const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
                 const month = months.indexOf(monthStr);
                 if (month !== -1) {
-                  let year = 2026;
-                  const yearMatch = dates.match(/\d{4}/);
+                  let dYear = year;
+                  const yearMatch = t.dates.match(/\d{4}/);
                   if (yearMatch) {
-                    year = parseInt(yearMatch[0], 10);
-                    const tMonthMatch = dates.match(/\d{1,2}\/(\d{1,2})\/\d{4}/);
-                    if (tMonthMatch) {
-                      const tMonth = parseInt(tMonthMatch[1], 10) - 1;
-                      if (tMonth <= 2 && month >= 10) {
-                        year -= 1;
-                      }
-                    }
+                    dYear = parseInt(yearMatch[0], 10);
                   }
-                  closingDeadline = `${day}/${month + 1}/${year}`;
+                  t.closingDeadline = `${day}/${month + 1}/${dYear}`;
                 }
               }
             }
           });
 
-          if (source === "AUS") {
-            const factsheetUrl = `https://tournaments.tennis.com.au/tournament/${tournamentId}/Factsheet`;
-            const fsRes = await axios.get(factsheetUrl, { timeout: 3000 });
-            const $fs = cheerio.load(fsRes.data);
-            $fs("a").each((_, aEl) => {
-              const text = $fs(aEl).text().trim();
-              const href = $fs(aEl).attr("href");
-              if (text.toLowerCase().includes("maps") || (href && href.includes("maps"))) {
-                mapsLink = href;
-              }
-            });
+          enrichCount++;
+          // Periodically save to tournaments.json
+          if (enrichCount % 5 === 0 || enrichCount === upcomingTournaments.length) {
+            await fs.writeFile(dataPath, JSON.stringify({
+              lastUpdated: new Date().toISOString(),
+              tournaments: allTournaments
+            }, null, 2));
+            console.log(`Background enricher saved progress: ${enrichCount} tournaments updated.`);
           }
 
-          // Fetch players for this tournament
-          try {
-            const pRes = await axios.get(playersUrl, {
-              headers: { "X-Requested-With": "XMLHttpRequest" },
-              timeout: 5000
-            });
-            const $p = cheerio.load(pRes.data);
-            $p("li.js-alphabet-list-item").each((_, pEl) => {
-              const pName = $p(pEl).find(".media__title").text().trim();
-              if (pName) playersSet.add(pName);
-            });
-          } catch (pe) {
-            // Ignore player fetch errors
-          }
+          // Politeness delay to avoid rate limiting
+          await new Promise(resolve => setTimeout(resolve, 800));
         }
-      } catch (e) {
-        // Silent fail for factsheet or tournament page
+      } catch (err: any) {
+        console.error(`Background enricher failed for ${t.name}:`, err.message);
       }
     }
 
-    if (name) {
-      return { name, dates, link, ageGroup, source, distance, mapsLink, closingDeadline };
-    }
-    return null;
-  }));
-
-  return {
-    tournaments: results.filter((r): r is Tournament => r !== null),
-    players: Array.from(playersSet)
-  };
-}
-
-export async function runScraper() {
-  console.log("Starting daily scraper...");
-  const allTournaments: Tournament[] = [];
-  const allPlayers = new Set<string>();
-
-  try {
-    // Scrape HK
-    let page = 1;
-    let hasMore = true;
-    while (hasMore) {
-      console.log(`Fetching HK page ${page}...`);
-      const { tournaments, players } = await fetchPage("https://hkta.tournamentsoftware.com/find/tournament/DoSearch", page, "HK");
-      players.forEach(p => allPlayers.add(p));
-
-      if (tournaments.length === 0) {
-        hasMore = false;
-      } else {
-        // Deduplicate
-        const newResults = tournaments.filter(nr => !allTournaments.some(at => at.link === nr.link));
-        if (newResults.length === 0 && tournaments.length > 0) {
-          hasMore = false;
-        } else {
-          allTournaments.push(...newResults);
-          page++;
-        }
-      }
-      if (page > 20) hasMore = false; 
-      await new Promise(resolve => setTimeout(resolve, 500));
-    }
-
-    // Save HK data
-    const dataPath = path.join(process.cwd(), "public", "tournaments.json");
-    const playersPath = path.join(process.cwd(), "public", "players.json");
-
-    await fs.writeFile(dataPath, JSON.stringify({
-      lastUpdated: new Date().toISOString(),
-      tournaments: allTournaments
-    }, null, 2));
-    await fs.writeFile(playersPath, JSON.stringify(Array.from(allPlayers).sort(), null, 2));
-
-    // Scrape AUS
-    page = 1;
-    hasMore = true;
-    while (hasMore) {
-      console.log(`Fetching AUS page ${page}...`);
-      const { tournaments, players } = await fetchPage("https://tournaments.tennis.com.au/find/tournament/DoSearch", page, "AUS");
-      players.forEach(p => allPlayers.add(p));
-
-      if (tournaments.length === 0) {
-        hasMore = false;
-      } else {
-        const newResults = tournaments.filter(nr => !allTournaments.some(at => at.link === nr.link));
-        allTournaments.push(...newResults);
-        page++;
-        
-        await fs.writeFile(dataPath, JSON.stringify({
-          lastUpdated: new Date().toISOString(),
-          tournaments: allTournaments
-        }, null, 2));
-        await fs.writeFile(playersPath, JSON.stringify(Array.from(allPlayers).sort(), null, 2));
-      }
-      if (page > 20) hasMore = false;
-      await new Promise(resolve => setTimeout(resolve, 500));
-    }
-
-    console.log(`Scraping complete. Saved ${allTournaments.length} tournaments and ${allPlayers.size} players.`);
+    console.log("Scraping and background enrichment complete.");
   } catch (error) {
     console.error("Error during scraping:", error);
   }

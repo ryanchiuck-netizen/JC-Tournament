@@ -6,11 +6,13 @@ const MONTHS = [
 ];
 
 interface MonthTabsProps {
+  selectedYear: number;
+  setSelectedYear: (year: number) => void;
   selectedMonth: number | 'ALL';
   setSelectedMonth: (month: number | 'ALL') => void;
 }
 
-export const MonthTabs: React.FC<MonthTabsProps> = ({ selectedMonth, setSelectedMonth }) => {
+export const MonthTabs: React.FC<MonthTabsProps> = ({ selectedYear, setSelectedYear, selectedMonth, setSelectedMonth }) => {
   const monthTabs = useMemo(() => {
     const tabs = [];
     for (let i = 0; i < 12; i++) {
@@ -19,10 +21,25 @@ export const MonthTabs: React.FC<MonthTabsProps> = ({ selectedMonth, setSelected
     return tabs;
   }, []);
 
+  const years = useMemo(() => {
+    const arr = [];
+    for (let y = 2026; y <= 2036; y++) arr.push(y);
+    return arr;
+  }, []);
+
   return (
     <div className="bg-gray-900 border-b border-gray-800 sticky top-16 z-40">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex overflow-x-auto no-scrollbar py-2 gap-2">
+        <div className="flex overflow-x-auto no-scrollbar py-2 gap-2 items-center">
+          <select
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(parseInt(e.target.value, 10))}
+            className="px-3 py-1.5 text-sm font-medium rounded-full transition-all bg-gray-800/50 text-gray-200 border border-transparent hover:bg-gray-700 outline-none focus:ring-2 focus:ring-blue-500/50"
+          >
+            {years.map(y => (
+              <option key={y} value={y}>{y}</option>
+            ))}
+          </select>
           <button
             onClick={() => setSelectedMonth('ALL')}
             className={`px-4 py-1.5 text-sm font-medium rounded-full whitespace-nowrap transition-all ${
@@ -31,7 +48,7 @@ export const MonthTabs: React.FC<MonthTabsProps> = ({ selectedMonth, setSelected
                 : 'bg-gray-800/50 text-gray-400 border border-transparent hover:bg-gray-800 hover:text-gray-200'
             }`}
           >
-            All Year
+            All Months
           </button>
           {monthTabs.map(tab => (
             <button

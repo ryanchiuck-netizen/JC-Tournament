@@ -4,6 +4,7 @@ export interface Tournament {
   link: string;
   ageGroup: string;
   source: "HK" | "AUS";
+  location?: string;
   distance?: string;
   mapsLink?: string;
   closingDeadline?: string;

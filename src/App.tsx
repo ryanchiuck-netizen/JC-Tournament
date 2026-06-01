@@ -4,13 +4,15 @@ import {
   AlertCircle, 
   Filter,
   RefreshCw,
-  Clock
+  Clock,
+  Bell,
+  BellOff
 } from "lucide-react";
 import { AnimatePresence } from "motion/react";
 import * as XLSX from 'xlsx';
 
 import { Tournament, Region, AgeFilter } from "./types";
-import { fetchTournaments, getFullLink } from "./services/tournamentService";
+import { fetchTournaments, getFullLink, getTournamentState } from "./services/tournamentService";
 import { TournamentCard } from "./components/TournamentCard";
 import { FilterBar } from "./components/FilterBar";
 import { MonthTabs } from "./components/MonthTabs";
@@ -18,28 +20,81 @@ import { PlayerWatch } from "./components/PlayerWatch";
 import { PlayerScreen } from "./components/PlayerScreen";
 import { TournamentScreen } from "./components/TournamentScreen";
 import { DrawChecker } from "./components/DrawChecker";
+import { HistoryTab } from "./components/HistoryTab";
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<"tournaments" | "player-watch" | "player-screen" | "tournament-screen" | "draw-checker">("tournaments");
+  const [activeTab, setActiveTab] = useState<"tournaments" | "player-watch" | "player-screen" | "tournament-screen" | "draw-checker" | "alerts">("tournaments");
+  
+  // Notification Permission State
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>("default");
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && "Notification" in window) {
+      setNotificationPermission(Notification.permission);
+    }
+  }, []);
+
+  const requestNotificationPermission = async () => {
+    if (typeof window === "undefined" || !("Notification" in window)) {
+      alert("This browser does not support desktop notifications.");
+      return;
+    }
+    
+    try {
+      const permission = await Notification.requestPermission();
+      setNotificationPermission(permission);
+      
+      if (permission === "granted") {
+        new Notification("Notifications Enabled", {
+          body: "You will now receive notifications on JC Tennis Tournament Planner!",
+          icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTElZ9tTIVQ-qQzRwpEyM5aC2JlP2NbaHA6yR9rObvF7g&s"
+        });
+      }
+    } catch (error) {
+      console.error("Error requesting notification permission:", error);
+    }
+  };
+
+  const [savedDraws, setSavedDraws] = useState<any[]>([]);
   const [allTournaments, setAllTournaments] = useState<Tournament[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  const [isScraping, setIsScraping] = useState<boolean>(false);
   
-  const [region, setRegion] = useState<Region>("BOTH");
+  const [region, setRegion] = useState<Region>("AUS");
   const [ageFilter, setAgeFilter] = useState<AgeFilter>("ALL");
   const [within120km, setWithin120km] = useState<boolean>(false);
   
   const currentMonthIndex = new Date().getMonth();
+  const currentYearValue = new Date().getFullYear();
   const [selectedMonth, setSelectedMonth] = useState<number | 'ALL'>(currentMonthIndex);
+  const [selectedYear, setSelectedYear] = useState<number>(currentYearValue);
+  const [auState, setAuState] = useState<string>("NSW");
+
+  const fetchSavedDraws = async () => {
+    try {
+      const res = await fetch('/api/saved-draws');
+      if (res.ok) {
+        const data = await res.json();
+        setSavedDraws(data.draws || []);
+      }
+    } catch (err) {
+      console.error("Failed to fetch saved draws:", err);
+    }
+  };
 
   const fetchStaticData = async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await fetchTournaments();
+      const [data] = await Promise.all([
+        fetchTournaments(),
+        fetchSavedDraws()
+      ]);
       setAllTournaments(data.tournaments || []);
+      setIsScraping(!!data.isScraping);
       if (data.lastUpdated) {
         setLastUpdated(new Date(data.lastUpdated));
       }
@@ -84,6 +139,12 @@ export default function App() {
       // Search filter
       if (searchTerm && !t.name.toLowerCase().includes(searchTerm.toLowerCase()) && !t.dates.toLowerCase().includes(searchTerm.toLowerCase())) return false;
       
+      // State filter for tennis Australia tournaments
+      if (auState !== "ALL") {
+        if (t.source !== "AUS") return false;
+        if (getTournamentState(t) !== auState) return false;
+      }
+      
       // Month filter
       if (selectedMonth !== 'ALL') {
         const parts = t.dates.split(" to ");
@@ -93,9 +154,8 @@ export default function App() {
           if (startMatch && endMatch) {
             const startDate = new Date(parseInt(startMatch[3]), parseInt(startMatch[2]) - 1, parseInt(startMatch[1]));
             const endDate = new Date(parseInt(endMatch[3]), parseInt(endMatch[2]) - 1, parseInt(endMatch[1]));
-            const currentYear = new Date().getFullYear();
-            const targetMonthStart = new Date(currentYear, selectedMonth as number, 1);
-            const targetMonthEnd = new Date(currentYear, (selectedMonth as number) + 1, 0);
+            const targetMonthStart = new Date(selectedYear, selectedMonth as number, 1);
+            const targetMonthEnd = new Date(selectedYear, (selectedMonth as number) + 1, 0);
             
             // Check if the tournament range overlaps with the selected month
             if (endDate < targetMonthStart || startDate > targetMonthEnd) return false;
@@ -104,14 +164,35 @@ export default function App() {
           const match = t.dates.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
           if (match) {
             const month = parseInt(match[2], 10) - 1;
-            if (month !== selectedMonth) return false;
+            const year = parseInt(match[3], 10);
+            if (month !== selectedMonth || year !== selectedYear) return false;
+          }
+        }
+      } else {
+        // Year filter when ALL months is selected
+        const parts = t.dates.split(" to ");
+        if (parts.length === 2) {
+          const startMatch = parts[0].match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+          const endMatch = parts[1].match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+          if (startMatch && endMatch) {
+            const startYear = parseInt(startMatch[3], 10);
+            const endYear = parseInt(endMatch[3], 10);
+            if (selectedYear < startYear || selectedYear > endYear) {
+              return false;
+            }
+          }
+        } else {
+          const match = t.dates.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+          if (match) {
+            const year = parseInt(match[3], 10);
+            if (year !== selectedYear) return false;
           }
         }
       }
       
       return true;
     });
-  }, [allTournaments, region, ageFilter, searchTerm, selectedMonth, within120km]);
+  }, [allTournaments, region, ageFilter, searchTerm, selectedMonth, selectedYear, within120km, auState]);
 
   const handleExport = () => {
     const dataToExport = allTournaments.map(t => ({
@@ -119,6 +200,7 @@ export default function App() {
       'Dates': t.dates,
       'Age Group': t.ageGroup,
       'Region': t.source,
+      'State': t.source === 'AUS' ? getTournamentState(t) : '',
       'Distance': t.distance || '',
       'Closing Deadline': t.closingDeadline || '',
       'Link': getFullLink(t.link, t.source),
@@ -133,6 +215,7 @@ export default function App() {
       { wch: 25 }, // Dates
       { wch: 15 }, // Age Group
       { wch: 10 }, // Region
+      { wch: 10 }, // State
       { wch: 15 }, // Distance
       { wch: 15 }, // Closing Deadline
       { wch: 50 }, // Link
@@ -167,20 +250,39 @@ export default function App() {
               </div>
               
               <div className="flex items-center gap-3 sm:hidden">
+                <button
+                  type="button"
+                  onClick={requestNotificationPermission}
+                  className={`p-1.5 rounded-xl border transition-all duration-200 cursor-pointer flex items-center gap-1 focus:outline-none select-none ${
+                    notificationPermission === "granted"
+                      ? "bg-emerald-500/10 text-emerald-405 border-emerald-500/20"
+                      : notificationPermission === "denied"
+                      ? "bg-rose-500/10 text-rose-405 border-rose-500/20"
+                      : "bg-gray-800 hover:bg-gray-750 text-gray-300 border-gray-700/60"
+                  }`}
+                  title={
+                    notificationPermission === "granted"
+                      ? "Notifications enabled"
+                      : notificationPermission === "denied"
+                      ? "Notifications blocked"
+                      : "Enable notifications"
+                  }
+                >
+                  {notificationPermission === "granted" ? (
+                    <Bell className="w-4.5 h-4.5 text-emerald-400 animate-pulse" />
+                  ) : notificationPermission === "denied" ? (
+                    <BellOff className="w-4.5 h-4.5 text-rose-405" />
+                  ) : (
+                    <Bell className="w-4.5 h-4.5 text-gray-400" />
+                  )}
+                  <span className="text-[10px] font-black uppercase tracking-wider">
+                    {notificationPermission === "granted" ? "On" : notificationPermission === "denied" ? "Off" : "Alerts"}
+                  </span>
+                </button>
               </div>
             </div>
 
             <nav className="flex items-center gap-1 bg-gray-800/50 p-1 rounded-lg overflow-x-auto w-full sm:w-auto no-scrollbar">
-              <button
-                onClick={() => setActiveTab("tournaments")}
-                className={`px-3 sm:px-4 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
-                  activeTab === "tournaments" 
-                    ? "bg-gray-700 text-white shadow-sm" 
-                    : "text-gray-400 hover:text-gray-200"
-                }`}
-              >
-                Tournaments
-              </button>
               <button
                 onClick={() => setActiveTab("tournament-screen")}
                 className={`px-3 sm:px-4 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
@@ -221,16 +323,74 @@ export default function App() {
               >
                 Player Search
               </button>
+              <button
+                onClick={() => setActiveTab("tournaments")}
+                className={`px-3 sm:px-4 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
+                  activeTab === "tournaments" 
+                    ? "bg-white/10 text-white shadow-sm" 
+                    : "text-gray-400 hover:text-gray-200"
+                }`}
+              >
+                Tournaments
+              </button>
+              <button
+                onClick={() => setActiveTab("alerts")}
+                className={`px-3 sm:px-4 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                  activeTab === "alerts" 
+                    ? "bg-white/10 text-white shadow-sm" 
+                    : "text-gray-400 hover:text-gray-200"
+                }`}
+              >
+                Alerts
+              </button>
             </nav>
           </div>
           
           <div className="hidden sm:flex items-center gap-4">
+            <button
+              type="button"
+              onClick={requestNotificationPermission}
+              className={`p-2 px-3 rounded-xl border transition-all duration-200 cursor-pointer flex items-center gap-2 focus:outline-none select-none ${
+                notificationPermission === "granted"
+                  ? "bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border-emerald-500/20"
+                  : notificationPermission === "denied"
+                  ? "bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border-rose-500/20"
+                  : "bg-gray-800 hover:bg-gray-750 text-gray-300 border-gray-700/60"
+              }`}
+              title={
+                notificationPermission === "granted"
+                  ? "Notifications enabled"
+                  : notificationPermission === "denied"
+                  ? "Notifications blocked"
+                  : "Enable notifications"
+              }
+            >
+              {notificationPermission === "granted" ? (
+                <Bell className="w-4 h-4 text-emerald-400 animate-pulse" />
+              ) : notificationPermission === "denied" ? (
+                <BellOff className="w-4 h-4 text-rose-400" />
+              ) : (
+                <Bell className="w-4 h-4 text-gray-400" />
+              )}
+              <span className="text-xs font-bold uppercase tracking-wider">
+                {notificationPermission === "granted"
+                  ? "Notifications On"
+                  : notificationPermission === "denied"
+                  ? "Notifications Blocked"
+                  : "Enable Alerts"}
+              </span>
+            </button>
           </div>
         </div>
       </header>
 
       {activeTab === "tournaments" && (
-        <MonthTabs selectedMonth={selectedMonth} setSelectedMonth={setSelectedMonth} />
+        <MonthTabs 
+          selectedYear={selectedYear} 
+          setSelectedYear={setSelectedYear} 
+          selectedMonth={selectedMonth} 
+          setSelectedMonth={setSelectedMonth} 
+        />
       )}
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
@@ -268,9 +428,20 @@ export default function App() {
               </button>
             </div>
 
-            <div className="flex items-center gap-1.5 text-xs text-gray-500 bg-gray-900/30 px-3 py-1.5 rounded-lg border border-gray-800/50">
-              <Clock className="w-3.5 h-3.5" />
-              Updated {lastUpdated.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Asia/Hong_Kong' }).replace(/ /g, '-')} {lastUpdated.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Hong_Kong' })} HKT
+            <div className="flex items-center gap-3">
+              {isScraping && (
+                <div className="flex items-center gap-1.5 text-xs text-amber-400 bg-amber-500/10 px-3 py-1.5 rounded-lg border border-amber-500/20 font-medium">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                  </span>
+                  Scraper Active
+                </div>
+              )}
+              <div className="flex items-center gap-1.5 text-xs text-gray-500 bg-gray-900/30 px-3 py-1.5 rounded-lg border border-gray-800/50">
+                <Clock className="w-3.5 h-3.5" />
+                Updated {lastUpdated.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Asia/Hong_Kong' }).replace(/ /g, '-')} {lastUpdated.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Hong_Kong' })} HKT
+              </div>
             </div>
           </div>
 
@@ -282,6 +453,9 @@ export default function App() {
             searchTerm={searchTerm}
             setSearchTerm={setSearchTerm}
             handleExport={handleExport}
+            auState={auState}
+            setAuState={setAuState}
+            showStateFilter={region !== 'HK'}
           />
 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-gray-500 mb-6">
@@ -318,7 +492,13 @@ export default function App() {
                 </div>
               ) : filteredTournaments.length > 0 ? (
                 filteredTournaments.map((t, i) => (
-                  <TournamentCard key={i} tournament={t} index={i} />
+                  <TournamentCard 
+                    key={i} 
+                    tournament={t} 
+                    index={i} 
+                    savedDraws={savedDraws} 
+                    onSavedDrawsChanged={fetchSavedDraws} 
+                  />
                 ))
               ) : !loading && (
                 <div className="p-16 flex flex-col items-center justify-center gap-3 text-gray-500">
@@ -349,6 +529,10 @@ export default function App() {
 
         <div className={activeTab === "draw-checker" ? "block" : "hidden"}>
           <DrawChecker />
+        </div>
+
+        <div className={activeTab === "alerts" ? "block" : "hidden"}>
+          <HistoryTab />
         </div>
 
       {/* Footer */}

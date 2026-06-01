@@ -10,6 +10,27 @@ import pLimit from "p-limit";
 import cookieParser from "cookie-parser";
 import { createClient } from "@supabase/supabase-js";
 
+function getQueryParts(playerName: string): string[] {
+  if (!playerName) return [];
+  const clean = playerName
+    .replace(/\[.*?\]|\(.*?\)/g, '')
+    .toLowerCase()
+    .trim();
+  return clean.split(/[\s,.-]+/).filter(Boolean);
+}
+
+function isPlayerNameMatch(tPlayerName: string, queryParts: string[]): boolean {
+  if (!tPlayerName || queryParts.length === 0) return false;
+  const cleanCandidate = tPlayerName
+    .replace(/\[.*?\]|\(.*?\)/g, '')
+    .toLowerCase()
+    .trim();
+  const candidateWords = cleanCandidate.split(/[\s,.-]+/).filter(Boolean);
+  return queryParts.every(part => 
+    candidateWords.some(word => word === part)
+  );
+}
+
 async function startServer() {
   const app = express();
   const PORT = 3000;
@@ -40,6 +61,69 @@ async function startServer() {
   let isScraping = false;
   let refreshTournamentsForPlayersCache: () => Promise<any>;
 
+  const wrappedRunScraper = async () => {
+    // 1. Get existing tournament links
+    const oldLinks = new Set<string>();
+    try {
+      const rawContent = await fs.readFile(dataPath, "utf-8");
+      const parsed = JSON.parse(rawContent);
+      if (parsed && Array.isArray(parsed.tournaments)) {
+        for (const t of parsed.tournaments) {
+          if (t.link) {
+            oldLinks.add(t.link);
+          }
+        }
+      }
+    } catch (e) {
+      console.log("No previous tournaments before runScraper.");
+    }
+
+    // 2. Run the actual scraper
+    await runScraper();
+
+    // 3. Analyze newly added tournaments
+    try {
+      const rawNew = await fs.readFile(dataPath, "utf-8");
+      const parsedNew = JSON.parse(rawNew);
+      if (parsedNew && Array.isArray(parsedNew.tournaments)) {
+        const newNSWNotifications: any[] = [];
+        for (const t of parsedNew.tournaments) {
+          if (t.link && !oldLinks.has(t.link)) {
+            // New tournament!
+            const nameUpper = (t.name || "").toUpperCase();
+            const locUpper = (t.location || "").toUpperCase();
+            if (t.source === "AUS" && (nameUpper.includes("NSW") || locUpper.includes("NSW"))) {
+              const dateStr = t.dates || "Unknown Dates";
+              newNSWNotifications.push({
+                id: `nsw-tournament-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+                player: 'System',
+                title: `New NSW Tournament Created`,
+                body: `New NSW Tournament: ${t.name}\nDates: ${dateStr}\nLocation: ${t.location || "Unknown"}`,
+                type: 'NSW_Tournament',
+                source: 'AUS',
+                date: new Date().toISOString().split('T')[0],
+                timestamp: new Date().toISOString(),
+                url: `/#tournaments`
+              });
+            }
+          }
+        }
+
+        if (newNSWNotifications.length > 0) {
+          console.log(`Detected ${newNSWNotifications.length} new NSW tournaments. Saving alerts...`);
+          let existingNotifications = [];
+          try {
+            existingNotifications = await getNotificationsHistory(null, null);
+          } catch (e) {}
+          const merged = [...newNSWNotifications, ...existingNotifications];
+          await saveNotificationsHistory(null, null, merged);
+        }
+      }
+    } catch (e: any) {
+      console.error("Error analyzing new tournaments for NSW alerts:", e.message || e);
+    }
+  };
+
   const checkAndScrape = async () => {
     try {
       await fs.access(dataPath);
@@ -58,7 +142,7 @@ async function startServer() {
     } catch {
       console.log("tournaments.json not found. Running initial scrape...");
       isScraping = true;
-      runScraper()
+      wrappedRunScraper()
         .then(async () => {
           if (refreshTournamentsForPlayersCache) {
             await refreshTournamentsForPlayersCache().catch(console.error);
@@ -74,7 +158,7 @@ async function startServer() {
   cron.schedule('0 9,13,18 * * *', () => {
     console.log("Running scheduled scrape at 9 AM/1 PM/6 PM HKT...");
     isScraping = true;
-    runScraper()
+    wrappedRunScraper()
       .then(async () => {
         if (refreshTournamentsForPlayersCache) {
           try {
@@ -109,6 +193,21 @@ async function startServer() {
   app.get("/api/tournaments/static", requireAuth, getTournamentsHandler);
   app.get("/api/tournaments", requireAuth, getTournamentsHandler);
 
+  app.post("/api/force-scrape", requireAuth, async (req, res) => {
+    if (isScraping) {
+      return res.status(400).json({ error: "Scraping already in progress" });
+    }
+    isScraping = true;
+    wrappedRunScraper()
+      .then(async () => {
+        if (refreshTournamentsForPlayersCache) {
+          await refreshTournamentsForPlayersCache().catch(console.error);
+        }
+      })
+      .finally(() => { isScraping = false; });
+    res.json({ message: "Scraping started in background" });
+  });
+
   // API route to get player names for autofill
   app.get("/api/players", requireAuth, async (req, res) => {
     try {
@@ -135,8 +234,7 @@ async function startServer() {
       
       const limit = pLimit(5);
       const matches: any[] = [];
-      const cleanPlayerName = playerName.replace(/\[.*?\]|\(.*?\)/g, '').replace(/[,.]/g, '').trim();
-      const queryParts = cleanPlayerName.toLowerCase().split(/\s+/);
+      const queryParts = getQueryParts(playerName);
 
       const searchTasks = tournaments.map((tournament: any) => 
         limit(async () => {
@@ -149,7 +247,7 @@ async function startServer() {
           // If we have pre-scraped players, filter. If empty or absent, we assume they could be in it.
           if (tournament.players && tournament.players.length > 0) {
             const isMatch = tournament.players.some((tPlayerName: string) => 
-               queryParts.every(part => tPlayerName.toLowerCase().replace(/[,.]/g, '').includes(part))
+               isPlayerNameMatch(tPlayerName, queryParts)
             );
             if (!isMatch) return;
           }
@@ -175,9 +273,9 @@ async function startServer() {
               let playerDetailLink = "";
 
               $("li.js-alphabet-list-item").each((i, el) => {
-                const name = $(el).find(".media__title").text().trim().toLowerCase().replace(/[,.]/g, '');
+                const name = $(el).find(".media__title").text().trim();
                 // Match if all parts of the query are found in the player's name
-                if (queryParts.every(part => name.includes(part))) {
+                if (isPlayerNameMatch(name, queryParts)) {
                   playerDetailLink = $(el).find(".media__title a").attr("href") || "";
                   return false; // break
                 }
@@ -510,10 +608,9 @@ async function startServer() {
 
           // If we have pre-scraped players, filter.
           if (tournament.players && tournament.players.length > 0) {
-            const cleanPlayerName = player.name.replace(/\[.*?\]|\(.*?\)/g, '').replace(/[,.]/g, '').trim();
-            const queryParts = cleanPlayerName.toLowerCase().split(/\s+/);
+            const queryParts = getQueryParts(player.name);
             return tournament.players.some((tPlayerName: string) => 
-               queryParts.every(part => tPlayerName.toLowerCase().replace(/[,.]/g, '').includes(part))
+               isPlayerNameMatch(tPlayerName, queryParts)
             );
           }
           return true;
@@ -541,8 +638,7 @@ async function startServer() {
               const joinedPlayers: any[] = [];
 
               for (const player of likelyPlayers) {
-                const cleanPlayerName = player.name.replace(/\[.*?\]|\(.*?\)/g, '').replace(/[,.]/g, '').trim();
-                const queryParts = cleanPlayerName.toLowerCase().split(/\s+/);
+                const queryParts = getQueryParts(player.name);
 
                 const quickMatch = queryParts.every(part => dataLower.includes(part));
 
@@ -550,8 +646,8 @@ async function startServer() {
                   let playerDetailLink = "";
 
                   $("li.js-alphabet-list-item").each((i, el) => {
-                    const name = $(el).find(".media__title").text().trim().toLowerCase().replace(/[,.]/g, '');
-                    if (queryParts.every(part => name.includes(part))) {
+                    const name = $(el).find(".media__title").text().trim();
+                    if (isPlayerNameMatch(name, queryParts)) {
                       playerDetailLink = $(el).find(".media__title a").attr("href") || "";
                       return false; // break
                     }
@@ -1240,8 +1336,27 @@ async function startServer() {
           
           tournamentName = $t(".media__title").first().text().trim();
           const items = $t(".media__content small, .media__content .text-muted, .text-muted.media__subheading, .media__title + span, span[class*=\"date\"]").map((_, e)=>$t(e).text().trim()).get();
-          if (items.length > 1) {
-            tournamentDate = items[1]; // Typically "6 Jul to 10 Jul" etc
+          
+          // Try to find an item that contains a date pattern
+          const dateRegexes = [
+            /\d{1,2}\/\d{1,2}\/\d{4}/,       // DD/MM/YYYY
+            /\d{4}-\d{1,2}-\d{1,2}/,       // YYYY-MM-DD
+            /\d{1,2}\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)/i,  // 12 Jan
+            /(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2}/i   // Jan 12
+          ];
+          
+          let foundDate = false;
+          for (const item of items) {
+            if (dateRegexes.some(rx => rx.test(item))) {
+              tournamentDate = item;
+              foundDate = true;
+              break;
+            }
+          }
+          
+          // Fallback if no specific date pattern found but items exist
+          if (!foundDate && items.length > 1 && !items[1].includes("GMT") && !items[1].toLowerCase().includes("entries")) {
+            tournamentDate = items[1];
           }
         }
       } catch (e: any) {
@@ -1537,8 +1652,10 @@ async function startServer() {
         if (error) {
           if (error.message.includes("Could not find the table")) {
             console.log("Supabase 'notifications_history' table not found. Skipping Supabase backup (local save succeeded).");
+          } else if (error.code === '42501' || error.message.includes("row-level security")) {
+            console.log("Supabase RLS is blocking notifications insert. Please run 'alter table public.notifications_history disable row level security;' in your Supabase SQL editor. Local fallback used successfully.");
           } else {
-            console.log("Error saving notifications to Supabase:", error.message);
+            console.log("Supabase notifications write warning:", error.message);
           }
         }
       } catch (err: any) {
@@ -1586,7 +1703,11 @@ async function startServer() {
               .upsert(rows, { onConflict: "id" });
 
             if (upsertError) {
-              console.log("Failed to migrate local notifications to Supabase:", upsertError.message);
+              if (upsertError.code === '42501' || upsertError.message.includes("row-level security")) {
+                console.log("Supabase RLS is blocking migration. Please run 'alter table public.notifications_history disable row level security;' in your SQL editor.");
+              } else {
+                console.log("Failed to migrate local notifications to Supabase warning:", upsertError.message);
+              }
             } else {
               console.log(`Successfully migrated ${localNotifications.length} notifications to Supabase!`);
             }
@@ -1897,7 +2018,47 @@ async function startServer() {
 
   app.get("/api/notifications/history", requireAuth, async (req, res) => {
     try {
-      const notifications = await getNotificationsHistory(req, res);
+      let notifications = await getNotificationsHistory(req, res);
+      
+      // Bootstrap from reference app if empty
+      if (notifications.length === 0) {
+        try {
+          const resp = await axios.get('https://jc-tournament-planner-569341375821.us-west1.run.app/api/notifications/history', { timeout: 5000 });
+          if (Array.isArray(resp.data) && resp.data.length > 0) {
+            const flatNotifications: any[] = [];
+            resp.data.forEach((group: any) => {
+              if (group.notifications && Array.isArray(group.notifications)) {
+                group.notifications.forEach((n: any, index: number) => {
+                  const titleUpper = (n.title || '').toUpperCase();
+                  const bodyUpper = (n.body || '').toUpperCase();
+                  const isNSW = titleUpper.includes('NSW') || bodyUpper.includes('NSW') || bodyUpper.includes('TWEED COAST') || titleUpper.includes('NSW_TOURNAMENT') || n.type === 'NSW_Tournament' || n.type === 'NSW';
+                  const isDrawWatcher = titleUpper.includes('NEW PLAYER IN DRAW') || titleUpper.includes('DRAW WATCHER') || n.type === 'Draw_Watcher' || n.type === 'Draw' || (bodyUpper.includes('JOINED') && titleUpper.includes('DRAW'));
+                  
+                  flatNotifications.push({
+                    id: `bootstrapped-${Date.now()}-${group.date}-${index}`,
+                    player: isNSW ? 'System' : (n.title?.split(' ')[0] || n.body?.split(' ')[0] || 'Unknown'),
+                    title: n.title || 'Notification',
+                    body: n.body || '',
+                    type: n.title?.includes('Win:Loss') ? 'Win:Loss' : n.title?.includes('Joined') ? 'Tournament' : isNSW ? 'NSW_Tournament' : isDrawWatcher ? 'Draw_Watcher' : 'Other',
+                    source: 'Unknown',
+                    date: group.date || n.timestamp?.split('T')[0] || new Date().toISOString().split('T')[0],
+                    timestamp: n.timestamp || new Date().toISOString(),
+                    url: n.url || (isNSW ? '/#tournaments' : isDrawWatcher ? '/#saved-draws' : '/#player-screen')
+                  });
+                });
+              }
+            });
+            
+            if (flatNotifications.length > 0) {
+              notifications = flatNotifications;
+              await saveNotificationsHistory(req, res, notifications);
+            }
+          }
+        } catch (fetchErr: any) {
+          console.log("Failed to bootstrap notifications from reference app:", fetchErr.message);
+        }
+      }
+
       res.json(notifications);
     } catch (err) {
       console.error("Failed to get notifications history:", err);
@@ -1924,7 +2085,11 @@ async function startServer() {
               .eq("timestamp", item.timestamp);
           }
         } catch (err: any) {
-          console.error("Error deleting notifications from Supabase:", err.message || err);
+          if (err.code === '42501' || (err.message && err.message.includes("row-level security"))) {
+            console.log("Supabase RLS is blocking deletion. Please disable RLS. Local fallback used.");
+          } else {
+            console.log("Supabase deletion warning:", err.message || err);
+          }
         }
       }
 

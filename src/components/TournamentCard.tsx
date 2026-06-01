@@ -1,21 +1,31 @@
-import React from "react";
+import React, { useState } from "react";
 import { 
   Calendar, 
   MapPin, 
   CalendarPlus, 
-  ChevronRight 
+  ChevronRight,
+  Layers,
+  RefreshCw
 } from "lucide-react";
 import { motion } from "motion/react";
 import { Tournament } from "../types";
-import { getFullLink, getGoogleCalendarLink } from "../services/tournamentService";
+import { getFullLink, getGoogleCalendarLink, getTournamentState } from "../services/tournamentService";
+
+function normalizeUrl(urlStr: string): string {
+  if (!urlStr) return '';
+  return urlStr.split('#')[0].toLowerCase().trim();
+}
 
 interface TournamentCardProps {
   tournament: Tournament;
   index: number;
+  savedDraws?: any[];
+  onSavedDrawsChanged?: () => void;
 }
 
-export const TournamentCard: React.FC<TournamentCardProps> = ({ tournament, index }) => {
+export const TournamentCard: React.FC<TournamentCardProps> = ({ tournament, index, savedDraws = [], onSavedDrawsChanged }) => {
   const t = tournament;
+  const [isProcessing, setIsProcessing] = useState(false);
   
   const getDeadlineInfo = () => {
     if (!t.closingDeadline) return null;
@@ -35,6 +45,61 @@ export const TournamentCard: React.FC<TournamentCardProps> = ({ tournament, inde
       }
     }
     return null;
+  };
+
+  const fullLink = getFullLink(t.link, t.source);
+  const savedDraw = savedDraws.find((sd) => normalizeUrl(sd.url) === normalizeUrl(fullLink));
+  const isSaved = !!savedDraw;
+
+  const handleToggleDraws = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsProcessing(true);
+    try {
+      if (isSaved && savedDraw) {
+        const deleteRes = await fetch(`/api/saved-draws/${savedDraw.id}`, {
+          method: 'DELETE',
+        });
+        if (deleteRes.ok && onSavedDrawsChanged) {
+          onSavedDrawsChanged();
+        }
+      } else {
+        const checkRes = await fetch('/api/check-draw', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: fullLink }),
+        });
+        
+        let finalUrl = fullLink;
+        let finalPlayers = [];
+        if (checkRes.ok) {
+          const data = await checkRes.json();
+          if (data.tournamentDate && !finalUrl.includes('#date=')) {
+            finalUrl += `#date=${encodeURIComponent(data.tournamentDate)}`;
+          }
+          if (data.players) {
+            finalPlayers = data.players;
+          }
+        }
+        
+        const saveRes = await fetch('/api/saved-draws', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            url: finalUrl,
+            region: t.source === 'HK' ? 'HKTA' : 'AUS',
+            name: t.name,
+            players: finalPlayers
+          })
+        });
+        if (saveRes.ok && onSavedDrawsChanged) {
+          onSavedDrawsChanged();
+        }
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -68,6 +133,11 @@ export const TournamentCard: React.FC<TournamentCardProps> = ({ tournament, inde
               <span>{t.source === 'HK' ? '🇭🇰' : '🇦🇺'}</span>
               {t.source}
             </div>
+            {t.source === 'AUS' && (
+              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-semibold border border-teal-800/30 text-teal-400 bg-teal-900/20">
+                {getTournamentState(t)}
+              </div>
+            )}
           </div>
           
           {t.closingDeadline && (
@@ -111,6 +181,26 @@ export const TournamentCard: React.FC<TournamentCardProps> = ({ tournament, inde
           >
             <CalendarPlus className="w-4 h-4" />
           </a>
+
+          <button
+            onClick={handleToggleDraws}
+            disabled={isProcessing}
+            className={`w-9 h-9 flex items-center justify-center rounded-full transition-all duration-200 border cursor-pointer ${
+              isProcessing ? 'animate-pulse opacity-75' : ''
+            } ${
+              isSaved 
+                ? 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border-emerald-500/30 shadow-[0_0_12px_rgba(16,185,129,0.15)] animate-none' 
+                : 'bg-gray-800 hover:bg-gray-700 text-gray-400 border-gray-700/50'
+            }`}
+            title={isSaved ? "Remove from Draw Checker" : "Save to Draw Checker"}
+          >
+            {isProcessing ? (
+              <RefreshCw className="w-4 h-4 animate-spin text-blue-400" />
+            ) : (
+              <Layers className="w-4 h-4" />
+            )}
+          </button>
+
           <a 
             href={getFullLink(t.link, t.source)}
             target="_blank" 

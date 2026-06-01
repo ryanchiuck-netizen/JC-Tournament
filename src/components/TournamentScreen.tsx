@@ -689,6 +689,23 @@ function TournamentItem({
           </div>
         </div>
         <div className="flex items-center gap-3 shrink-0">
+          {t.tournament.mapsLink && (
+            <a 
+              href={t.tournament.mapsLink}
+              target="_blank" 
+              rel="noopener noreferrer"
+              className={`w-9 h-9 flex items-center justify-center rounded-full transition-colors ${
+                containsJordan 
+                  ? 'bg-yellow-500/10 hover:bg-yellow-500/25 text-yellow-400' 
+                  : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
+              }`}
+              title="Open in Google Maps"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <MapPin className="w-4 h-4" />
+            </a>
+          )}
+
           <a 
             href={getGoogleCalendarLink(t.tournament as Tournament)}
             target="_blank" 
