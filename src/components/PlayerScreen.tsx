@@ -33,42 +33,46 @@ interface SavedPlayer {
   points?: string;
 }
 
-function PlayerTournamentsModal({ player, onClose }: { player: SavedPlayer, onClose: () => void }) {
-  const [tournaments, setTournaments] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchTournaments = async () => {
-      try {
-        const res = await fetch(`/api/player-watch?name=${encodeURIComponent(player.name)}&source=${encodeURIComponent(player.source || '')}`);
-        if (res.ok) {
-          const resClone = res.clone();
-          try {
-            const data = await res.json();
-            const futureTournaments = data.matches.filter((m: any) => {
-              if (!m.tournamentDates) return false;
-              const parts = m.tournamentDates.split(' to ');
-              const dateToParse = parts[parts.length - 1].trim();
-              const [day, month, year] = dateToParse.split('/');
-              if (!day || !month || !year) return false;
-              const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-              const today = new Date();
-              today.setHours(0, 0, 0, 0);
-              return date >= today;
+function PlayerTournamentsModal({ 
+  player, 
+  onClose, 
+  tournamentsCache, 
+  isTournamentsCacheLoading 
+}: { 
+  player: SavedPlayer, 
+  onClose: () => void, 
+  tournamentsCache: any[], 
+  isTournamentsCacheLoading: boolean 
+}) {
+  const tournaments = useMemo(() => {
+    if (isTournamentsCacheLoading) return [];
+    
+    const matches: any[] = [];
+    const queryParts = player.name.toLowerCase().split(' ').filter(Boolean);
+    
+    for (const t of (tournamentsCache || [])) {
+      if (player.source === "HKTA" && t.tournament.source !== "HK") continue;
+      if (player.source === "TA" && t.tournament.source !== "AUS") continue;
+      
+      const jPlayers = t.joinedPlayers || [];
+      for (const jp of jPlayers) {
+        const isMatch = queryParts.every((part: string) => jp.player.name.toLowerCase().includes(part));
+        if (isMatch) {
+          for (const draw of jp.draws || []) {
+            matches.push({
+              tournamentName: t.tournament.name,
+              tournamentLink: t.tournament.link.startsWith('http') ? t.tournament.link : `https://${t.tournament.source==='HK'?'hkta.tournamentsoftware.com':'tournaments.tennis.com.au'}${t.tournament.link}`,
+              tournamentDates: t.tournament.dates,
+              drawName: draw.drawName,
+              drawLink: draw.drawLink
             });
-            setTournaments(futureTournaments);
-          } catch (e) {
-            console.error("Failed to parse /api/player-watch JSON. Response text:", await resClone.text());
           }
         }
-      } catch (e) {
-        console.error("Failed to fetch player tournaments", e);
-      } finally {
-        setLoading(false);
       }
-    };
-    fetchTournaments();
-  }, [player.name]);
+    }
+    
+    return matches;
+  }, [player.name, player.source, tournamentsCache, isTournamentsCacheLoading]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
@@ -83,7 +87,7 @@ function PlayerTournamentsModal({ player, onClose }: { player: SavedPlayer, onCl
           </button>
         </div>
         <div className="p-6 overflow-y-auto flex-1">
-          {loading ? (
+          {isTournamentsCacheLoading ? (
             <div className="flex flex-col items-center justify-center py-12 gap-3">
               <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
               <p className="text-gray-400 text-sm">Searching for tournaments...</p>
@@ -134,7 +138,8 @@ function SortablePlayerRow({
   activeTab, 
   isRefreshing, 
   onViewHistory,
-  previousPlayerData
+  previousPlayerData,
+  onRefreshPlayer
 }: { 
   player: SavedPlayer, 
   removePlayer: (id: string) => void | Promise<void>, 
@@ -143,7 +148,8 @@ function SortablePlayerRow({
   isRefreshing?: boolean, 
   onViewHistory: (playerName: string) => void,
   previousPlayerData?: any,
-  key?: any 
+  key?: any,
+  onRefreshPlayer?: (id: string) => void | Promise<void>
 }) {
   const {
     attributes,
@@ -257,6 +263,14 @@ function SortablePlayerRow({
         {renderStat(player.championships, previousPlayerData?.championships)}
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium animate-fade-in" onClick={(e) => e.stopPropagation()}>
+        <button
+          onClick={() => onRefreshPlayer && onRefreshPlayer(player.id)}
+          disabled={isRefreshing}
+          className={`text-gray-500 hover:text-green-400 hover:bg-green-400/10 p-2 rounded-lg transition-colors mr-1 ${isRefreshing ? 'cursor-not-allowed opacity-50' : ''}`}
+          title="Refresh player stats and tournaments"
+        >
+          <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-green-400' : ''}`} />
+        </button>
         <button
           onClick={() => onViewHistory(player.name)}
           className="text-gray-500 hover:text-blue-400 hover:bg-blue-400/10 p-2 rounded-lg transition-colors mr-1"
@@ -516,7 +530,15 @@ function HistoryView({
   );
 }
 
-export function PlayerScreen() {
+export function PlayerScreen({
+  tournamentsCache = [],
+  isTournamentsCacheLoading = false,
+  reloadTournamentsCache
+}: {
+  tournamentsCache?: any[],
+  isTournamentsCacheLoading?: boolean,
+  reloadTournamentsCache?: () => void
+}) {
   const [players, setPlayers] = useState<SavedPlayer[]>([]);
   const [activeTab, setActiveTab] = useState<'TA' | 'HKTA'>('TA');
   const [newName, setNewName] = useState('');
@@ -525,9 +547,55 @@ export function PlayerScreen() {
   const [error, setError] = useState<string | null>(null);
   const [selectedPlayer, setSelectedPlayer] = useState<SavedPlayer | null>(null);
   const [isRefreshingAll, setIsRefreshingAll] = useState(false);
+  const [refreshingIds, setRefreshingIds] = useState<Set<string>>(new Set());
   const [showHistory, setShowHistory] = useState(false);
   const [historyPlayerFilter, setHistoryPlayerFilter] = useState<string>("");
   const [yesterdaySnapshot, setYesterdaySnapshot] = useState<any>(null);
+
+  // Poll for background global refresh status
+  useEffect(() => {
+    let intervalId: any = null;
+
+    const checkRefreshStatus = async () => {
+      try {
+        const res = await fetch("/api/admin/refresh-status");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.inProgress) {
+            setIsRefreshingAll(true);
+            if (!intervalId) {
+              intervalId = setInterval(checkRefreshStatus, 3000);
+            }
+          } else {
+            if (isRefreshingAll) {
+              // Refresh just finished! Reload players and tournaments cache
+              setIsRefreshingAll(false);
+              const resPlayers = await fetch('/api/saved-players');
+              if (resPlayers.ok) {
+                const dataPlayers = await resPlayers.json();
+                setPlayers(dataPlayers);
+              }
+              if (reloadTournamentsCache) {
+                reloadTournamentsCache();
+              }
+            }
+            if (intervalId) {
+              clearInterval(intervalId);
+              intervalId = null;
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Failed to query background refresh status:", err);
+      }
+    };
+
+    checkRefreshStatus();
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [isRefreshingAll, reloadTournamentsCache]);
 
   type SortField = 'name' | 'utrSingles' | 'wtnSingles' | 'points' | 'rank' | 'winLossYTD' | 'winLossCareer' | 'championships' | 'custom';
   const [sortField, setSortField] = useState<SortField>('custom');
@@ -596,15 +664,20 @@ export function PlayerScreen() {
     fetchYesterdaySnapshot();
   }, []);
 
-  // Manual refresh helper is retained for potential future manual trigger controls
-  /*
   const refreshPlayer = async (id: string) => {
-    setRefreshingIds(prev => new Set(prev).add(id));
+    setRefreshingIds(prev => {
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
     try {
       const res = await fetch(`/api/refresh-player/${id}`, { method: 'POST' });
       if (res.ok) {
         const updatedPlayer = await res.json();
         setPlayers(prev => prev.map(p => p.id === id ? updatedPlayer : p));
+        if (reloadTournamentsCache) {
+          await reloadTournamentsCache();
+        }
       }
     } catch (e) {
       console.error(`Failed to refresh player ${id}`, e);
@@ -616,7 +689,6 @@ export function PlayerScreen() {
       });
     }
   };
-  */
 
   const handleAddPlayer = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -971,7 +1043,8 @@ export function PlayerScreen() {
                         removePlayer={removePlayer} 
                         onRowClick={setSelectedPlayer} 
                         activeTab={activeTab} 
-                        isRefreshing={false}
+                        isRefreshing={refreshingIds.has(player.id)}
+                        onRefreshPlayer={refreshPlayer}
                         onViewHistory={(name) => {
                           setHistoryPlayerFilter(name);
                           setShowHistory(true);
@@ -996,6 +1069,8 @@ export function PlayerScreen() {
         <PlayerTournamentsModal 
           player={selectedPlayer} 
           onClose={() => setSelectedPlayer(null)} 
+          tournamentsCache={tournamentsCache}
+          isTournamentsCacheLoading={isTournamentsCacheLoading}
         />
       )}
     </div>

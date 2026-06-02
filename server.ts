@@ -59,6 +59,7 @@ async function startServer() {
   const tournamentsPlayersCachePath = path.join(process.cwd(), "public", "tournaments-for-players.json");
   
   let isScraping = false;
+  let isGlobalRefreshing = false;
   let refreshTournamentsForPlayersCache: () => Promise<any>;
 
   const wrappedRunScraper = async () => {
@@ -80,6 +81,17 @@ async function startServer() {
 
     // 2. Run the actual scraper
     await runScraper();
+
+    if (supabase) {
+      try {
+         const rawNew = await fs.readFile(dataPath, "utf-8");
+         const parsedNew = JSON.parse(rawNew);
+         await supabase.from("tournaments").upsert({ id: "latest", data: parsedNew });
+         console.log("Successfully backed up scraped tournaments to Supabase!");
+      } catch (err: any) {
+         console.error("Error saving tournaments to Supabase:", err.message);
+      }
+    }
 
     // 3. Analyze newly added tournaments
     try {
@@ -124,35 +136,38 @@ async function startServer() {
     }
   };
 
-  const checkAndScrape = async () => {
+  // Automatic migration/sync on startup: Supabase -> Local for Tournaments
+  const syncSupabaseToLocalTournaments = async () => {
+    if (!supabase) {
+        console.warn("Supabase not configured, skipping tournaments sync on startup.");
+        return;
+    }
     try {
-      await fs.access(dataPath);
-      console.log("tournaments.json exists. Skipping initial scrape.");
-      try {
-        await fs.access(tournamentsPlayersCachePath);
-      } catch {
-        // Build initial cache after a delay if tournaments.json exists but cache doesn't
-        setTimeout(() => {
-          if (refreshTournamentsForPlayersCache) {
-            console.log("tournaments-for-players.json not found. Generating initial cache...");
-            refreshTournamentsForPlayersCache().catch(console.error);
-          }
-        }, 3000);
+      const { count } = await supabase.from("tournaments").select("id", { count: "exact", head: true });
+      if (count === null || count === 0) {
+         console.log("Supabase tournaments table empty. Waiting for next cron job.");
+         return;
       }
-    } catch {
-      console.log("tournaments.json not found. Running initial scrape...");
-      isScraping = true;
-      wrappedRunScraper()
-        .then(async () => {
-          if (refreshTournamentsForPlayersCache) {
-            await refreshTournamentsForPlayersCache().catch(console.error);
-          }
-        })
-        .finally(() => { isScraping = false; });
+      
+      const { data, error } = await supabase.from("tournaments").select("data").eq("id", "latest").single();
+      if (error) {
+        console.error("Failed to fetch tournaments from supabase:", error.message);
+        return;
+      }
+      if (data && data.data) {
+        await fs.writeFile(dataPath, JSON.stringify(data.data, null, 2));
+        console.log("Successfully restored tournaments.json from Supabase!");
+      }
+
+      const { data: cacheData, error: cacheErr } = await supabase.from("tournaments").select("data").eq("id", "players_cache").single();
+      if (!cacheErr && cacheData && cacheData.data) {
+         await fs.writeFile(tournamentsPlayersCachePath, JSON.stringify(cacheData.data, null, 2));
+         console.log("Successfully restored tournaments-for-players.json from Supabase!");
+      }
+    } catch(err: any) {
+      console.warn("Error restoring tournaments from supabase:", err.message);
     }
   };
-  
-  checkAndScrape();
   
   // Schedule daily scrapes at 9 AM, 1 PM, and 6 PM HKT
   cron.schedule('0 9,13,18 * * *', () => {
@@ -332,10 +347,9 @@ async function startServer() {
         const cachedContent = await fs.readFile(tournamentsPlayersCachePath, "utf-8");
         return res.json(JSON.parse(cachedContent));
       } catch {
-        // If cache doesn't exist, calculate it once
-        console.log("No cache found for tournaments-for-players. Doing on-demand calculation...");
-        const data = await refreshTournamentsForPlayersCache();
-        return res.json(data);
+        // If cache doesn't exist, return empty. Do NOT scrape on demand.
+        console.log("No cache found for tournaments-for-players. Returning empty...");
+        return res.json({ tournaments: [] });
       }
     } catch (error) {
       console.error("Failed to fetch tournaments for players", error);
@@ -583,17 +597,30 @@ async function startServer() {
       const data = await fs.readFile(dataPath, "utf-8");
       const { tournaments } = JSON.parse(data);
 
-      // Filter tournaments to only future ones
+      // Filter tournaments to only active ones starting within the next 60 days (or still currently running)
       const futureTournaments = tournaments.filter((t: any) => {
         if (!t.dates) return false;
         const parts = t.dates.split(' to ');
-        const dateToParse = parts[parts.length - 1].trim();
-        const [day, month, year] = dateToParse.split('/');
-        if (!day || !month || !year) return false;
-        const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+        
+        // End date parsing to ensure it's not in the past
+        const endDateParts = parts[parts.length - 1].trim().split('/');
+        if (endDateParts.length < 3) return false;
+        const endDate = new Date(parseInt(endDateParts[2]), parseInt(endDateParts[1]) - 1, parseInt(endDateParts[0]));
+        
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        return date >= today;
+        
+        if (endDate < today) return false;
+
+        // Start date parsing to limit search space to next 60 days
+        const startDateParts = parts[0].trim().split('/');
+        if (startDateParts.length < 3) return false;
+        const startDate = new Date(parseInt(startDateParts[2]), parseInt(startDateParts[1]) - 1, parseInt(startDateParts[0]));
+        
+        const limitDate = new Date();
+        limitDate.setDate(today.getDate() + 60);
+        
+        return startDate <= limitDate;
       });
 
       const limit = pLimit(5);
@@ -713,6 +740,16 @@ async function startServer() {
       const outputData = { tournaments: results, updatedAt: new Date().toISOString() };
       await fs.writeFile(tournamentsPlayersCachePath, JSON.stringify(outputData, null, 2));
       console.log("Cached tournaments-for-players list updated successfully.");
+      
+      if (supabase) {
+        try {
+          await supabase.from("tournaments").upsert({ id: "players_cache", data: outputData });
+          console.log("Successfully backed up tournaments-for-players cache to Supabase.");
+        } catch (e: any) {
+           console.error("Failed to backup players cache to Supabase:", e.message);
+        }
+      }
+
       return outputData;
     } catch (error) {
       console.error("Failed to build tournaments-for-players cache", error);
@@ -2066,6 +2103,31 @@ async function startServer() {
     }
   });
 
+  app.post("/api/notifications/test", requireAuth, async (req, res) => {
+    try {
+      let notifications = await getNotificationsHistory(req, res);
+      const testId = `test-${Date.now()}`;
+      const newNotification = {
+        id: testId,
+        player: "Test Bot 🎾",
+        title: "Test Tennis Alert 🎾",
+        body: "Success! Connection test passed! Your phone can receive real-time notifications on JC Tennis.",
+        type: "Other",
+        source: "System",
+        date: new Date().toISOString().split('T')[0],
+        timestamp: new Date().toISOString(),
+        url: "/#alerts"
+      };
+
+      notifications.unshift(newNotification);
+      await saveNotificationsHistory(req, res, notifications);
+      res.json({ success: true, notification: newNotification });
+    } catch (err: any) {
+      console.error("Failed to append test notification:", err);
+      res.status(500).json({ error: "Failed to issue test notification: " + err.message });
+    }
+  });
+
   app.post("/api/notifications/delete", requireAuth, async (req, res) => {
     const { items } = req.body;
     if (!Array.isArray(items)) {
@@ -2110,51 +2172,72 @@ async function startServer() {
     }
   });
 
+  app.get("/api/admin/refresh-status", requireAuth, (req, res) => {
+    res.json({ inProgress: isGlobalRefreshing });
+  });
+
   app.post("/api/admin/refresh-all", requireAuth, async (req, res) => {
-    try {
-      console.log("Triggering refresh of all saved players...");
-      const players = await getSavedPlayers(req, res);
-      let notifications: any[] = [];
-      try {
-        notifications = await getNotificationsHistory(req, res);
-      } catch (e) {
-        // Ignore
-      }
-
-      const limit = pLimit(2); // Concurrency limit of 2 to avoid slamming tennis systems and timeouts
-      const updatedPlayers = await Promise.all(
-        players.map((p: any) =>
-          limit(async () => {
-            if (!p.url) return p;
-            try {
-              const updatedStats = await scrapePlayerProfile(p.url, p.name);
-              const updatedPlayer = { ...p, ...updatedStats, name: p.name };
-              
-              const newChanges = getPlayerChanges(p, updatedPlayer);
-              if (newChanges.length > 0) {
-                notifications = [...newChanges, ...notifications];
-              }
-
-              return updatedPlayer;
-            } catch (e) {
-              console.error(`Failed to refresh player ${p.name} in refresh-all:`, e);
-              return p; // Return unchanged on failure
-            }
-          })
-        )
-      );
-
-      await savePlayers(req, res, updatedPlayers);
-
-      if (notifications.length > 0) {
-        await saveNotificationsHistory(req, res, notifications);
-      }
-
-      res.json({ success: true, count: updatedPlayers.length });
-    } catch (err: any) {
-      console.error("Refresh all failed:", err);
-      res.status(500).json({ error: "Failed to refresh players" });
+    if (isGlobalRefreshing) {
+      return res.status(400).json({ error: "Global refresh already in progress" });
     }
+
+    isGlobalRefreshing = true;
+
+    // Start background processing
+    (async () => {
+      try {
+        console.log("Triggering background refresh of all saved players & tournaments-for-players cache...");
+        const players = await getSavedPlayers(null, null);
+        let notifications: any[] = [];
+        try {
+          notifications = await getNotificationsHistory(null, null);
+        } catch (e) {
+          // Ignore
+        }
+
+        const limit = pLimit(2); // Concurrency limit of 2 to avoid slamming tennis systems and timeouts
+        const updatedPlayers = await Promise.all(
+          players.map((p: any) =>
+            limit(async () => {
+              if (!p.url) return p;
+              try {
+                const updatedStats = await scrapePlayerProfile(p.url, p.name);
+                const updatedPlayer = { ...p, ...updatedStats, name: p.name };
+                
+                const newChanges = getPlayerChanges(p, updatedPlayer);
+                if (newChanges.length > 0) {
+                  notifications = [...newChanges, ...notifications];
+                }
+
+                return updatedPlayer;
+              } catch (e) {
+                console.error(`Failed to refresh player ${p.name} in refresh-all:`, e);
+                return p; // Return unchanged on failure
+              }
+            })
+          )
+        );
+
+        await savePlayers(null, null, updatedPlayers);
+
+        if (notifications.length > 0) {
+          await saveNotificationsHistory(null, null, notifications);
+        }
+
+        // Now, trigger tournaments-for-players cache refresh!
+        if (refreshTournamentsForPlayersCache) {
+          console.log("Rebuilding tournaments-for-players cache...");
+          await refreshTournamentsForPlayersCache().catch(console.error);
+        }
+        console.log("Background global refresh completed successfully.");
+      } catch (err) {
+        console.error("Background refresh all failed:", err);
+      } finally {
+        isGlobalRefreshing = false;
+      }
+    })();
+
+    res.json({ success: true, message: "Global refresh triggered in background" });
   });
 
   app.get("/api/download-project", (req, res) => {
@@ -2168,6 +2251,8 @@ async function startServer() {
       }
     });
   });
+
+  await syncSupabaseToLocalTournaments();
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {

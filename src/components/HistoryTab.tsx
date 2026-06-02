@@ -24,6 +24,7 @@ export function HistoryTab() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [savedPlayers, setSavedPlayers] = useState<any[]>([]);
+  const [testingNotif, setTestingNotif] = useState(false);
 
   // Collapsible dashboard state (minimized by default)
   const [dashboardOpen, setDashboardOpen] = useState(false);
@@ -78,10 +79,10 @@ export function HistoryTab() {
       const res = await fetch('/api/notifications/history');
       if (res.ok) {
         const data = await res.json();
-        // Filter out "Other" notifications completely
+        // Filter out "Other" notifications completely, except for tests
         const filteredData = (data || []).filter((notif: any) => {
           const cat = getNotificationCategory(notif);
-          return cat !== 'Other';
+          return cat !== 'Other' || (notif.id && notif.id.startsWith('test-'));
         });
         setNotifications(filteredData);
       }
@@ -89,6 +90,29 @@ export function HistoryTab() {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleTestNotification = async () => {
+    setTestingNotif(true);
+    try {
+      const res = await fetch('/api/notifications/test', { method: 'POST' });
+      if (res.ok) {
+        if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
+          new Notification("Test Tennis Alert 🎾", {
+            body: "Success! Connection test passed! Your phone can receive real-time notifications on JC Tennis.",
+            icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTElZ9tTIVQ-qQzRwpEyM5aC2JlP2NbaHA6yR9rObvF7g&s"
+          });
+        }
+        await fetchHistory();
+      } else {
+        alert("Failed to trigger server test notification.");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Error triggering test notification.");
+    } finally {
+      setTestingNotif(false);
     }
   };
 
@@ -110,6 +134,9 @@ export function HistoryTab() {
   }, []);
 
   const getNotificationCategory = (notif: any): string => {
+    if (notif && notif.id && notif.id.startsWith('test-')) {
+      return 'Test';
+    }
     const type = notif.type;
     const title = notif.title || '';
     const body = notif.body || '';
@@ -143,6 +170,8 @@ export function HistoryTab() {
 
   const getCategoryIcon = (key: string, className = "w-4 h-4") => {
     switch (key) {
+      case 'Test':
+        return <Bell className={`${className} text-pink-400 animate-bounce`} />;
       case 'UTR':
         return <Activity className={`${className} text-cyan-400`} />;
       case 'Points':
@@ -303,6 +332,11 @@ export function HistoryTab() {
   }, [selectedRegion, savedPlayers, notifications, selectedPlayer]);
 
   const filteredNotifications = notifications.filter(notif => {
+    // Always show test notifications so the user can easily see their test succeeded
+    if (notif && notif.id && notif.id.startsWith('test-')) {
+      return true;
+    }
+
     // 1. Event Category Filter
     const category = getNotificationCategory(notif);
     if (!displayFilters[category]) return false;
@@ -407,14 +441,24 @@ export function HistoryTab() {
             Generated from daily player stat changes
           </p>
         </div>
-        <button
-          onClick={fetchHistory}
-          disabled={loading}
-          className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors border border-gray-700 text-sm font-medium"
-        >
-          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-blue-400' : ''}`} />
-          Refresh
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleTestNotification}
+            disabled={testingNotif}
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-lg font-semibold tracking-wide transition-all shadow-lg active:scale-[0.98] disabled:opacity-50 text-sm"
+          >
+            <Bell className={`w-4 h-4 ${testingNotif ? 'animate-bounce' : ''}`} />
+            {testingNotif ? 'Sending Test...' : 'Send Test Notification'}
+          </button>
+          <button
+            onClick={fetchHistory}
+            disabled={loading}
+            className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors border border-gray-700 text-sm font-medium"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-blue-400' : ''}`} />
+            Refresh
+          </button>
+        </div>
       </div>
 
       {/* Collapsible Toggle Dashboard */}

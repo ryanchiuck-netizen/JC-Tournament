@@ -25,6 +25,27 @@ import { HistoryTab } from "./components/HistoryTab";
 export default function App() {
   const [activeTab, setActiveTab] = useState<"tournaments" | "player-watch" | "player-screen" | "tournament-screen" | "draw-checker" | "alerts">("tournaments");
   
+  // Tournaments-for-players cache states
+  const [tournamentsForPlayers, setTournamentsForPlayers] = useState<any[]>([]);
+  const [tournamentsForPlayersLastUpdated, setTournamentsForPlayersLastUpdated] = useState<string | null>(null);
+  const [isTournamentsForPlayersLoading, setIsTournamentsForPlayersLoading] = useState(false);
+
+  const reloadTournamentsForPlayers = async () => {
+    setIsTournamentsForPlayersLoading(true);
+    try {
+      const res = await fetch("/api/tournaments-for-players");
+      if (res.ok) {
+        const data = await res.json();
+        setTournamentsForPlayers(data.tournaments || []);
+        setTournamentsForPlayersLastUpdated(data.updatedAt || null);
+      }
+    } catch (err) {
+      console.error("Failed to fetch tournaments for players:", err);
+    } finally {
+      setIsTournamentsForPlayersLoading(false);
+    }
+  };
+
   // Notification Permission State
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>("default");
 
@@ -54,6 +75,82 @@ export default function App() {
       console.error("Error requesting notification permission:", error);
     }
   };
+
+  // Poll notifications history to fire real-time native desktop notifications
+  useEffect(() => {
+    if (typeof window === "undefined" || !("Notification" in window)) return;
+
+    let isFirstRun = true;
+    let seenNotificationIds = new Set<string>();
+
+    try {
+      const saved = localStorage.getItem("jc_tennis_seen_notification_ids");
+      if (saved) {
+        seenNotificationIds = new Set(JSON.parse(saved));
+      }
+    } catch (e) {
+      console.error("Failed to read seen notification IDs from local storage:", e);
+    }
+
+    const checkRealTimeNotifications = async () => {
+      try {
+        const res = await fetch("/api/notifications/history");
+        if (res.ok) {
+          const alerts = await res.json();
+          if (Array.isArray(alerts) && alerts.length > 0) {
+            // Sort ascending by alert timestamp to show from oldest to newest
+            const sortedAlerts = [...alerts].sort((a, b) => {
+              const timeA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+              const timeB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+              return timeA - timeB;
+            });
+
+            if (isFirstRun) {
+              // Initial load of the app session: index existing notices without showing popups
+              // to prevent flood of historic notification sound/spam
+              sortedAlerts.forEach(item => {
+                if (item.id) seenNotificationIds.add(item.id);
+              });
+              try {
+                localStorage.setItem("jc_tennis_seen_notification_ids", JSON.stringify(Array.from(seenNotificationIds)));
+              } catch (e) {}
+              isFirstRun = false;
+              return;
+            }
+
+            let modified = false;
+            for (const item of sortedAlerts) {
+              if (item.id && !seenNotificationIds.has(item.id)) {
+                seenNotificationIds.add(item.id);
+                modified = true;
+
+                if (Notification.permission === "granted") {
+                  new Notification(item.title || "Tennis Player Alert", {
+                    body: item.body || item.message || "Player statistics updated.",
+                    icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTElZ9tTIVQ-qQzRwpEyM5aC2JlP2NbaHA6yR9rObvF7g&s",
+                    tag: item.id
+                  });
+                }
+              }
+            }
+
+            if (modified) {
+              try {
+                localStorage.setItem("jc_tennis_seen_notification_ids", JSON.stringify(Array.from(seenNotificationIds)));
+              } catch (e) {}
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Failed checking real-time background notifications:", err);
+      }
+    };
+
+    checkRealTimeNotifications();
+    const interval = setInterval(checkRealTimeNotifications, 20000); // Check every 20s
+
+    return () => clearInterval(interval);
+  }, [notificationPermission]);
 
   const [savedDraws, setSavedDraws] = useState<any[]>([]);
   const [allTournaments, setAllTournaments] = useState<Tournament[]>([]);
@@ -98,6 +195,8 @@ export default function App() {
       if (data.lastUpdated) {
         setLastUpdated(new Date(data.lastUpdated));
       }
+      // Also request cache from server
+      await reloadTournamentsForPlayers();
     } catch (err: any) {
       console.error(err);
       setError(err.message || 'An error occurred while fetching data');
@@ -108,12 +207,6 @@ export default function App() {
 
   useEffect(() => {
     fetchStaticData();
-    
-    const intervalId = setInterval(() => {
-      fetchStaticData();
-    }, 60 * 60 * 1000);
-    
-    return () => clearInterval(intervalId);
   }, []);
 
   // Filter tournaments based on region, ageFilter, searchTerm, and month
@@ -520,11 +613,21 @@ export default function App() {
         </div>
 
         <div className={activeTab === "player-screen" ? "block" : "hidden"}>
-          <PlayerScreen />
+          <PlayerScreen 
+            tournamentsCache={tournamentsForPlayers}
+            isTournamentsCacheLoading={isTournamentsForPlayersLoading}
+            reloadTournamentsCache={reloadTournamentsForPlayers}
+          />
         </div>
 
         <div className={activeTab === "tournament-screen" ? "block" : "hidden"}>
-          <TournamentScreen isActive={activeTab === "tournament-screen"} />
+          <TournamentScreen 
+            isActive={activeTab === "tournament-screen"} 
+            tournamentsCache={tournamentsForPlayers}
+            isTournamentsCacheLoading={isTournamentsForPlayersLoading}
+            reloadTournamentsCache={reloadTournamentsForPlayers}
+            tournamentsCacheLastUpdated={tournamentsForPlayersLastUpdated}
+          />
         </div>
 
         <div className={activeTab === "draw-checker" ? "block" : "hidden"}>

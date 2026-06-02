@@ -361,6 +361,20 @@ export async function runScraper() {
 
 import { fileURLToPath } from 'url';
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+const isMainInstance = () => {
+  try {
+    if (typeof import.meta !== 'undefined' && import.meta.url) {
+      return process.argv[1] === fileURLToPath(import.meta.url);
+    }
+  } catch (e) {
+    // Ignore
+  }
+  if (typeof __filename !== 'undefined' && process.argv[1]) {
+    return process.argv[1] === __filename;
+  }
+  return false;
+};
+
+if (isMainInstance()) {
   runScraper();
 }

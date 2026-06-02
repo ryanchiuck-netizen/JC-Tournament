@@ -912,16 +912,41 @@ const isCompleted = (datesStr: string): boolean => {
   return end < today;
 };
 
-export function TournamentScreen({ isActive }: { isActive?: boolean }) {
-  const [tournaments, setTournaments] = useState<TournamentWithPlayers[]>([]);
+export function TournamentScreen({ 
+  tournamentsCache = [],
+  isTournamentsCacheLoading = false,
+  reloadTournamentsCache,
+  tournamentsCacheLastUpdated
+}: { 
+  isActive?: boolean,
+  tournamentsCache?: TournamentWithPlayers[],
+  isTournamentsCacheLoading?: boolean,
+  reloadTournamentsCache?: () => void,
+  tournamentsCacheLastUpdated?: string | null
+}) {
+  const [tournaments, setTournaments] = useState<TournamentWithPlayers[]>(tournamentsCache);
   const [savedDraws, setSavedDraws] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(isTournamentsCacheLoading);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<string | null>(tournamentsCacheLastUpdated || null);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'HK' | 'AUS'>('AUS');
   const [notJoinedFilter, setNotJoinedFilter] = useState(false);
   const [completedExpanded, setCompletedExpanded] = useState(false);
+  const [isGlobalRefreshing, setIsGlobalRefreshing] = useState(false);
+
+  // Sync with parent cache
+  useEffect(() => {
+    if (tournamentsCache && tournamentsCache.length > 0) {
+      setTournaments(tournamentsCache);
+    }
+  }, [tournamentsCache]);
+
+  useEffect(() => {
+    if (tournamentsCacheLastUpdated) {
+      setLastUpdated(tournamentsCacheLastUpdated);
+    }
+  }, [tournamentsCacheLastUpdated]);
 
   const fetchSavedDraws = async () => {
     try {
@@ -951,15 +976,17 @@ export function TournamentScreen({ isActive }: { isActive?: boolean }) {
       ]);
 
       if (resTournaments.ok) {
-        const resClone = resTournaments.clone();
         try {
           const data = await resTournaments.json();
           setTournaments(data.tournaments || []);
           if (data.updatedAt) {
             setLastUpdated(data.updatedAt);
           }
+          if (reloadTournamentsCache) {
+            reloadTournamentsCache();
+          }
         } catch (e) {
-          console.error("Failed to parse /api/tournaments-for-players JSON:", await resClone.text());
+          console.error("Failed to parse /api/tournaments-for-players JSON:", e);
           setError("Failed to fetch tournaments");
         }
       } else {
@@ -979,13 +1006,49 @@ export function TournamentScreen({ isActive }: { isActive?: boolean }) {
     }
   };
 
+  // Poll for background global refresh status
   useEffect(() => {
-    if (isActive !== false) {
-      fetchTournaments(false);
-    }
-  }, [isActive]);
+    let intervalId: any = null;
 
-  if (loading) {
+    const checkRefreshStatus = async () => {
+      try {
+        const res = await fetch("/api/admin/refresh-status");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.inProgress) {
+            setIsGlobalRefreshing(true);
+            if (!intervalId) {
+              intervalId = setInterval(checkRefreshStatus, 3000);
+            }
+          } else {
+            if (isGlobalRefreshing) {
+              // Rebuild finished! Reload cache
+              setIsGlobalRefreshing(false);
+              fetchTournaments(false);
+            }
+            if (intervalId) {
+              clearInterval(intervalId);
+              intervalId = null;
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Failed to check refresh status:", err);
+      }
+    };
+
+    checkRefreshStatus();
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [isGlobalRefreshing]);
+
+  useEffect(() => {
+    fetchTournaments(false);
+  }, []);
+
+  if (loading && tournaments.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-24 gap-4">
         <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
@@ -1110,6 +1173,15 @@ export function TournamentScreen({ isActive }: { isActive?: boolean }) {
 
   return (
     <div className="space-y-6">
+      {isGlobalRefreshing && (
+        <div className="bg-blue-950/30 border border-blue-900/50 rounded-xl p-4 flex items-center gap-3 text-blue-300/90 animate-pulse">
+          <RefreshCw className="w-4 h-4 animate-spin text-blue-400 flex-shrink-0" />
+          <div className="text-sm">
+            <span className="font-semibold text-white">Global Database Refresh in progress...</span> Updating all player profiles and future tournament entries. Page will auto-update as soon as complete.
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex flex-col sm:flex-row sm:items-center gap-4">
           <div className="flex items-center gap-3">
@@ -1125,6 +1197,28 @@ export function TournamentScreen({ isActive }: { isActive?: boolean }) {
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-blue-400' : ''}`} />
               {isRefreshing ? 'Scanning...' : 'Rescan'}
+            </button>
+            <button
+              onClick={async () => {
+                if (!isGlobalRefreshing) {
+                  setIsGlobalRefreshing(true);
+                  try {
+                    await fetch("/api/admin/refresh-all", { method: "POST" });
+                  } catch (err) {
+                    console.error("Failed to trigger global refresh from Tournament Screen:", err);
+                  }
+                }
+              }}
+              disabled={isGlobalRefreshing}
+              className={`p-1.5 rounded-lg border border-gray-800 transition-all flex items-center gap-1.5 text-xs font-semibold ${
+                isGlobalRefreshing
+                  ? "bg-blue-900/20 text-blue-400 border-blue-800/50 cursor-not-allowed"
+                  : "bg-gray-900/50 text-gray-400 hover:text-green-400 hover:bg-gray-800"
+              }`}
+              title="Scrapes and refreshes all saved player profiles & latest tournaments"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isGlobalRefreshing ? 'animate-spin text-green-400' : ''}`} />
+              {isGlobalRefreshing ? 'Refreshing All...' : 'Refresh All (Profiles & Tournaments)'}
             </button>
           </div>
           <label className="flex items-center gap-2 cursor-pointer bg-gray-900/50 px-3 py-1.5 rounded-lg border border-gray-800 hover:bg-gray-800 transition-colors w-fit">
