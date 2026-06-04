@@ -12,10 +12,25 @@
     <title>JC Tournament Planner</title>
     <script>
       if ('serviceWorker' in navigator) {
+        let refreshing = false;
+        // Listen for controller changes and reload the page with the newest assets
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (!refreshing) {
+            refreshing = true;
+            console.log('New app version detected. Refreshing to update...');
+            window.location.reload();
+          }
+        });
+
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/sw.js')
             .then(registration => {
               console.log('Service Worker registered successfully with scope:', registration.scope);
+              
+              // Actively check for updates immediately on every startup to bypass the 24-hour browser throttle
+              registration.update().catch(err => {
+                console.warn('Service worker update check skipped:', err);
+              });
             })
             .catch(error => {
               console.error('Service Worker registration failed:', error);

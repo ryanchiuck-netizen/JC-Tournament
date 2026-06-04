@@ -1,4 +1,4 @@
-const CACHE_NAME = 'jc-tennis-v4';
+const CACHE_NAME = 'jc-tennis-v5';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -30,6 +30,14 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  // Parse the URL of the request
+  const url = new URL(event.request.url);
+  
+  // Always bypass Service Worker for API endpoints to ensure they reach the backend directly
+  if (url.pathname.startsWith('/api')) {
+    return;
+  }
+
   if (event.request.mode === 'navigate' || (event.request.headers.get('accept') && event.request.headers.get('accept').includes('text/html'))) {
     event.respondWith(
       fetch(event.request).catch(() => caches.match(event.request))

@@ -22,7 +22,8 @@ async function fetchPage(
   existingLinks: Set<string> = new Set(),
   startDate: string = "2026-01-01",
   endDate: string = "2036-12-31",
-  existingDetails: Record<string, { mapsLink?: string; closingDeadline?: string; location?: string }> = {}
+  existingDetails: Record<string, { mapsLink?: string; closingDeadline?: string; location?: string }> = {},
+  state?: string
 ): Promise<{ tournaments: Tournament[], players: string[] }> {
   const params = new URLSearchParams();
   params.append("Page", page.toString());
@@ -30,6 +31,9 @@ async function fetchPage(
   params.append("TournamentFilter.DateFilterType", "0");
   params.append("TournamentFilter.StartDate", startDate);
   params.append("TournamentFilter.EndDate", endDate);
+  if (source === "AUS" && state) {
+    params.append("TournamentExtendedFilter.OrganizationStateList[0]", state);
+  }
 
   const response = await axios.post(url, params.toString(), {
     headers: {
@@ -154,12 +158,38 @@ async function fetchPage(
 }
 
 export async function runScraper() {
-  console.log("Starting daily high-speed scraper...");
+  console.log("Starting daily high-speed scraper with past-event caching optimization...");
   const allTournaments: Tournament[] = [];
+  const retainedTournaments: Tournament[] = [];
   const allPlayers = new Set<string>();
 
   const dataPath = path.join(process.cwd(), "public", "tournaments.json");
   const playersPath = path.join(process.cwd(), "public", "players.json");
+
+  const now = new Date();
+  // Calculate "last month onwards" to be safe and efficient
+  const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const startYear = lastMonthDate.getFullYear();
+  const startMonth = lastMonthDate.getMonth() + 1; // 1-indexed (e.g. 5 for May if current month is June)
+
+  // Helper to determine if a tournament ended completely in the past (before last month)
+  const isTournamentInPast = (datesStr: string, activeYear: number, activeMonth: number): boolean => {
+    if (!datesStr) return false;
+    try {
+      const parts = datesStr.split(" to ");
+      const lastDatePart = parts[parts.length - 1].trim();
+      const dateParts = lastDatePart.split("/");
+      if (dateParts.length === 3) {
+        const m = parseInt(dateParts[1], 10);
+        const y = parseInt(dateParts[2], 10);
+        if (y < activeYear) return true;
+        if (y === activeYear && m < activeMonth) return true;
+      }
+    } catch (e) {
+      // If parsing fails, do not assume it's past
+    }
+    return false;
+  };
 
   // Load existing details to avoid re-scraping and preserve manual edits
   let existingDetails: Record<string, { mapsLink?: string; closingDeadline?: string; location?: string }> = {};
@@ -175,25 +205,34 @@ export async function runScraper() {
             location: t.location
           };
         }
+
+        // If tournament ended before last month, retain it in memory of our static cache
+        if (isTournamentInPast(t.dates, startYear, startMonth)) {
+          retainedTournaments.push(t);
+        }
       }
     }
-    console.log(`Reused detail maps/deadlines for ${Object.keys(existingDetails).length} existing tournaments.`);
+    console.log(`Optimized startup: retaining ${retainedTournaments.length} historical tournaments in past-cache (prior to month ${startMonth}/${startYear}). Reused details for ${Object.keys(existingDetails).length} entries.`);
   } catch {
     // File doesn't exist yet, start clean
   }
 
+  // Pre-seed with retained past tournaments, so they are never lost from public/tournaments.json
+  allTournaments.push(...retainedTournaments);
+
   try {
-    // 1. Scrape HK
+    // 1. Scrape HK (only from last month onwards)
     let page = 1;
     let hasMore = true;
+    const hkStartDate = `${startYear}-${startMonth.toString().padStart(2, "0")}-01`;
     while (hasMore) {
-      console.log(`Fetching HK page ${page}...`);
+      console.log(`Fetching HK page ${page} from ${hkStartDate} onwards...`);
       const { tournaments } = await fetchPage(
         "https://hkta.tournamentsoftware.com/find/tournament/DoSearch", 
         page, 
         "HK", 
         new Set(allTournaments.map(t => t.link)),
-        "2026-01-01",
+        hkStartDate,
         "2036-12-31",
         existingDetails
       );
@@ -213,66 +252,87 @@ export async function runScraper() {
       await new Promise(resolve => setTimeout(resolve, 200));
     }
 
-    // Save initial HK data
+    // Save initial HK data combined with retained past tournaments
     await fs.writeFile(dataPath, JSON.stringify({
       lastUpdated: new Date().toISOString(),
       tournaments: allTournaments
     }, null, 2));
 
-    // 2. Scrape AUS month-by-month for the current year (2026) to bypass the 400 results filter cap
-    const year = 2026;
+    // 2. Scrape AUS month-by-month starting ONLY from last month onwards (saving immense overhead!)
     const dateRanges: { start: string; end: string }[] = [];
-    for (let month = 1; month <= 12; month++) {
+    let tempYear = startYear;
+    let tempMonth = startMonth;
+    while (tempYear < now.getFullYear() || (tempYear === now.getFullYear() && tempMonth <= 12)) {
       const startDay = "01";
-      const startMonth = month.toString().padStart(2, "0");
-      const endDay = new Date(year, month, 0).getDate().toString().padStart(2, "0");
+      const startMonthStr = tempMonth.toString().padStart(2, "0");
+      const endDay = new Date(tempYear, tempMonth, 0).getDate().toString().padStart(2, "0");
       dateRanges.push({
-        start: `${year}-${startMonth}-${startDay}`,
-        end: `${year}-${startMonth}-${endDay}`
+        start: `${tempYear}-${startMonthStr}-${startDay}`,
+        end: `${tempYear}-${startMonthStr}-${endDay}`
       });
+      tempMonth++;
+      if (tempMonth > 12) {
+        tempMonth = 1;
+        tempYear++;
+      }
     }
-    // Include 2027-2028 as well
+    // Include upcoming years 
     dateRanges.push({
-      start: `${year + 1}-01-01`,
-      end: `${year + 2}-12-31`
+      start: `${now.getFullYear() + 1}-01-01`,
+      end: `${now.getFullYear() + 2}-12-31`
     });
+
+    const states = ["", "NSW", "VIC", "QLD", "WA", "SA", "TAS", "ACT", "NT"];
 
     for (const range of dateRanges) {
       console.log(`Starting AUS search for range: ${range.start} to ${range.end}...`);
-      let rangePage = 1;
-      let rangeHasMore = true;
-      while (rangeHasMore) {
-        console.log(`Fetching AUS range ${range.start} to ${range.end}, page ${rangePage}...`);
-        const { tournaments } = await fetchPage(
-          "https://tournaments.tennis.com.au/find/tournament/DoSearch",
-          rangePage,
-          "AUS",
-          new Set(allTournaments.map(t => t.link)),
-          range.start,
-          range.end,
-          existingDetails
-        );
+      for (const state of states) {
+        console.log(`Starting AUS search for state: ${state || "all"}, range: ${range.start} to ${range.end}...`);
+        const seenLinksInCurrentSearch = new Set<string>();
+        let rangePage = 1;
+        let rangeHasMore = true;
+        while (rangeHasMore) {
+          console.log(`Fetching AUS state ${state || "all"}, range ${range.start} to ${range.end}, page ${rangePage}...`);
+          const { tournaments } = await fetchPage(
+            "https://tournaments.tennis.com.au/find/tournament/DoSearch",
+            rangePage,
+            "AUS",
+            new Set(),
+            range.start,
+            range.end,
+            existingDetails,
+            state
+          );
 
-        if (tournaments.length === 0) {
-          rangeHasMore = false;
-        } else {
-          const newResults = tournaments.filter(nr => !allTournaments.some(at => at.link === nr.link));
-          if (newResults.length === 0) {
+          if (tournaments.length === 0) {
             rangeHasMore = false;
           } else {
-            allTournaments.push(...newResults);
-            
-            // Write progressively so that tournaments load IMMEDIATELY in the frontend!
-            await fs.writeFile(dataPath, JSON.stringify({
-              lastUpdated: new Date().toISOString(),
-              tournaments: allTournaments
-            }, null, 2));
-            
-            rangePage++;
+            const hasNewInCurrentSearch = tournaments.some(t => !seenLinksInCurrentSearch.has(t.link));
+            if (!hasNewInCurrentSearch) {
+              console.log(`No new tournaments in current search for state ${state || "all"} page ${rangePage} (pagination loop detected). Stopping range.`);
+              rangeHasMore = false;
+            } else {
+              for (const t of tournaments) {
+                seenLinksInCurrentSearch.add(t.link);
+              }
+
+              const newResults = tournaments.filter(nr => !allTournaments.some(at => at.link === nr.link));
+              if (newResults.length > 0) {
+                allTournaments.push(...newResults);
+                
+                // Write progressively so that tournaments load IMMEDIATELY in the frontend!
+                await fs.writeFile(dataPath, JSON.stringify({
+                  lastUpdated: new Date().toISOString(),
+                  tournaments: allTournaments
+                }, null, 2));
+              }
+              
+              rangePage++;
+            }
           }
+          if (rangePage > 100) rangeHasMore = false;
+          await new Promise(resolve => setTimeout(resolve, 200));
         }
-        if (rangePage > 100) rangeHasMore = false;
-        await new Promise(resolve => setTimeout(resolve, 200));
       }
     }
 
@@ -304,13 +364,45 @@ export async function runScraper() {
     for (const t of upcomingTournaments) {
       try {
         const idMatch = t.link.match(/id=([^&]+)/i);
-        if (idMatch) {
-          const tournamentId = idMatch[1];
-          const domain = t.source === "HK" ? "hkta.tournamentsoftware.com" : "tournaments.tennis.com.au";
-          const tournamentUrl = `https://${domain}/tournament/${tournamentId}`;
+        const domain = t.source === "HK" ? "hkta.tournamentsoftware.com" : "tournaments.tennis.com.au";
+        
+        let tournamentUrl = "";
+        if (t.link.startsWith("http")) {
+          tournamentUrl = t.link;
+        } else if (t.link.startsWith("/")) {
+          tournamentUrl = `https://${domain}${t.link}`;
+        } else {
+          tournamentUrl = `https://${domain}/${t.link}`;
+        }
 
-          console.log(`Background enriching (${enrichCount + 1}/${upcomingTournaments.length}): ${t.name}...`);
-          const tRes = await axios.get(tournamentUrl, { timeout: 6000 });
+        console.log(`Background enriching (${enrichCount + 1}/${upcomingTournaments.length}): ${t.name}...`);
+        
+        let tRes: any = null;
+        try {
+          tRes = await axios.get(tournamentUrl, {
+            headers: {
+              "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+            },
+            timeout: 6000
+          });
+        } catch (err: any) {
+          // If the exact crawler URL fails, let's try the pretty URL path /tournament/UUID as fallback if there is an ID
+          if (idMatch) {
+            const tournamentId = idMatch[1];
+            const fallbackUrl = `https://${domain}/tournament/${tournamentId}`;
+            console.log(`Primary URL failed (${err.message}). Trying fallback URL: ${fallbackUrl}`);
+            tRes = await axios.get(fallbackUrl, {
+              headers: {
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+              },
+              timeout: 6000
+            });
+          } else {
+            throw err;
+          }
+        }
+
+        if (tRes && tRes.data) {
           const $t = cheerio.load(tRes.data);
 
           $t("*").each((_, tEl) => {
@@ -334,22 +426,22 @@ export async function runScraper() {
               }
             }
           });
-
-          enrichCount++;
-          // Periodically save to tournaments.json
-          if (enrichCount % 5 === 0 || enrichCount === upcomingTournaments.length) {
-            await fs.writeFile(dataPath, JSON.stringify({
-              lastUpdated: new Date().toISOString(),
-              tournaments: allTournaments
-            }, null, 2));
-            console.log(`Background enricher saved progress: ${enrichCount} tournaments updated.`);
-          }
-
-          // Politeness delay to avoid rate limiting
-          await new Promise(resolve => setTimeout(resolve, 800));
         }
+
+        enrichCount++;
+        // Periodically save to tournaments.json
+        if (enrichCount % 5 === 0 || enrichCount === upcomingTournaments.length) {
+          await fs.writeFile(dataPath, JSON.stringify({
+            lastUpdated: new Date().toISOString(),
+            tournaments: allTournaments
+          }, null, 2));
+          console.log(`Background enricher saved progress: ${enrichCount} tournaments updated.`);
+        }
+
+        // Politeness delay to avoid rate limiting
+        await new Promise(resolve => setTimeout(resolve, 800));
       } catch (err: any) {
-        console.error(`Background enricher failed for ${t.name}:`, err.message);
+        console.log(`Background enricher skipped ${t.name}:`, err.message);
       }
     }
 

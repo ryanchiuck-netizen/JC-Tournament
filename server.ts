@@ -58,6 +58,28 @@ async function startServer() {
   const dataPath = path.join(process.cwd(), "public", "tournaments.json");
   const tournamentsPlayersCachePath = path.join(process.cwd(), "public", "tournaments-for-players.json");
   
+  const getTournamentsData = async (): Promise<any> => {
+    if (supabase) {
+      try {
+        const { data, error } = await supabase.from("tournaments").select("data").eq("id", "latest");
+        if (!error && data && data.length > 0 && data[0].data) {
+          return data[0].data;
+        }
+        if (error) {
+          if (error.message?.includes("Could not find the table") || error.message?.includes("relation \"public.tournaments\" does not exist")) {
+            console.warn("Supabase 'tournaments' table not found. Please run supabase_setup.sql. Falling back to public/tournaments.json.");
+          } else {
+            console.warn("Supabase tournaments fetch failed, using local file fallback:", error.message);
+          }
+        }
+      } catch (err: any) {
+        console.warn("Supabase exception in getTournamentsData:", err.message || err);
+      }
+    }
+    const raw = await fs.readFile(dataPath, "utf-8");
+    return JSON.parse(raw);
+  };
+  
   let isScraping = false;
   let isGlobalRefreshing = false;
   let refreshTournamentsForPlayersCache: () => Promise<any>;
@@ -143,35 +165,94 @@ async function startServer() {
         return;
     }
     try {
-      const { count } = await supabase.from("tournaments").select("id", { count: "exact", head: true });
+      const { count, error: countErr } = await supabase.from("tournaments").select("id", { count: "exact", head: true });
+      if (countErr) {
+        if (countErr.message?.includes("Could not find the table") || countErr.message?.includes("relation \"public.tournaments\" does not exist")) {
+          console.warn("Supabase 'tournaments' table not found on startup sync. Please run supabase_setup.sql in your Supabase dashboard.");
+        } else {
+          console.warn("Failed to check tournaments count from Supabase on startup sync:", countErr.message);
+        }
+        return;
+      }
       if (count === null || count === 0) {
-         console.log("Supabase tournaments table empty. Waiting for next cron job.");
+         console.log("Supabase tournaments table empty. Seeding with local files...");
+         try {
+           const raw = await fs.readFile(dataPath, "utf-8");
+           const parsed = JSON.parse(raw);
+           await supabase.from("tournaments").upsert({ id: "latest", data: parsed });
+           console.log("Successfully seeded local tournaments to Supabase!");
+           
+           try {
+             const cacheContent = await fs.readFile(tournamentsPlayersCachePath, "utf-8");
+             const cacheParsed = JSON.parse(cacheContent);
+             await supabase.from("tournaments").upsert({ id: "players_cache", data: cacheParsed });
+             console.log("Successfully seeded local tournaments-for-players cache to Supabase!");
+           } catch {
+             console.log("No local custom players cache file found to seed.");
+           }
+         } catch (seedErr: any) {
+           console.warn("Failed to seed Supabase table on startup:", seedErr.message);
+         }
+         
+         // Trigger an automatic background adhoc scrape so they have completely updated data in Supabase immediately!
+         console.log("Triggering background adhoc tournaments scrape on startup to ensure fresh data...");
+         isScraping = true;
+         wrappedRunScraper()
+           .then(async () => {
+             if (refreshTournamentsForPlayersCache) {
+               await refreshTournamentsForPlayersCache().catch(console.error);
+             }
+           })
+           .catch(err => console.error("Adhoc startup scrape failed:", err))
+           .finally(() => { isScraping = false; });
          return;
       }
       
-      const { data, error } = await supabase.from("tournaments").select("data").eq("id", "latest").single();
+      const { data, error } = await supabase.from("tournaments").select("data").eq("id", "latest");
       if (error) {
-        console.error("Failed to fetch tournaments from supabase:", error.message);
+        console.warn("Failed to fetch tournaments from supabase:", error.message);
         return;
       }
-      if (data && data.data) {
-        await fs.writeFile(dataPath, JSON.stringify(data.data, null, 2));
+      if (!data || data.length === 0) {
+        console.log("No row with id 'latest' in Supabase tournaments table. Seeding from local tournaments.json...");
+        try {
+          const raw = await fs.readFile(dataPath, "utf-8");
+          const parsed = JSON.parse(raw);
+          await supabase.from("tournaments").upsert({ id: "latest", data: parsed });
+          console.log("Successfully seeded 'latest' state to Supabase!");
+        } catch(e: any) {
+          console.error("Seeding 'latest' failed:", e.message);
+        }
+      } else if (data[0] && data[0].data) {
+        await fs.writeFile(dataPath, JSON.stringify(data[0].data, null, 2));
         console.log("Successfully restored tournaments.json from Supabase!");
       }
 
-      const { data: cacheData, error: cacheErr } = await supabase.from("tournaments").select("data").eq("id", "players_cache").single();
-      if (!cacheErr && cacheData && cacheData.data) {
-         await fs.writeFile(tournamentsPlayersCachePath, JSON.stringify(cacheData.data, null, 2));
+      const { data: cacheData, error: cacheErr } = await supabase.from("tournaments").select("data").eq("id", "players_cache");
+      if (!cacheErr && cacheData && cacheData.length > 0 && cacheData[0].data) {
+         await fs.writeFile(tournamentsPlayersCachePath, JSON.stringify(cacheData[0].data, null, 2));
          console.log("Successfully restored tournaments-for-players.json from Supabase!");
+      } else if (!cacheErr && (!cacheData || cacheData.length === 0)) {
+         console.log("No custom players cache found in Supabase. Backing up local cache to Supabase...");
+         try {
+           const cacheContent = await fs.readFile(tournamentsPlayersCachePath, "utf-8");
+           const cacheParsed = JSON.parse(cacheContent);
+           await supabase.from("tournaments").upsert({ id: "players_cache", data: cacheParsed });
+           console.log("Successfully backed up local players cache to Supabase!");
+         } catch {
+           console.log("No local players cache file found to backup.");
+         }
+      } else if (cacheErr) {
+         console.warn("Error checking custom players cache in Supabase:", cacheErr.message);
       }
     } catch(err: any) {
       console.warn("Error restoring tournaments from supabase:", err.message);
     }
   };
   
-  // Schedule daily scrapes at 9 AM, 1 PM, and 6 PM HKT
-  cron.schedule('0 9,13,18 * * *', () => {
-    console.log("Running scheduled scrape at 9 AM/1 PM/6 PM HKT...");
+  // Tournaments tab: refresh at 5AM HKT only once per day
+  cron.schedule('0 5 * * *', () => {
+    console.log("Running scheduled tournaments-only scrape at 5 AM HKT...");
     isScraping = true;
     wrappedRunScraper()
       .then(async () => {
@@ -179,7 +260,7 @@ async function startServer() {
           try {
             await refreshTournamentsForPlayersCache();
           } catch (e) {
-            console.error("Scheduled background cache rebuild failed:", e);
+            console.error("Scheduled 5 AM tournaments cache rebuild failed:", e);
           }
         }
       })
@@ -188,11 +269,22 @@ async function startServer() {
     timezone: "Asia/Hong_Kong"
   });
 
+  // Tournament screen, draw checker, player screen, alerts: 8AM, 12PM, 4PM, 8PM HKT daily
+  cron.schedule('0 8,12,16,20 * * *', () => {
+    console.log("Running scheduled player statistics, draw checks, and alerts update at 8 AM/12 PM/4 PM/8 PM HKT...");
+    if (isGlobalRefreshing) {
+      console.log("Scheduled global refresh skipped because another refresh is already in progress.");
+      return;
+    }
+    runGlobalRefreshTask(false).catch(console.error);
+  }, {
+    timezone: "Asia/Hong_Kong"
+  });
+
   // API route to get the static tournaments data (and support legacy route)
   const getTournamentsHandler = async (req: any, res: any) => {
     try {
-      const data = await fs.readFile(dataPath, "utf-8");
-      const parsed = JSON.parse(data);
+      const parsed = await getTournamentsData();
       parsed.isScraping = isScraping;
       res.setHeader("Content-Type", "application/json");
       res.json(parsed);
@@ -208,6 +300,53 @@ async function startServer() {
   app.get("/api/tournaments/static", requireAuth, getTournamentsHandler);
   app.get("/api/tournaments", requireAuth, getTournamentsHandler);
 
+  app.get("/api/tournaments/metadata", requireAuth, async (req, res) => {
+    try {
+      if (supabase) {
+        const { data, error } = await supabase.from("tournaments").select("data").eq("id", "latest");
+        if (!error && data && data.length > 0 && data[0].data) {
+          const d = data[0].data;
+          return res.json({
+            lastUpdated: d.lastUpdated || null,
+            count: d.tournaments ? d.tournaments.length : 0
+          });
+        }
+      }
+      const raw = await fs.readFile(dataPath, "utf-8");
+      const parsed = JSON.parse(raw);
+      return res.json({
+        lastUpdated: parsed.lastUpdated || null,
+        count: parsed.tournaments ? parsed.tournaments.length : 0
+      });
+    } catch (err) {
+      console.error("Failed to get tournaments metadata:", err);
+      res.status(500).json({ error: "Failed to get metadata" });
+    }
+  });
+
+  app.get("/api/tournaments-for-players/metadata", requireAuth, async (req, res) => {
+    try {
+      if (supabase) {
+        const { data, error } = await supabase.from("tournaments").select("data").eq("id", "players_cache");
+        if (!error && data && data.length > 0 && data[0].data) {
+          return res.json({
+            updatedAt: data[0].data.updatedAt || null,
+            count: data[0].data.tournaments ? data[0].data.tournaments.length : 0
+          });
+        }
+      }
+      const raw = await fs.readFile(tournamentsPlayersCachePath, "utf-8");
+      const parsed = JSON.parse(raw);
+      return res.json({
+        updatedAt: parsed.updatedAt || null,
+        count: parsed.tournaments ? parsed.tournaments.length : 0
+      });
+    } catch (err) {
+      console.error("Failed to get tournaments-for-players metadata:", err);
+      res.status(500).json({ error: "Failed to get metadata" });
+    }
+  });
+
   app.post("/api/force-scrape", requireAuth, async (req, res) => {
     if (isScraping) {
       return res.status(400).json({ error: "Scraping already in progress" });
@@ -221,6 +360,26 @@ async function startServer() {
       })
       .finally(() => { isScraping = false; });
     res.json({ message: "Scraping started in background" });
+  });
+
+  // Google Sheets Proxy Endpoint
+  app.post("/api/save-google-sheet", requireAuth, async (req, res) => {
+    try {
+      const { sheetName, data } = req.body;
+      const response = await axios.post("https://script.google.com/macros/s/AKfycbxvoYQvw9S3ctCEuShwtHyZL19IZnu2HeXK7ZQp-HYs5cReS0mvNZL_vid8wifj88vyDg/exec", {
+        sheetName,
+        data
+      }, {
+        headers: {
+          "Content-Type": "application/json"
+        },
+        timeout: 20000
+      });
+      res.json({ success: true, response: response.data });
+    } catch (err: any) {
+      console.error("Error proxying to Google Sheets:", err.message);
+      res.status(500).json({ error: "Failed to save to Google Sheets via proxy", details: err.message });
+    }
   });
 
   // API route to get player names for autofill
@@ -244,8 +403,8 @@ async function startServer() {
     }
 
     try {
-      const data = await fs.readFile(dataPath, "utf-8");
-      const { tournaments } = JSON.parse(data);
+      const data = await getTournamentsData();
+      const { tournaments } = data;
       
       const limit = pLimit(5);
       const matches: any[] = [];
@@ -342,6 +501,24 @@ async function startServer() {
         return res.json(data);
       }
 
+      // Try reading directly from Supabase first
+      if (supabase) {
+        try {
+          const { data: cacheRow, error: cacheErr } = await supabase.from("tournaments").select("data").eq("id", "players_cache");
+          if (!cacheErr && cacheRow && cacheRow.length > 0 && cacheRow[0].data) {
+            return res.json(cacheRow[0].data);
+          } else if (cacheErr) {
+            if (cacheErr.message?.includes("Could not find the table") || cacheErr.message?.includes("relation \"public.tournaments\" does not exist")) {
+              console.warn("Supabase 'tournaments' table not found, trying local file for player cache instead.");
+            } else {
+              console.warn("Failed to fetch tournaments-for-players from Supabase, trying local file:", cacheErr.message);
+            }
+          }
+        } catch (supabaseErr: any) {
+          console.warn("Supabase query failed in tournaments_for_players, trying local file:", supabaseErr.message || supabaseErr);
+        }
+      }
+
       // Try reading from cache file first
       try {
         const cachedContent = await fs.readFile(tournamentsPlayersCachePath, "utf-8");
@@ -364,6 +541,7 @@ async function startServer() {
   const syncLocalToSupabase = async () => {
     if (!supabase) return;
     try {
+      // 1. Sync saved players
       const { count, error } = await supabase
         .from("saved_players")
         .select("id", { count: "exact", head: true });
@@ -402,6 +580,43 @@ async function startServer() {
         } catch (fsErr) {
           // Local file might not exist yet, which is fine
         }
+      }
+
+      // 2. Sync tournaments database rows (latest & players_cache)
+      try {
+        const { data: existingTours, error: toursErr } = await supabase
+          .from("tournaments")
+          .select("id");
+
+        if (!toursErr) {
+          const existingIds = new Set((existingTours || []).map((t: any) => t.id));
+
+          if (!existingIds.has("latest")) {
+            console.log("Supabase tournaments table is missing 'latest' row. Syncing local tournaments.json...");
+            try {
+              const rawTours = await fs.readFile(dataPath, "utf-8");
+              const parsedTours = JSON.parse(rawTours);
+              await supabase.from("tournaments").insert({ id: "latest", data: parsedTours });
+              console.log("Successfully seeded 'latest' tournaments to Supabase.");
+            } catch (fsErr) {
+              console.warn("Could not seed local tournaments.json:", fsErr);
+            }
+          }
+
+          if (!existingIds.has("players_cache")) {
+            console.log("Supabase tournaments table is missing 'players_cache' row. Syncing local tournaments-players-cache.json...");
+            try {
+              const rawCache = await fs.readFile(tournamentsPlayersCachePath, "utf-8");
+              const parsedCache = JSON.parse(rawCache);
+              await supabase.from("tournaments").insert({ id: "players_cache", data: parsedCache });
+              console.log("Successfully seeded 'players_cache' to Supabase.");
+            } catch (fsErr) {
+              console.warn("Could not seed local tournaments-players-cache.json:", fsErr);
+            }
+          }
+        }
+      } catch (toursSetupErr: any) {
+        console.warn("Could not sync tournaments setup to Supabase:", toursSetupErr.message || toursSetupErr);
       }
     } catch (err: any) {
       console.warn("Could not sync local data to Supabase (Ensure your saved_players table is configured in your Supabase SQL editor):", err.message || err);
@@ -594,8 +809,8 @@ async function startServer() {
         return { tournaments: [] };
       }
 
-      const data = await fs.readFile(dataPath, "utf-8");
-      const { tournaments } = JSON.parse(data);
+      const data = await getTournamentsData();
+      const { tournaments } = data;
 
       // Filter tournaments to only active ones starting within the next 60 days (or still currently running)
       const futureTournaments = tournaments.filter((t: any) => {
@@ -984,10 +1199,10 @@ async function startServer() {
     // Load tournaments for lazy date lookup
     let cachedTournaments: any[] = [];
     try {
-      const rawT = await fs.readFile(dataPath, "utf-8");
-      cachedTournaments = JSON.parse(rawT).tournaments || [];
+      const data = await getTournamentsData();
+      cachedTournaments = data.tournaments || [];
     } catch (err) {
-      console.warn("Could not read tournaments.json for metadata lookup", err);
+      console.warn("Could not load tournaments data for metadata lookup", err);
     }
 
     if (supabase) {
@@ -1320,12 +1535,50 @@ async function startServer() {
   }
 
   app.post("/api/check-draw", requireAuth, async (req, res) => {
-    const { url } = req.body;
+    let { url } = req.body;
     if (!url || typeof url !== 'string') {
       return res.status(400).json({ error: "Draw URL is required" });
     }
 
     try {
+      // Auto-resolve event.aspx links in tournament software (which are container events, not draw pages)
+      if (url.includes('event.aspx')) {
+        try {
+          console.log(`[check-draw] Detected event.aspx container URL: ${url}. Fetching event page to seek actual draw link...`);
+          const eventPageRes = await axios.get(url, {
+            headers: { "User-Agent": "Mozilla/5.0" },
+            timeout: 10000
+          });
+          const $eventPage = cheerio.load(eventPageRes.data);
+          let drawLink = '';
+          
+          // Look for any links containing "draw.aspx?" or "/draw/"
+          $eventPage('a[href*="draw.aspx?"], a[href*="/draw/"]').each((_, el) => {
+            const href = $eventPage(el).attr('href');
+            if (href) {
+              drawLink = href;
+              return false; // Break
+            }
+          });
+          
+          if (drawLink) {
+            const domain = url.includes("hkta") ? "hkta.tournamentsoftware.com" : "tournaments.tennis.com.au";
+            if (!drawLink.startsWith('http')) {
+              if (drawLink.startsWith('/')) {
+                url = `https://${domain}${drawLink}`;
+              } else {
+                url = `https://${domain}/sport/${drawLink}`;
+              }
+            } else {
+              url = drawLink;
+            }
+            console.log(`[check-draw] Successfully auto-resolved event.aspx to draw.aspx: ${url}`);
+          }
+        } catch (eventErr: any) {
+          console.warn("[check-draw] Failed to pre-fetch event.aspx for auto-draw-resolution:", eventErr.message);
+        }
+      }
+
       const drawRes = await axios.get(url, {
         headers: { "User-Agent": "Mozilla/5.0" },
         timeout: 10000
@@ -2176,66 +2429,83 @@ async function startServer() {
     res.json({ inProgress: isGlobalRefreshing });
   });
 
+  async function runGlobalRefreshTask(includeTournamentsScrape: boolean = true) {
+    isGlobalRefreshing = true;
+    isScraping = true;
+    try {
+      console.log(`Starting background refresh. Include tournaments scrape: ${includeTournamentsScrape}`);
+      
+      const players = await getSavedPlayers(null, null);
+      let notifications: any[] = [];
+      try {
+        notifications = await getNotificationsHistory(null, null);
+      } catch (e) {
+        // Ignore
+      }
+
+      const limit = pLimit(2); // Concurrency limit of 2 to avoid slamming tennis systems and timeouts
+      
+      // Task A: update all player stats
+      const playersPromise = Promise.all(
+        players.map((p: any) =>
+          limit(async () => {
+            if (!p.url) return p;
+            try {
+              const updatedStats = await scrapePlayerProfile(p.url, p.name);
+              const updatedPlayer = { ...p, ...updatedStats, name: p.name };
+              
+              const newChanges = getPlayerChanges(p, updatedPlayer);
+              if (newChanges.length > 0) {
+                notifications = [...newChanges, ...notifications];
+              }
+
+              return updatedPlayer;
+            } catch (e) {
+              console.error(`Failed to refresh player ${p.name} in global refresh:`, e);
+              return p; // Return unchanged on failure
+            }
+          })
+        )
+      ).then(async (updatedPlayers) => {
+        await savePlayers(null, null, updatedPlayers);
+        if (notifications.length > 0) {
+          await saveNotificationsHistory(null, null, notifications);
+        }
+      });
+
+      // Task B: run tournaments scraper (only if includeTournamentsScrape is true)
+      let scraperPromise = Promise.resolve();
+      if (includeTournamentsScrape) {
+        scraperPromise = wrappedRunScraper().catch((e) => {
+          console.error("Tournaments scraper failed during global refresh:", e);
+        });
+      }
+
+      // Wait for both tasks to complete
+      await Promise.all([playersPromise, scraperPromise]);
+
+      // 2. Now trigger tournaments-for-players cache refresh using the newly updated data!
+      if (refreshTournamentsForPlayersCache) {
+        console.log("Rebuilding tournaments-for-players cache...");
+        await refreshTournamentsForPlayersCache().catch(console.error);
+      }
+      console.log("Background global refresh completed successfully.");
+    } catch (err) {
+      console.error("Background refresh all failed:", err);
+    } finally {
+      isGlobalRefreshing = false;
+      isScraping = false;
+    }
+  }
+
   app.post("/api/admin/refresh-all", requireAuth, async (req, res) => {
     if (isGlobalRefreshing) {
       return res.status(400).json({ error: "Global refresh already in progress" });
     }
 
-    isGlobalRefreshing = true;
-
-    // Start background processing
-    (async () => {
-      try {
-        console.log("Triggering background refresh of all saved players & tournaments-for-players cache...");
-        const players = await getSavedPlayers(null, null);
-        let notifications: any[] = [];
-        try {
-          notifications = await getNotificationsHistory(null, null);
-        } catch (e) {
-          // Ignore
-        }
-
-        const limit = pLimit(2); // Concurrency limit of 2 to avoid slamming tennis systems and timeouts
-        const updatedPlayers = await Promise.all(
-          players.map((p: any) =>
-            limit(async () => {
-              if (!p.url) return p;
-              try {
-                const updatedStats = await scrapePlayerProfile(p.url, p.name);
-                const updatedPlayer = { ...p, ...updatedStats, name: p.name };
-                
-                const newChanges = getPlayerChanges(p, updatedPlayer);
-                if (newChanges.length > 0) {
-                  notifications = [...newChanges, ...notifications];
-                }
-
-                return updatedPlayer;
-              } catch (e) {
-                console.error(`Failed to refresh player ${p.name} in refresh-all:`, e);
-                return p; // Return unchanged on failure
-              }
-            })
-          )
-        );
-
-        await savePlayers(null, null, updatedPlayers);
-
-        if (notifications.length > 0) {
-          await saveNotificationsHistory(null, null, notifications);
-        }
-
-        // Now, trigger tournaments-for-players cache refresh!
-        if (refreshTournamentsForPlayersCache) {
-          console.log("Rebuilding tournaments-for-players cache...");
-          await refreshTournamentsForPlayersCache().catch(console.error);
-        }
-        console.log("Background global refresh completed successfully.");
-      } catch (err) {
-        console.error("Background refresh all failed:", err);
-      } finally {
-        isGlobalRefreshing = false;
-      }
-    })();
+    runGlobalRefreshTask(true).catch((err) => {
+      console.error("Failed to execute admin refresh-all:", err);
+    });
 
     res.json({ success: true, message: "Global refresh triggered in background" });
   });

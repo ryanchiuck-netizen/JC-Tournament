@@ -21,12 +21,20 @@ import { PlayerScreen } from "./components/PlayerScreen";
 import { TournamentScreen } from "./components/TournamentScreen";
 import { DrawChecker } from "./components/DrawChecker";
 import { HistoryTab } from "./components/HistoryTab";
+import { cacheDb } from "./lib/db";
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<"tournaments" | "player-watch" | "player-screen" | "tournament-screen" | "draw-checker" | "alerts">("tournaments");
   
   // Tournaments-for-players cache states
-  const [tournamentsForPlayers, setTournamentsForPlayers] = useState<any[]>([]);
+  const [tournamentsForPlayers, setTournamentsForPlayers] = useState<any[]>(() => {
+    try {
+      const saved = localStorage.getItem("jc_tennis_cached_tournaments_for_players");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
   const [tournamentsForPlayersLastUpdated, setTournamentsForPlayersLastUpdated] = useState<string | null>(null);
   const [isTournamentsForPlayersLoading, setIsTournamentsForPlayersLoading] = useState(false);
 
@@ -36,7 +44,14 @@ export default function App() {
       const res = await fetch("/api/tournaments-for-players");
       if (res.ok) {
         const data = await res.json();
-        setTournamentsForPlayers(data.tournaments || []);
+        const tours = data.tournaments || [];
+        setTournamentsForPlayers(tours);
+        try {
+          localStorage.setItem("jc_tennis_cached_tournaments_for_players", JSON.stringify(tours));
+        } catch (e) {
+          console.warn("localStorage quota exceeded for tournamentsForPlayers, relied purely on IndexedDB.");
+        }
+        await cacheDb.set("tournaments_for_players", tours);
         setTournamentsForPlayersLastUpdated(data.updatedAt || null);
       }
     } catch (err) {
@@ -125,11 +140,26 @@ export default function App() {
                 modified = true;
 
                 if (Notification.permission === "granted") {
-                  new Notification(item.title || "Tennis Player Alert", {
-                    body: item.body || item.message || "Player statistics updated.",
-                    icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTElZ9tTIVQ-qQzRwpEyM5aC2JlP2NbaHA6yR9rObvF7g&s",
-                    tag: item.id
-                  });
+                  try {
+                    new Notification(item.title || "Tennis Player Alert", {
+                      body: item.body || item.message || "Player statistics updated.",
+                      icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTElZ9tTIVQ-qQzRwpEyM5aC2JlP2NbaHA6yR9rObvF7g&s",
+                      tag: item.id
+                    });
+                  } catch (notifErr) {
+                    console.warn("Direct Notification constructor failed in background, trying service worker fallback:", notifErr);
+                    if ("serviceWorker" in navigator) {
+                      navigator.serviceWorker.ready.then((registration) => {
+                        registration.showNotification(item.title || "Tennis Player Alert", {
+                          body: item.body || item.message || "Player statistics updated.",
+                          icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTElZ9tTIVQ-qQzRwpEyM5aC2JlP2NbaHA6yR9rObvF7g&s",
+                          tag: item.id
+                        });
+                      }).catch((swErr) => {
+                        console.error("Service worker background notification failed:", swErr);
+                      });
+                    }
+                  }
                 }
               }
             }
@@ -142,7 +172,7 @@ export default function App() {
           }
         }
       } catch (err) {
-        console.error("Failed checking real-time background notifications:", err);
+        console.warn("Failed checking real-time background notifications:", err);
       }
     };
 
@@ -152,12 +182,33 @@ export default function App() {
     return () => clearInterval(interval);
   }, [notificationPermission]);
 
-  const [savedDraws, setSavedDraws] = useState<any[]>([]);
-  const [allTournaments, setAllTournaments] = useState<Tournament[]>([]);
+  const [savedDraws, setSavedDraws] = useState<any[]>(() => {
+    try {
+      const saved = localStorage.getItem("jc_tennis_cached_saved_draws");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [allTournaments, setAllTournaments] = useState<Tournament[]>(() => {
+    try {
+      const saved = localStorage.getItem("jc_tennis_cached_all_tournaments");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  const [lastUpdated, setLastUpdated] = useState<Date>(() => {
+    try {
+      const saved = localStorage.getItem("jc_tennis_cached_last_updated");
+      return saved ? new Date(saved) : new Date();
+    } catch {
+      return new Date();
+    }
+  });
   const [isScraping, setIsScraping] = useState<boolean>(false);
   
   const [region, setRegion] = useState<Region>("AUS");
@@ -170,12 +221,30 @@ export default function App() {
   const [selectedYear, setSelectedYear] = useState<number>(currentYearValue);
   const [auState, setAuState] = useState<string>("NSW");
 
+  const jordanJoinedUrls = useMemo(() => {
+    const urls = new Set<string>();
+    tournamentsForPlayers.forEach(tp => {
+      const containsJordan = tp.joinedPlayers?.some((jp: any) => {
+        const name = jp.player?.name ? jp.player.name.toLowerCase() : "";
+        return name.includes("jordan chiu") || name.includes("chiu jordan") || jp.player?.id === "66333972211" || jp.player?.id === "66419";
+      });
+      if (containsJordan && tp.tournament?.link) {
+        const absoluteUrl = getFullLink(tp.tournament.link, tp.tournament.source as any);
+        const normalized = absoluteUrl.split('#')[0].toLowerCase().trim();
+        urls.add(normalized);
+      }
+    });
+    return urls;
+  }, [tournamentsForPlayers]);
+
   const fetchSavedDraws = async () => {
     try {
       const res = await fetch('/api/saved-draws');
       if (res.ok) {
         const data = await res.json();
-        setSavedDraws(data.draws || []);
+        const draws = data.draws || [];
+        setSavedDraws(draws);
+        localStorage.setItem("jc_tennis_cached_saved_draws", JSON.stringify(draws));
       }
     } catch (err) {
       console.error("Failed to fetch saved draws:", err);
@@ -186,27 +255,140 @@ export default function App() {
     setLoading(true);
     setError(null);
     try {
-      const [data] = await Promise.all([
+      console.log("Manual refresh triggered. Fetching all tournaments, draws, and players cache...");
+      const [toursData, resSavedDraws, resPlayers] = await Promise.all([
         fetchTournaments(),
-        fetchSavedDraws()
+        fetch('/api/saved-draws').then(r => r.json()).catch(() => ({ draws: [] })),
+        fetch('/api/tournaments-for-players').then(r => r.json()).catch(() => ({ tournaments: [] }))
       ]);
-      setAllTournaments(data.tournaments || []);
-      setIsScraping(!!data.isScraping);
-      if (data.lastUpdated) {
-        setLastUpdated(new Date(data.lastUpdated));
+
+      const tours = toursData.tournaments || [];
+      setAllTournaments(tours);
+      try {
+        localStorage.setItem("jc_tennis_cached_all_tournaments", JSON.stringify(tours));
+      } catch (e) {
+        console.warn("localStorage space quota exceeded for allTournaments, relying purely on IndexedDB.");
       }
-      // Also request cache from server
-      await reloadTournamentsForPlayers();
+      await cacheDb.set("all_tournaments", tours);
+      setIsScraping(!!toursData.isScraping);
+
+      if (toursData.lastUpdated) {
+        const updatedDate = new Date(toursData.lastUpdated);
+        setLastUpdated(updatedDate);
+        localStorage.setItem("jc_tennis_cached_last_updated", updatedDate.toISOString());
+      }
+
+      const draws = resSavedDraws.draws || [];
+      setSavedDraws(draws);
+      localStorage.setItem("jc_tennis_cached_saved_draws", JSON.stringify(draws));
+
+      const tpTours = resPlayers.tournaments || [];
+      setTournamentsForPlayers(tpTours);
+      try {
+        localStorage.setItem("jc_tennis_cached_tournaments_for_players", JSON.stringify(tpTours));
+      } catch (e) {
+        console.warn("localStorage space quota exceeded for tournamentsForPlayers, relying purely on IndexedDB.");
+      }
+      await cacheDb.set("tournaments_for_players", tpTours);
+      setTournamentsForPlayersLastUpdated(resPlayers.updatedAt || null);
     } catch (err: any) {
-      console.error(err);
+      console.error("Manual refresh failed:", err);
       setError(err.message || 'An error occurred while fetching data');
     } finally {
       setLoading(false);
     }
   };
 
+  // Safe instant loading utilizing local cache first, then checking for updates silently
+  const initFromCacheAndFetch = async () => {
+    let hasLocalCache = false;
+    // 1. Instantly restore everything from IndexedDB cache or localStorage fallback
+    try {
+      const cachedAll = await cacheDb.get<Tournament[]>("all_tournaments");
+      if (cachedAll && cachedAll.length > 0) {
+        setAllTournaments(cachedAll);
+        hasLocalCache = true;
+      } else {
+        const localSaved = localStorage.getItem("jc_tennis_cached_all_tournaments");
+        if (localSaved) {
+          const parsed = JSON.parse(localSaved);
+          setAllTournaments(parsed);
+          await cacheDb.set("all_tournaments", parsed);
+          hasLocalCache = true;
+        }
+      }
+
+      const cachedPlayersTours = await cacheDb.get<any[]>("tournaments_for_players");
+      if (cachedPlayersTours && cachedPlayersTours.length > 0) {
+        setTournamentsForPlayers(cachedPlayersTours);
+      } else {
+        const localSaved = localStorage.getItem("jc_tennis_cached_tournaments_for_players");
+        if (localSaved) {
+          const parsed = JSON.parse(localSaved);
+          setTournamentsForPlayers(parsed);
+          await cacheDb.set("tournaments_for_players", parsed);
+        }
+      }
+
+      const lastUpText = localStorage.getItem("jc_tennis_cached_last_updated");
+      if (lastUpText) {
+        setLastUpdated(new Date(lastUpText));
+      }
+    } catch (e) {
+      console.warn("Failed to retrieve initial cache:", e);
+    } finally {
+      // Direct user access to interactive UI with cached data in < 50ms!
+      setLoading(!hasLocalCache);
+    }
+
+    // 2. Perform background fetch of all latest data in parallel to keep it completely in sync with Supabase/Server
+    try {
+      console.log("Background syncing latest data from Supabase/Server...");
+      const [toursRes, playersRes, drawsRes] = await Promise.allSettled([
+        fetchTournaments(),
+        fetch("/api/tournaments-for-players").then(r => r.ok ? r.json() : Promise.reject()),
+        fetch("/api/saved-draws").then(r => r.ok ? r.json() : Promise.reject())
+      ]);
+
+      if (toursRes.status === "fulfilled" && toursRes.value) {
+        const toursData = toursRes.value;
+        const tours = toursData.tournaments || [];
+        setAllTournaments(tours);
+        await cacheDb.set("all_tournaments", tours);
+        setIsScraping(!!toursData.isScraping);
+        if (toursData.lastUpdated) {
+          const updatedDate = new Date(toursData.lastUpdated);
+          setLastUpdated(updatedDate);
+          localStorage.setItem("jc_tennis_cached_last_updated", updatedDate.toISOString());
+        }
+      }
+
+      if (playersRes.status === "fulfilled" && playersRes.value) {
+        const data = playersRes.value;
+        const tours = data.tournaments || [];
+        setTournamentsForPlayers(tours);
+        await cacheDb.set("tournaments_for_players", tours);
+        setTournamentsForPlayersLastUpdated(data.updatedAt || null);
+      }
+
+      if (drawsRes.status === "fulfilled" && drawsRes.value) {
+        const drawData = drawsRes.value;
+        if (drawData && drawData.draws) {
+          setSavedDraws(drawData.draws);
+          localStorage.setItem("jc_tennis_cached_saved_draws", JSON.stringify(drawData.draws));
+        }
+      }
+      
+      console.log("Background sync complete. All views fully populated from Supabase!");
+    } catch (err) {
+      console.warn("Background update sync failed:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    fetchStaticData();
+    initFromCacheAndFetch();
   }, []);
 
   // Filter tournaments based on region, ageFilter, searchTerm, and month
@@ -233,8 +415,7 @@ export default function App() {
       if (searchTerm && !t.name.toLowerCase().includes(searchTerm.toLowerCase()) && !t.dates.toLowerCase().includes(searchTerm.toLowerCase())) return false;
       
       // State filter for tennis Australia tournaments
-      if (auState !== "ALL") {
-        if (t.source !== "AUS") return false;
+      if (auState !== "ALL" && t.source === "AUS") {
         if (getTournamentState(t) !== auState) return false;
       }
       
@@ -584,15 +765,21 @@ export default function App() {
                   <p className="text-sm font-medium">Loading Database...</p>
                 </div>
               ) : filteredTournaments.length > 0 ? (
-                filteredTournaments.map((t, i) => (
-                  <TournamentCard 
-                    key={i} 
-                    tournament={t} 
-                    index={i} 
-                    savedDraws={savedDraws} 
-                    onSavedDrawsChanged={fetchSavedDraws} 
-                  />
-                ))
+                filteredTournaments.map((t, i) => {
+                  const absoluteUrl = getFullLink(t.link, t.source);
+                  const normalized = absoluteUrl.split('#')[0].toLowerCase().trim();
+                  const hasJordanJoined = jordanJoinedUrls.has(normalized);
+                  return (
+                    <TournamentCard 
+                      key={i} 
+                      tournament={t} 
+                      index={i} 
+                      savedDraws={savedDraws} 
+                      onSavedDrawsChanged={fetchSavedDraws} 
+                      hasJordanJoined={hasJordanJoined}
+                    />
+                  );
+                })
               ) : !loading && (
                 <div className="p-16 flex flex-col items-center justify-center gap-3 text-gray-500">
                   <div className="w-12 h-12 bg-gray-800 rounded-full flex items-center justify-center mb-2">

@@ -8,6 +8,142 @@ function normalizeUrl(urlStr: string): string {
   return urlStr.split('#')[0].toLowerCase().trim();
 }
 
+export const formatDateToDdMmYyyy = (dateStr: string): string => {
+  if (!dateStr) return '';
+  const cleanStr = dateStr.trim();
+  if (!cleanStr) return '';
+
+  const months = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+  const monthsFull = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"];
+
+  const getMonthIndex = (str: string): number => {
+    const s = str.toLowerCase();
+    let idx = months.findIndex(m => s.includes(m));
+    if (idx === -1) {
+      idx = monthsFull.findIndex(m => s.includes(m));
+    }
+    return idx;
+  };
+
+  // Zero padding helper
+  const pad = (num: number) => num.toString().padStart(2, '0');
+
+  // Helper to format Date object to DD/MM/YYYY
+  const formatDateObj = (d: Date) => {
+    return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
+  };
+
+  // 1. DD/MM/YYYY or D/M/YYYY
+  const ddMmyYyyyMatch = cleanStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (ddMmyYyyyMatch) {
+    const day = parseInt(ddMmyYyyyMatch[1], 10);
+    const month = parseInt(ddMmyYyyyMatch[2], 10);
+    const year = parseInt(ddMmyYyyyMatch[3], 10);
+    return `${pad(day)}/${pad(month)}/${year}`;
+  }
+
+  // 2. YYYY-MM-DD
+  const yyyyMmDdMatch = cleanStr.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (yyyyMmDdMatch) {
+    const year = parseInt(yyyyMmDdMatch[1], 10);
+    const month = parseInt(yyyyMmDdMatch[2], 10);
+    const day = parseInt(yyyyMmDdMatch[3], 10);
+    return `${pad(day)}/${pad(month)}/${year}`;
+  }
+
+  // 3. DD-MM-YYYY
+  const ddMmYyyyDashMatch = cleanStr.match(/^(\d{1,2})-(\d{1,2})-(\d{4})/);
+  if (ddMmYyyyDashMatch) {
+    const day = parseInt(ddMmYyyyDashMatch[1], 10);
+    const month = parseInt(ddMmYyyyDashMatch[2], 10);
+    const year = parseInt(ddMmYyyyDashMatch[3], 10);
+    return `${pad(day)}/${pad(month)}/${year}`;
+  }
+
+  // Extract year if present, otherwise default to current year
+  let year = new Date().getFullYear();
+  const yearMatch = cleanStr.match(/\b(20\d{2})\b/);
+  if (yearMatch) {
+    year = parseInt(yearMatch[1], 10);
+  }
+
+  // Remove the year and commas from cleanStr to simplify parsing of day and month
+  let parseStr = cleanStr.replace(/\b20\d{2}\b/g, '').replace(/,/g, '').trim();
+
+  // 4. Day range with single month: e.g. "21-22 Jun" or "21 - 22 Jun"
+  const dayRangeSingleMonth = parseStr.match(/^(\d{1,2})\s*[-–—to/\s]+\s*(\d{1,2})\s+([a-zA-Z]{3,10})$/i);
+  if (dayRangeSingleMonth) {
+    const day = parseInt(dayRangeSingleMonth[1], 10);
+    const monthIdx = getMonthIndex(dayRangeSingleMonth[3]);
+    if (monthIdx !== -1) {
+      return formatDateObj(new Date(year, monthIdx, day));
+    }
+  }
+
+  // 5. Month with day range: e.g. "Jun 21-22"
+  const monthDayRange = parseStr.match(/^([a-zA-Z]{3,10})\s+(\d{1,2})\s*[-–—to/\s]+\s*(\d{1,2})$/i);
+  if (monthDayRange) {
+    const monthIdx = getMonthIndex(monthDayRange[1]);
+    const day = parseInt(monthDayRange[2], 10);
+    if (monthIdx !== -1) {
+      return formatDateObj(new Date(year, monthIdx, day));
+    }
+  }
+
+  // 6. Full range "6 Jul to 10 Jul" -> split and parse first part
+  if (parseStr.includes(" to ") || parseStr.includes(" - ") || parseStr.includes(" – ") || parseStr.includes(" — ")) {
+    const parts = parseStr.split(/\s+(?:to|-|–|—)\s+/i);
+    if (parts.length > 0) {
+      const startPart = parts[0].trim();
+      
+      const dayMonth = startPart.match(/^(\d{1,2})\s+([a-zA-Z]{3,10})$/i);
+      if (dayMonth) {
+        const day = parseInt(dayMonth[1], 10);
+        const monthIdx = getMonthIndex(dayMonth[2]);
+        if (monthIdx !== -1) {
+          return formatDateObj(new Date(year, monthIdx, day));
+        }
+      }
+      const monthDay = startPart.match(/^([a-zA-Z]{3,10})\s+(\d{1,2})$/i);
+      if (monthDay) {
+        const monthIdx = getMonthIndex(monthDay[1]);
+        const day = parseInt(monthDay[2], 10);
+        if (monthIdx !== -1) {
+          return formatDateObj(new Date(year, monthIdx, day));
+        }
+      }
+    }
+  }
+
+  // 7. Just DD MMM (e.g. "21 Jun")
+  const singleDayMonth = parseStr.match(/^(\d{1,2})\s+([a-zA-Z]{3,10})$/i);
+  if (singleDayMonth) {
+    const day = parseInt(singleDayMonth[1], 10);
+    const monthIdx = getMonthIndex(singleDayMonth[2]);
+    if (monthIdx !== -1) {
+      return formatDateObj(new Date(year, monthIdx, day));
+    }
+  }
+
+  // 8. Just MMM DD (e.g. "Jun 21")
+  const singleMonthDay = parseStr.match(/^([a-zA-Z]{3,10})\s+(\d{1,2})$/i);
+  if (singleMonthDay) {
+    const monthIdx = getMonthIndex(singleMonthDay[1]);
+    const day = parseInt(singleMonthDay[2], 10);
+    if (monthIdx !== -1) {
+      return formatDateObj(new Date(year, monthIdx, day));
+    }
+  }
+
+  // 9. Standard Date.parse fallback
+  let rawParsed = Date.parse(`${parseStr} ${year}`);
+  if (!isNaN(rawParsed)) {
+    return formatDateObj(new Date(rawParsed));
+  }
+
+  return cleanStr;
+};
+
 interface TournamentSavedDrawItemProps {
   draw: any;
   onRefresh: (drawId: string, url: string) => Promise<void>;
@@ -31,13 +167,17 @@ function TournamentSavedDrawItem({ draw, onRefresh, onDelete }: TournamentSavedD
   }, [draw.players]);
 
   const drawDateMatch = draw.url?.match(/#date=(.*)$/);
-  let drawDate = drawDateMatch ? decodeURIComponent(drawDateMatch[1]) : '';
-  if (!drawDate) {
+  let rawDrawDate = drawDateMatch ? decodeURIComponent(drawDateMatch[1]) : '';
+  if (!rawDrawDate) {
     const nameMatch = draw.name?.match(/\b\d{1,2}(?:-\d{1,2})?\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b/i);
+    const ddMmYyyyMatch = draw.name?.match(/\b\d{1,2}\/\d{1,2}\/\d{4}\b/);
     if (nameMatch) {
-      drawDate = nameMatch[0];
+      rawDrawDate = nameMatch[0];
+    } else if (ddMmYyyyMatch) {
+      rawDrawDate = ddMmYyyyMatch[0];
     }
   }
+  const drawDate = formatDateToDdMmYyyy(rawDrawDate);
   const displayUrl = draw.url?.split('#')[0] || '';
 
   const handleRefresh = async () => {
@@ -937,7 +1077,7 @@ export function TournamentScreen({
 
   // Sync with parent cache
   useEffect(() => {
-    if (tournamentsCache && tournamentsCache.length > 0) {
+    if (tournamentsCache) {
       setTournaments(tournamentsCache);
     }
   }, [tournamentsCache]);
@@ -963,7 +1103,7 @@ export function TournamentScreen({
   const fetchTournaments = async (force: boolean = false) => {
     if (force) {
       setIsRefreshing(true);
-    } else {
+    } else if (tournaments.length === 0) {
       setLoading(true);
     }
     setError(null);
@@ -987,10 +1127,14 @@ export function TournamentScreen({
           }
         } catch (e) {
           console.error("Failed to parse /api/tournaments-for-players JSON:", e);
-          setError("Failed to fetch tournaments");
+          if (tournaments.length === 0) {
+            setError("Failed to fetch tournaments");
+          }
         }
       } else {
-        setError("Failed to fetch tournaments");
+        if (tournaments.length === 0) {
+          setError("Failed to fetch tournaments");
+        }
       }
 
       if (resSavedDraws.ok) {
@@ -999,7 +1143,9 @@ export function TournamentScreen({
       }
     } catch (e) {
       console.error("Failed to fetch data", e);
-      setError("An error occurred while fetching data");
+      if (tournaments.length === 0) {
+        setError("An error occurred while fetching data");
+      }
     } finally {
       setLoading(false);
       setIsRefreshing(false);
@@ -1033,7 +1179,7 @@ export function TournamentScreen({
           }
         }
       } catch (err) {
-        console.error("Failed to check refresh status:", err);
+        console.warn("Failed to check refresh status:", err);
       }
     };
 

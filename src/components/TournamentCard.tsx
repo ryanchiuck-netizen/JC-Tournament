@@ -21,9 +21,10 @@ interface TournamentCardProps {
   index: number;
   savedDraws?: any[];
   onSavedDrawsChanged?: () => void;
+  hasJordanJoined?: boolean;
 }
 
-export const TournamentCard: React.FC<TournamentCardProps> = ({ tournament, index, savedDraws = [], onSavedDrawsChanged }) => {
+export const TournamentCard: React.FC<TournamentCardProps> = ({ tournament, index, savedDraws = [], onSavedDrawsChanged, hasJordanJoined = false }) => {
   const t = tournament;
   const [isProcessing, setIsProcessing] = useState(false);
   
@@ -107,16 +108,34 @@ export const TournamentCard: React.FC<TournamentCardProps> = ({ tournament, inde
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.01 }}
-      className="p-4 sm:px-6 hover:bg-gray-800/50 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4 group"
+      className={`p-4 sm:px-6 transition-all duration-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 group ${
+        hasJordanJoined
+          ? "bg-yellow-500/5 border-y border-yellow-500/20 shadow-md shadow-yellow-500/5 hover:bg-yellow-500/10"
+          : "hover:bg-gray-800/50"
+      }`}
     >
       <div className="flex items-start gap-4 flex-1">
-        <div className="w-8 h-8 rounded-full bg-blue-900/30 text-blue-400 flex items-center justify-center font-semibold text-sm shrink-0 mt-0.5 border border-blue-800/50">
+        <div className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm shrink-0 mt-0.5 border transition-colors ${
+          hasJordanJoined
+            ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/40"
+            : "bg-blue-900/30 text-blue-400 border-blue-800/50"
+        }`}>
           {index + 1}
         </div>
         <div className="flex-1">
-          <h3 className="font-bold text-gray-100 text-[15px] leading-snug mb-2 group-hover:text-blue-400 transition-colors">
-            {t.name}
-          </h3>
+          <div className="flex flex-wrap items-center gap-2 mb-2">
+            <h3 className={`font-bold text-[15px] leading-snug group-hover:text-blue-400 transition-colors ${
+              hasJordanJoined ? "text-yellow-400 font-extrabold" : "text-gray-100"
+            }`}>
+              {t.name}
+            </h3>
+            {hasJordanJoined && (
+              <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold bg-yellow-500/25 text-yellow-400 border border-yellow-500/40 px-2 py-0.5 rounded-full uppercase tracking-wider animate-pulse shrink-0">
+                <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-ping shrink-0" />
+                JORDAN JOINED
+              </span>
+            )}
+          </div>
           <div className="flex flex-wrap items-center gap-3 text-sm text-gray-400 font-medium">
             <div className="flex items-center gap-1.5">
               <Calendar className="w-4 h-4 opacity-70" />

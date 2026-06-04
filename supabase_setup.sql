@@ -45,7 +45,14 @@ create table if not exists public.notifications_history (
     created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- 4. Row Level Security (RLS) Configuration
+-- 4. Create the 'tournaments' table if it doesn't exist
+create table if not exists public.tournaments (
+    id text primary key,
+    data jsonb not null,
+    created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- 5. Row Level Security (RLS) Configuration
 -- If you are using the Service Role Key (SUPABASE_SERVICE_ROLE_KEY) in your environment,
 -- all queries bypass RLS automatically.
 --
@@ -55,6 +62,7 @@ create table if not exists public.notifications_history (
 alter table public.saved_players disable row level security;
 alter table public.saved_draws disable row level security;
 alter table public.notifications_history disable row level security;
+alter table public.tournaments disable row level security;
 
 -- OPTION B: Keep RLS enabled but explicitly grant full public CRUD permissions
 -- Uncomment the block below to use this option instead:

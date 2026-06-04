@@ -98,19 +98,47 @@ export function HistoryTab() {
     try {
       const res = await fetch('/api/notifications/test', { method: 'POST' });
       if (res.ok) {
+        let systemAlertSent = false;
         if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
-          new Notification("Test Tennis Alert 🎾", {
-            body: "Success! Connection test passed! Your phone can receive real-time notifications on JC Tennis.",
-            icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTElZ9tTIVQ-qQzRwpEyM5aC2JlP2NbaHA6yR9rObvF7g&s"
-          });
+          try {
+            new Notification("Test Tennis Alert 🎾", {
+              body: "Success! Connection test passed! Your phone can receive real-time notifications on JC Tennis.",
+              icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTElZ9tTIVQ-qQzRwpEyM5aC2JlP2NbaHA6yR9rObvF7g&s"
+            });
+            systemAlertSent = true;
+          } catch (notifErr: any) {
+            console.warn("Direct Notification constructor failed. Attempting service worker notification fallback.", notifErr);
+            // Fallback to service worker if registered
+            if ("serviceWorker" in navigator) {
+              try {
+                const registration = await navigator.serviceWorker.ready;
+                await registration.showNotification("Test Tennis Alert 🎾", {
+                  body: "Success! Connection test passed! Your phone can receive real-time notifications on JC Tennis.",
+                  icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTElZ9tTIVQ-qQzRwpEyM5aC2JlP2NbaHA6yR9rObvF7g&s"
+                });
+                systemAlertSent = true;
+              } catch (swErr) {
+                console.error("Service worker notification failed too:", swErr);
+              }
+            }
+          }
         }
+
         await fetchHistory();
+
+        if (systemAlertSent) {
+          alert("Success! Check your phone's notification bar. A system-level test alert has been fired!");
+        } else {
+          alert("Test event saved on server! If you did not see a system-level popup on your phone:\n\n" +
+                "1. Confirm you tapped 'Enable Notifications' in the app header.\n" +
+                "2. On iOS/iPhone: You must 'Add to Home Screen' (via Share button under Safari) first to enable system-level notifications on iOS.");
+        }
       } else {
         alert("Failed to trigger server test notification.");
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
-      alert("Error triggering test notification.");
+      alert("Error triggering test notification: " + (e.message || e));
     } finally {
       setTestingNotif(false);
     }

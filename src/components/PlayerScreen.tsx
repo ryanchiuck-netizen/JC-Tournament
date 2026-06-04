@@ -586,7 +586,7 @@ export function PlayerScreen({
           }
         }
       } catch (err) {
-        console.error("Failed to query background refresh status:", err);
+        console.warn("Failed to query background refresh status:", err);
       }
     };
 
