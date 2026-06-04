@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { 
   Loader2, 
   AlertCircle, 
@@ -91,96 +91,134 @@ export default function App() {
     }
   };
 
-  // Poll notifications history to fire real-time native desktop notifications
-  useEffect(() => {
+  // Refs for tracking seen notification ids, first-run indexing, and refresh monitoring state
+  const seenNotificationIdsRef = useRef<Set<string>>(new Set());
+  const isFirstNotificationsRunRef = useRef(true);
+  const wasRefreshingRef = useRef(false);
+
+  const checkRealTimeNotifications = async () => {
     if (typeof window === "undefined" || !("Notification" in window)) return;
 
-    let isFirstRun = true;
-    let seenNotificationIds = new Set<string>();
-
-    try {
-      const saved = localStorage.getItem("jc_tennis_seen_notification_ids");
-      if (saved) {
-        seenNotificationIds = new Set(JSON.parse(saved));
+    if (seenNotificationIdsRef.current.size === 0) {
+      try {
+        const saved = localStorage.getItem("jc_tennis_seen_notification_ids");
+        if (saved) {
+          seenNotificationIdsRef.current = new Set(JSON.parse(saved));
+        }
+      } catch (e) {
+        console.error("Failed to read seen notification IDs from local storage:", e);
       }
-    } catch (e) {
-      console.error("Failed to read seen notification IDs from local storage:", e);
     }
 
-    const checkRealTimeNotifications = async () => {
-      try {
-        const res = await fetch("/api/notifications/history");
-        if (res.ok) {
-          const alerts = await res.json();
-          if (Array.isArray(alerts) && alerts.length > 0) {
-            // Sort ascending by alert timestamp to show from oldest to newest
-            const sortedAlerts = [...alerts].sort((a, b) => {
-              const timeA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
-              const timeB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
-              return timeA - timeB;
+    try {
+      const res = await fetch("/api/notifications/history");
+      if (res.ok) {
+        const alerts = await res.json();
+        if (Array.isArray(alerts) && alerts.length > 0) {
+          // Sort ascending by alert timestamp to show from oldest to newest
+          const sortedAlerts = [...alerts].sort((a, b) => {
+            const timeA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+            const timeB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+            return timeA - timeB;
+          });
+
+          if (isFirstNotificationsRunRef.current) {
+            // Initial load of the app session: index existing notices without showing popups
+            // to prevent flood of historic notification sound/spam
+            sortedAlerts.forEach(item => {
+              if (item.id) seenNotificationIdsRef.current.add(item.id);
             });
+            try {
+              localStorage.setItem("jc_tennis_seen_notification_ids", JSON.stringify(Array.from(seenNotificationIdsRef.current)));
+            } catch (e) {}
+            isFirstNotificationsRunRef.current = false;
+            return;
+          }
 
-            if (isFirstRun) {
-              // Initial load of the app session: index existing notices without showing popups
-              // to prevent flood of historic notification sound/spam
-              sortedAlerts.forEach(item => {
-                if (item.id) seenNotificationIds.add(item.id);
-              });
-              try {
-                localStorage.setItem("jc_tennis_seen_notification_ids", JSON.stringify(Array.from(seenNotificationIds)));
-              } catch (e) {}
-              isFirstRun = false;
-              return;
-            }
+          let modified = false;
+          for (const item of sortedAlerts) {
+            if (item.id && !seenNotificationIdsRef.current.has(item.id)) {
+              seenNotificationIdsRef.current.add(item.id);
+              modified = true;
 
-            let modified = false;
-            for (const item of sortedAlerts) {
-              if (item.id && !seenNotificationIds.has(item.id)) {
-                seenNotificationIds.add(item.id);
-                modified = true;
-
-                if (Notification.permission === "granted") {
-                  try {
-                    new Notification(item.title || "Tennis Player Alert", {
-                      body: item.body || item.message || "Player statistics updated.",
-                      icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTElZ9tTIVQ-qQzRwpEyM5aC2JlP2NbaHA6yR9rObvF7g&s",
-                      tag: item.id
-                    });
-                  } catch (notifErr) {
-                    console.warn("Direct Notification constructor failed in background, trying service worker fallback:", notifErr);
-                    if ("serviceWorker" in navigator) {
-                      navigator.serviceWorker.ready.then((registration) => {
-                        registration.showNotification(item.title || "Tennis Player Alert", {
-                          body: item.body || item.message || "Player statistics updated.",
-                          icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTElZ9tTIVQ-qQzRwpEyM5aC2JlP2NbaHA6yR9rObvF7g&s",
-                          tag: item.id
-                        });
-                      }).catch((swErr) => {
-                        console.error("Service worker background notification failed:", swErr);
+              if (Notification.permission === "granted") {
+                try {
+                  new Notification(item.title || "Tennis Player Alert", {
+                    body: item.body || item.message || "Player statistics updated.",
+                    icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTElZ9tTIVQ-qQzRwpEyM5aC2JlP2NbaHA6yR9rObvF7g&s",
+                    tag: item.id
+                  });
+                } catch (notifErr) {
+                  console.warn("Direct Notification constructor failed in background, trying service worker fallback:", notifErr);
+                  if ("serviceWorker" in navigator) {
+                    navigator.serviceWorker.ready.then((registration) => {
+                      registration.showNotification(item.title || "Tennis Player Alert", {
+                        body: item.body || item.message || "Player statistics updated.",
+                        icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTElZ9tTIVQ-qQzRwpEyM5aC2JlP2NbaHA6yR9rObvF7g&s",
+                        tag: item.id
                       });
-                    }
+                    }).catch((swErr) => {
+                      console.error("Service worker background notification failed:", swErr);
+                    });
                   }
                 }
               }
             }
+          }
 
-            if (modified) {
-              try {
-                localStorage.setItem("jc_tennis_seen_notification_ids", JSON.stringify(Array.from(seenNotificationIds)));
-              } catch (e) {}
+          if (modified) {
+            try {
+              localStorage.setItem("jc_tennis_seen_notification_ids", JSON.stringify(Array.from(seenNotificationIdsRef.current)));
+            } catch (e) {}
+          }
+        }
+      }
+    } catch (err) {
+      console.warn("Failed checking real-time background notifications:", err);
+    }
+  };
+
+  // Run initial check of notifications and run again if permission changes
+  useEffect(() => {
+    checkRealTimeNotifications();
+  }, [notificationPermission]);
+
+  // Monitor when a scheduled or background refresh finishes (zero database billing impact!)
+  useEffect(() => {
+    let intervalId: any = null;
+
+    const monitorRefreshCompletion = async () => {
+      try {
+        const res = await fetch("/api/admin/refresh-status");
+        if (res.ok) {
+          const { inProgress } = await res.json();
+          if (inProgress) {
+            wasRefreshingRef.current = true;
+          } else {
+            // If it was refreshing previously, and is no longer refreshing, a background/scheduled/manual job just finished!
+            if (wasRefreshingRef.current) {
+              console.log("App detected background refresh completed! Refreshing lists and notifications once...");
+              wasRefreshingRef.current = false;
+              
+              // Trigger single non-polling updates to sync all data!
+              checkRealTimeNotifications();
+              initFromCacheAndFetch(); // This retrieves fresh tournaments/players lists from Supabase!
             }
           }
         }
       } catch (err) {
-        console.warn("Failed checking real-time background notifications:", err);
+        console.warn("Error monitoring refresh completion:", err);
       }
     };
 
-    checkRealTimeNotifications();
-    const interval = setInterval(checkRealTimeNotifications, 20000); // Check every 20s
+    // Run initially to see if currently refreshing
+    monitorRefreshCompletion();
 
-    return () => clearInterval(interval);
-  }, [notificationPermission]);
+    // Check periodically (every 15s) - extremely lightweight memory-only check, does NOT query database!
+    intervalId = setInterval(monitorRefreshCompletion, 15000);
+
+    return () => clearInterval(intervalId);
+  }, []);
 
   const [savedDraws, setSavedDraws] = useState<any[]>(() => {
     try {
@@ -291,6 +329,9 @@ export default function App() {
       }
       await cacheDb.set("tournaments_for_players", tpTours);
       setTournamentsForPlayersLastUpdated(resPlayers.updatedAt || null);
+      
+      // Check real-time notifications after completing manual refresh
+      checkRealTimeNotifications();
     } catch (err: any) {
       console.error("Manual refresh failed:", err);
       setError(err.message || 'An error occurred while fetching data');

@@ -167,12 +167,11 @@ export async function runScraper() {
   const playersPath = path.join(process.cwd(), "public", "players.json");
 
   const now = new Date();
-  // Calculate "last month onwards" to be safe and efficient
-  const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  const startYear = lastMonthDate.getFullYear();
-  const startMonth = lastMonthDate.getMonth() + 1; // 1-indexed (e.g. 5 for May if current month is June)
+  // Calculate "this month onwards" to be safe and efficient
+  const startYear = now.getFullYear();
+  const startMonth = now.getMonth() + 1; // 1-indexed (e.g. 6 for June if current month is June)
 
-  // Helper to determine if a tournament ended completely in the past (before last month)
+  // Helper to determine if a tournament ended completely in the past (before this month)
   const isTournamentInPast = (datesStr: string, activeYear: number, activeMonth: number): boolean => {
     if (!datesStr) return false;
     try {
@@ -206,7 +205,7 @@ export async function runScraper() {
           };
         }
 
-        // If tournament ended before last month, retain it in memory of our static cache
+        // If tournament ended before this month, retain it in memory of our static cache
         if (isTournamentInPast(t.dates, startYear, startMonth)) {
           retainedTournaments.push(t);
         }
@@ -221,7 +220,7 @@ export async function runScraper() {
   allTournaments.push(...retainedTournaments);
 
   try {
-    // 1. Scrape HK (only from last month onwards)
+    // 1. Scrape HK (only from this month onwards)
     let page = 1;
     let hasMore = true;
     const hkStartDate = `${startYear}-${startMonth.toString().padStart(2, "0")}-01`;
@@ -258,7 +257,7 @@ export async function runScraper() {
       tournaments: allTournaments
     }, null, 2));
 
-    // 2. Scrape AUS month-by-month starting ONLY from last month onwards (saving immense overhead!)
+    // 2. Scrape AUS month-by-month starting ONLY from this month onwards (saving immense overhead!)
     const dateRanges: { start: string; end: string }[] = [];
     let tempYear = startYear;
     let tempMonth = startMonth;

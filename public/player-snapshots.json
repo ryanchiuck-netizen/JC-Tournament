@@ -1,7 +1,2155 @@
 [
   {
+    "date": "2026-06-04",
+    "timestamp": "2026-06-04T15:27:43.731Z",
+    "taPlayers": [
+      {
+        "id": "1774838840325",
+        "url": "https://tournaments.tennis.com.au/player-profile/26B6F59E-714F-4852-9D3E-5022A7EBEC99",
+        "name": "Andy (Yuhao) Liu",
+        "rank": "-",
+        "points": "130.00",
+        "source": "TA",
+        "utrSingles": "5.7",
+        "winLossYTD": "11:8",
+        "winLossCareer": "51:29",
+        "championships": "2026: 2\n2025: 3\n2024: 2"
+      },
+      {
+        "id": "1774838616457",
+        "url": "https://tournaments.tennis.com.au/player-profile/30BB29AE-08E1-4684-8333-74E1FE9D8D81",
+        "name": "Gavrilo Novkovic",
+        "rank": "-",
+        "points": "31.00",
+        "source": "TA",
+        "utrSingles": "4.8",
+        "winLossYTD": "25:9",
+        "winLossCareer": "121:62",
+        "championships": "2026: 3\n2025: 5\n2024: 4"
+      },
+      {
+        "id": "1774852422814",
+        "url": "https://tournaments.tennis.com.au/player-profile/AC4465CE-7AC0-40BA-9E1D-C5A5763C8109",
+        "name": "Henry Wen",
+        "rank": "-",
+        "points": "12.00",
+        "source": "TA",
+        "utrSingles": "4.7",
+        "winLossYTD": "24:9",
+        "winLossCareer": "55:62",
+        "championships": "2026: 3\n2025: 1\n2024: 2"
+      },
+      {
+        "id": "1774855004722",
+        "url": "https://tournaments.tennis.com.au/player-profile/8443627D-BFF7-4DF1-A5AC-137C4996E788",
+        "name": "Sam Ritchie",
+        "rank": "-",
+        "points": "26.00",
+        "source": "TA",
+        "utrSingles": "4.6",
+        "winLossYTD": "23:10",
+        "winLossCareer": "143:58",
+        "championships": "2026: 7\n2025: 10\n2024: 8"
+      },
+      {
+        "id": "1774854812309",
+        "url": "https://tournaments.tennis.com.au/player-profile/FBE8CE05-98F9-449A-B402-FB076AD50A80",
+        "name": "Zakariyya Rogers",
+        "rank": "-",
+        "points": "127.00",
+        "source": "TA",
+        "utrSingles": "4.4",
+        "winLossYTD": "28:16",
+        "winLossCareer": "95:86",
+        "championships": "2026: 1\n2025: 6\n2024: 2"
+      },
+      {
+        "id": "1774830531032",
+        "url": "https://tournaments.tennis.com.au/player-profile/D8C9AB7B-18A8-4631-B8DE-4EDBF1D543A1",
+        "name": "Jordan Chiu",
+        "rank": "-",
+        "points": "-",
+        "source": "TA",
+        "utrSingles": "4",
+        "winLossYTD": "34:12",
+        "winLossCareer": "90:31",
+        "championships": "2026: 2\n2025: 6\n2024: 1"
+      },
+      {
+        "id": "1774852489789",
+        "url": "https://tournaments.tennis.com.au/player-profile/4625D532-A92D-4155-B515-7AF811D329B6",
+        "name": "Aiden Guo",
+        "rank": "-",
+        "points": "-",
+        "source": "TA",
+        "utrSingles": "4",
+        "winLossYTD": "24:12",
+        "winLossCareer": "50:31",
+        "championships": "2026: 3\n2025: 3"
+      },
+      {
+        "id": "1774852503277",
+        "url": "https://tournaments.tennis.com.au/player-profile/806F94D7-D656-47C7-A99F-321576CC8980",
+        "name": "Henry Wang",
+        "rank": "-",
+        "points": "-",
+        "source": "TA",
+        "utrSingles": "4.1",
+        "winLossYTD": "18:5",
+        "winLossCareer": "58:38",
+        "championships": "2026: 2\n2025: 1"
+      },
+      {
+        "id": "1774853909506",
+        "url": "https://tournaments.tennis.com.au/player-profile/F15291C1-B67A-4EAE-9448-DD6E5BF75953",
+        "name": "Joshua Feng",
+        "rank": "-",
+        "points": "6.00",
+        "source": "TA",
+        "utrSingles": "3.8",
+        "winLossYTD": "13:7",
+        "winLossCareer": "85:46",
+        "championships": "2025: 3\n2024: 4"
+      },
+      {
+        "id": "1774852523592",
+        "url": "https://tournaments.tennis.com.au/player-profile/6657D415-DE03-4B14-B6FB-EB2223C71A0A",
+        "name": "Daniel Graovac",
+        "rank": "-",
+        "points": "-",
+        "source": "TA",
+        "utrSingles": "3.8",
+        "winLossYTD": "9:3",
+        "winLossCareer": "26:30",
+        "championships": "2026: 1\n2024: 1"
+      },
+      {
+        "id": "1774852531343",
+        "url": "https://tournaments.tennis.com.au/player-profile/1D203E27-3EE6-4F02-A3B1-421A308AD58F",
+        "name": "Beau Tindall",
+        "rank": "-",
+        "points": "-",
+        "source": "TA",
+        "utrSingles": "4",
+        "winLossYTD": "31:13",
+        "winLossCareer": "71:50",
+        "championships": "2026: 2\n2025: 3\n2024: 1"
+      },
+      {
+        "id": "1774852542593",
+        "url": "https://tournaments.tennis.com.au/player-profile/E2568F5E-726E-4EF3-A2C7-BC3435B2E04B",
+        "name": "Ryan Xu",
+        "rank": "-",
+        "points": "23.00",
+        "source": "TA",
+        "utrSingles": "3",
+        "winLossYTD": "18:15",
+        "winLossCareer": "83:78",
+        "championships": "2025: 3\n2024: 1"
+      },
+      {
+        "id": "1774852553484",
+        "url": "https://tournaments.tennis.com.au/player-profile/5B29E9F4-E77E-453E-B5E8-868A92A7A57C",
+        "name": "Bisam Chapagain",
+        "rank": "-",
+        "points": "-",
+        "source": "TA",
+        "utrSingles": "4",
+        "winLossYTD": "13:6",
+        "winLossCareer": "46:41",
+        "championships": "2025: 4"
+      },
+      {
+        "id": "1774852571511",
+        "url": "https://tournaments.tennis.com.au/player-profile/EE11357E-B2BA-486B-A896-CDF311D09F90",
+        "name": "Marko Petrovic",
+        "rank": "-",
+        "points": "2.00",
+        "source": "TA",
+        "utrSingles": "3",
+        "winLossYTD": "35:12",
+        "winLossCareer": "49:33",
+        "championships": "2026: 1\n2025: 1"
+      },
+      {
+        "id": "1774852586564",
+        "url": "https://tournaments.tennis.com.au/player-profile/1E57D0C2-F508-44E3-8351-E14191D59BA3",
+        "name": "Aengus Delaney",
+        "rank": "-",
+        "points": "34.00",
+        "source": "TA",
+        "utrSingles": "3.3",
+        "winLossYTD": "22:7",
+        "winLossCareer": "53:61",
+        "championships": "2026: 2\n2025: 1"
+      },
+      {
+        "id": "1774852594184",
+        "url": "https://tournaments.tennis.com.au/player-profile/00948A3B-A264-417B-9CF4-18FAEAE5915D",
+        "name": "Edwin Huxue",
+        "rank": "-",
+        "points": "-",
+        "source": "TA",
+        "utrSingles": "3",
+        "winLossYTD": "23:16",
+        "winLossCareer": "55:32",
+        "championships": "2025: 3"
+      },
+      {
+        "id": "1774852604537",
+        "url": "https://tournaments.tennis.com.au/player-profile/98C08E25-D3E6-440F-BAD4-78332D7671F1",
+        "name": "Andreas Mortel",
+        "rank": "-",
+        "points": "63.00",
+        "source": "TA",
+        "utrSingles": "3.7",
+        "winLossYTD": "28:26",
+        "winLossCareer": "85:111",
+        "championships": "2026: 3\n2025: 8"
+      },
+      {
+        "id": "1774854770264",
+        "url": "https://tournaments.tennis.com.au/player-profile/F64661E0-4EDB-4CE3-922F-7B8835695268",
+        "name": "Artemy Tenyaev",
+        "rank": "-",
+        "points": "39.00",
+        "source": "TA",
+        "utrSingles": "3.6",
+        "winLossYTD": "43:18",
+        "winLossCareer": "88:56",
+        "championships": "2026: 5\n2025: 5"
+      },
+      {
+        "id": "1774852617767",
+        "url": "https://tournaments.tennis.com.au/player-profile/3E97A937-D8DD-4DAD-99D3-3758C164F52C",
+        "name": "Felix Protsenko",
+        "rank": "-",
+        "points": "-",
+        "source": "TA",
+        "utrSingles": "2.6",
+        "winLossYTD": "20:1",
+        "winLossCareer": "32:18",
+        "championships": "2026: 2"
+      },
+      {
+        "id": "1774854726185",
+        "url": "https://tournaments.tennis.com.au/player-profile/D4C5B547-8491-4644-B12C-1E682BECE34C",
+        "name": "Owen Li",
+        "rank": "-",
+        "points": "-",
+        "source": "TA",
+        "utrSingles": "3",
+        "winLossYTD": "8:14",
+        "winLossCareer": "20:19",
+        "championships": "-"
+      },
+      {
+        "id": "1774852625855",
+        "url": "https://tournaments.tennis.com.au/player-profile/7C2D7BDE-3D6D-4EEF-9379-373A6D27F925",
+        "name": "Theo Stathis",
+        "rank": "-",
+        "points": "20.00",
+        "source": "TA",
+        "utrSingles": "2",
+        "winLossYTD": "6:12",
+        "winLossCareer": "29:30",
+        "championships": "2025: 1"
+      },
+      {
+        "id": "1774852634620",
+        "url": "https://tournaments.tennis.com.au/player-profile/19A26C4A-17EF-4259-976F-F04D375D3853",
+        "name": "Zachary Yen",
+        "rank": "-",
+        "points": "19.00",
+        "source": "TA",
+        "utrSingles": "2.9",
+        "winLossYTD": "15:23",
+        "winLossCareer": "29:48",
+        "championships": "2025: 2"
+      },
+      {
+        "id": "1774852645556",
+        "url": "https://tournaments.tennis.com.au/player-profile/3637049C-1E32-4E77-8756-5AA79D321995",
+        "name": "James Soetedja",
+        "rank": "-",
+        "points": "-",
+        "source": "TA",
+        "utrSingles": "2",
+        "winLossYTD": "37:5",
+        "winLossCareer": "67:31",
+        "championships": "2026: 8\n2024: 1"
+      },
+      {
+        "id": "1774852654757",
+        "url": "https://tournaments.tennis.com.au/player-profile/3D864E40-E0C1-4B23-89AD-3AFB63B97B2E",
+        "name": "Steven Saychenko",
+        "rank": "-",
+        "points": "15.00",
+        "source": "TA",
+        "utrSingles": "2.3",
+        "winLossYTD": "13:12",
+        "winLossCareer": "31:37",
+        "championships": "2025: 1"
+      },
+      {
+        "id": "1774854827035",
+        "url": "https://tournaments.tennis.com.au/player-profile/48D73322-95A1-4609-88E1-4654D99A29BC",
+        "name": "Garrett Wang",
+        "rank": "-",
+        "points": "6.00",
+        "source": "TA",
+        "utrSingles": "2",
+        "winLossYTD": "11:17",
+        "winLossCareer": "31:37",
+        "championships": "2026: 2\n2025: 3"
+      },
+      {
+        "id": "1774854855300",
+        "url": "https://tournaments.tennis.com.au/player-profile/144D39F2-EBD5-47B2-B1A7-5CA28199E8E5",
+        "name": "Alistair Cameron",
+        "rank": "-",
+        "points": "-",
+        "source": "TA",
+        "utrSingles": "3",
+        "winLossYTD": "4:2",
+        "winLossCareer": "4:2",
+        "championships": "-"
+      },
+      {
+        "id": "1774853948145",
+        "url": "https://tournaments.tennis.com.au/player-profile/4949A3F0-81BD-4968-85D5-E1E6B3F06D73",
+        "name": "Steven Ye",
+        "rank": "-",
+        "points": "-",
+        "source": "TA",
+        "utrSingles": "2.3",
+        "winLossYTD": "16:14",
+        "winLossCareer": "34:34",
+        "championships": "2026: 2\n2025: 1"
+      },
+      {
+        "id": "1774852672619",
+        "url": "https://tournaments.tennis.com.au/player-profile/72F1DA07-889D-409A-8A33-90B3149B8280",
+        "name": "Noah Yang",
+        "rank": "-",
+        "points": "-",
+        "source": "TA",
+        "utrSingles": "-",
+        "winLossYTD": "0:0",
+        "winLossCareer": "7:4",
+        "championships": "2025: 1"
+      },
+      {
+        "id": "1774884959036",
+        "url": "https://tournaments.tennis.com.au/player-profile/9369488B-34D9-4DA1-91F9-487A7D12A317",
+        "name": "Dylan Du",
+        "rank": "-",
+        "points": "-",
+        "source": "TA",
+        "utrSingles": "2",
+        "winLossYTD": "5:24",
+        "winLossCareer": "5:24",
+        "championships": "-"
+      },
+      {
+        "id": "1775572465212",
+        "url": "https://tournaments.tennis.com.au/player-profile/AD36E999-E7FD-4445-97AC-2A3FE8D9F82A",
+        "name": "Ashril Nur Rizal",
+        "rank": "-",
+        "points": "-",
+        "source": "TA",
+        "utrSingles": "-",
+        "winLossYTD": "36:4",
+        "winLossCareer": "75:51",
+        "championships": "2026: 9\n2025: 3"
+      },
+      {
+        "id": "1777380922933",
+        "url": "https://tournaments.tennis.com.au/player-profile/B600C449-E8E2-4BC4-AC98-5D53C6D5B47B",
+        "name": "Maxime Metayer",
+        "rank": "-",
+        "points": "11.00",
+        "source": "TA",
+        "utrSingles": "3",
+        "winLossYTD": "18:10",
+        "winLossCareer": "18:10",
+        "championships": "2026: 2"
+      }
+    ],
+    "hktaPlayers": [
+      {
+        "id": "1774830588509",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/01F4186B-4381-4B0D-A682-D652B49238D6",
+        "name": "CHIU Jordan Chung Shing",
+        "rank": "349",
+        "points": "6.97",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "0:0",
+        "winLossCareer": "30:25",
+        "championships": "2025: 1\n2024: 1"
+      },
+      {
+        "id": "1774852753599",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/37E374FE-7CA6-4044-AC85-C83E39A8254E",
+        "name": "YANG Noah",
+        "rank": "181",
+        "points": "48.82",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "0:1",
+        "winLossCareer": "46:20",
+        "championships": "2025: 1\n2024: 1\n2023: 6\n2021: 1"
+      },
+      {
+        "id": "1774852774843",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/69E6718B-0DE2-4CEC-939F-3BBAAA892DD3",
+        "name": "HONG Wing Ho",
+        "rank": "195",
+        "points": "41.87",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "14:3",
+        "winLossCareer": "108:38",
+        "championships": "2026: 2\n2025: 2\n2024: 4\n2023: 4\n2022: 1"
+      },
+      {
+        "id": "1774852786167",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/C5970211-DAEB-441A-AF27-2E19D25C6CF5",
+        "name": "PANG Tsz Yui Iden",
+        "rank": "172",
+        "points": "52.30",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "11:2",
+        "winLossCareer": "120:52",
+        "championships": "2026: 2\n2025: 4\n2024: 2\n2023: 5\n2022: 3"
+      },
+      {
+        "id": "1774852795513",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/E8F3B23E-2F78-4519-B36A-202F53E5F01A",
+        "name": "CHAN Pak Hei Isaac",
+        "rank": "235",
+        "points": "23.58",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "14:3",
+        "winLossCareer": "68:26",
+        "championships": "2026: 2\n2025: 3\n2024: 1\n2023: 1"
+      },
+      {
+        "id": "1774852805772",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/352788E6-11CF-4F3A-92EC-AC27C0445BA0",
+        "name": "CHEUNG Arick Ka Wai",
+        "rank": "253",
+        "points": "19.38",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "20:5",
+        "winLossCareer": "56:43",
+        "championships": "2026: 1\n2025: 1\n2023: 1"
+      },
+      {
+        "id": "1774852817154",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/92BAA1EC-1ADC-4716-9B22-D1261105E04B",
+        "name": "KAN Ethan Yin Lok",
+        "rank": "259",
+        "points": "17.73",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "11:7",
+        "winLossCareer": "42:21",
+        "championships": "2026: 1\n2025: 2"
+      },
+      {
+        "id": "1774852827260",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/4DBF1092-68D4-4EBF-8B82-8776AB07E902",
+        "name": "WONG Man Fung",
+        "rank": "342",
+        "points": "7.64",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "8:6",
+        "winLossCareer": "62:54",
+        "championships": "2025: 1\n2024: 1\n2023: 3"
+      },
+      {
+        "id": "1774852838206",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/99AE6E3F-E23B-4E33-8CE8-2B24E2D71CA8",
+        "name": "LIU Zipei",
+        "rank": "392",
+        "points": "3.90",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "0:1",
+        "winLossCareer": "27:11",
+        "championships": "2025: 1\n2024: 1"
+      },
+      {
+        "id": "1774852848735",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/2996953C-3B90-40B4-9780-9240FFEA0E5B",
+        "name": "LEUNG Carson",
+        "rank": "268",
+        "points": "16.33",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "13:6",
+        "winLossCareer": "56:37",
+        "championships": "2026: 1\n2025: 3\n2024: 2"
+      },
+      {
+        "id": "1774852862609",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/7CB8FC98-CB75-46F3-912C-9A4D8FC2C3BB",
+        "name": "LIU Shu Rui Jeremy",
+        "rank": "329",
+        "points": "8.83",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "10:5",
+        "winLossCareer": "59:37",
+        "championships": "2026: 1\n2025: 2\n2024: 1\n2023: 1"
+      },
+      {
+        "id": "1774852878775",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/7B90C216-DA2D-4971-B078-FD250259A71D",
+        "name": "CHAN Chun Yin Jayden",
+        "rank": "339",
+        "points": "7.66",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "8:5",
+        "winLossCareer": "47:31",
+        "championships": "2025: 2\n2024: 2"
+      },
+      {
+        "id": "1774852893136",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/0925605B-9A43-49DE-8A97-11EECEDCF4BF",
+        "name": "LEE Tsz Yuen",
+        "rank": "364",
+        "points": "5.92",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "9:2",
+        "winLossCareer": "62:25",
+        "championships": "2026: 1\n2025: 2\n2024: 2\n2023: 1"
+      },
+      {
+        "id": "1774852919609",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/AEAAEC5B-4D86-4215-BD01-7FCF1D65D482",
+        "name": "LI Youning",
+        "rank": "280",
+        "points": "13.71",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "8:5",
+        "winLossCareer": "40:20",
+        "championships": "2025: 2\n2024: 1\n2023: 2"
+      },
+      {
+        "id": "1774852934673",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/33CA5677-63DE-4D3E-8CB9-9FE5C48717DC",
+        "name": "ADVANI Joshua",
+        "rank": "325",
+        "points": "9.63",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "14:6",
+        "winLossCareer": "32:19",
+        "championships": "2025: 2"
+      },
+      {
+        "id": "1774852955419",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/D1B562B5-5F1C-478A-B759-7EB3601DD0B0",
+        "name": "CHAN Larry Long Wai",
+        "rank": "380",
+        "points": "4.53",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "6:2",
+        "winLossCareer": "49:19",
+        "championships": "2025: 1\n2024: 2\n2023: 1"
+      },
+      {
+        "id": "1774852976537",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/C4D2E37C-7912-496E-AAEB-446E4A702366",
+        "name": "ZHANG Xing Cheng London",
+        "rank": "372",
+        "points": "5.57",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "6:3",
+        "winLossCareer": "25:12",
+        "championships": "2025: 1\n2024: 1"
+      },
+      {
+        "id": "1774853003506",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/E5646E5D-27EA-413A-9C71-78B484D3137B",
+        "name": "CHAUVET Joahny",
+        "rank": "322",
+        "points": "10.42",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "8:5",
+        "winLossCareer": "23:21",
+        "championships": "-"
+      },
+      {
+        "id": "1774853025060",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/495FA938-B485-408E-AC29-682E6F87A538",
+        "name": "LI Terrence",
+        "rank": "320",
+        "points": "10.57",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "6:6",
+        "winLossCareer": "31:26",
+        "championships": "2024: 3"
+      },
+      {
+        "id": "1774853048005",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/7F8281DC-7FB7-4EAE-90BE-1E17684D586D",
+        "name": "NG Sheung Yin",
+        "rank": "376",
+        "points": "4.77",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "2:2",
+        "winLossCareer": "25:22",
+        "championships": "2025: 2"
+      },
+      {
+        "id": "1779894745670",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/854C7D18-BE9D-4577-B547-BAB174780828",
+        "name": "XU Jingtong",
+        "rank": "223",
+        "points": "29.16",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "21:4",
+        "winLossCareer": "93:34",
+        "championships": "2026: 1\n2025: 4\n2024: 2\n2023: 3\n2022: 1"
+      },
+      {
+        "id": "1779894771994",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/90BF56D6-2F09-448E-B62B-EA55F43F61A1",
+        "name": "PERKS Leo",
+        "rank": "267",
+        "points": "16.60",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "17:3",
+        "winLossCareer": "33:17",
+        "championships": "2026: 2\n2025: 1"
+      },
+      {
+        "id": "1779894825667",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/E429ED8E-9D8E-4A1E-89ED-2584FE2BCEA2",
+        "name": "YIP Tsz Hon Henry",
+        "rank": "284",
+        "points": "13.26",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "10:5",
+        "winLossCareer": "28:19",
+        "championships": "2026: 1\n2025: 2"
+      },
+      {
+        "id": "1779894839017",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/BBC05BE0-E203-4897-8B5B-39EF8686F726",
+        "name": "FANG Magnus Qingyuan",
+        "rank": "285",
+        "points": "13.12",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "10:6",
+        "winLossCareer": "44:15",
+        "championships": "2025: 3\n2024: 3"
+      },
+      {
+        "id": "1779894845135",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/38C0249A-E28F-44D5-93A6-85730BACB0AC",
+        "name": "LIK Tsun Hei",
+        "rank": "296",
+        "points": "11.80",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "9:6",
+        "winLossCareer": "43:21",
+        "championships": "2025: 2\n2024: 1"
+      },
+      {
+        "id": "1779894855049",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/FDA89C28-6CD1-465E-83D8-8618EA2476BE",
+        "name": "YIP Christopher",
+        "rank": "317",
+        "points": "11.20",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "12:5",
+        "winLossCareer": "68:23",
+        "championships": "2026: 1\n2025: 2\n2024: 2"
+      },
+      {
+        "id": "1779894867123",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/3640A4CD-CC32-4DF0-96DC-0D814D45965B",
+        "name": "CHAN Yat Fung Nathan",
+        "rank": "291",
+        "points": "12.43",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "17:5",
+        "winLossCareer": "83:31",
+        "championships": "2026: 1\n2025: 3\n2024: 1\n2023: 2\n2022: 1"
+      },
+      {
+        "id": "1779894874954",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/1A123FE1-8A5A-4225-8833-6F006056E85C",
+        "name": "HONG Chi Yui",
+        "rank": "319",
+        "points": "10.63",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "9:6",
+        "winLossCareer": "67:34",
+        "championships": "2026: 1\n2025: 1\n2024: 3\n2023: 1"
+      }
+    ]
+  },
+  {
+    "date": "2026-06-03",
+    "timestamp": "2026-06-03T18:36:26.816Z",
+    "taPlayers": [
+      {
+        "id": "1774838840325",
+        "url": "https://tournaments.tennis.com.au/player-profile/26B6F59E-714F-4852-9D3E-5022A7EBEC99",
+        "name": "Andy (Yuhao) Liu",
+        "rank": "-",
+        "points": "130.00",
+        "source": "TA",
+        "utrSingles": "5.7",
+        "winLossYTD": "11:8",
+        "winLossCareer": "51:29",
+        "championships": "2026: 2\n2025: 3\n2024: 2"
+      },
+      {
+        "id": "1774838616457",
+        "url": "https://tournaments.tennis.com.au/player-profile/30BB29AE-08E1-4684-8333-74E1FE9D8D81",
+        "name": "Gavrilo Novkovic",
+        "rank": "-",
+        "points": "31.00",
+        "source": "TA",
+        "utrSingles": "4.8",
+        "winLossYTD": "25:9",
+        "winLossCareer": "121:62",
+        "championships": "2026: 3\n2025: 5\n2024: 4"
+      },
+      {
+        "id": "1774852422814",
+        "url": "https://tournaments.tennis.com.au/player-profile/AC4465CE-7AC0-40BA-9E1D-C5A5763C8109",
+        "name": "Henry Wen",
+        "rank": "-",
+        "points": "12.00",
+        "source": "TA",
+        "utrSingles": "4.7",
+        "winLossYTD": "24:9",
+        "winLossCareer": "55:62",
+        "championships": "2026: 3\n2025: 1\n2024: 2"
+      },
+      {
+        "id": "1774855004722",
+        "url": "https://tournaments.tennis.com.au/player-profile/8443627D-BFF7-4DF1-A5AC-137C4996E788",
+        "name": "Sam Ritchie",
+        "rank": "-",
+        "points": "26.00",
+        "source": "TA",
+        "utrSingles": "4.6",
+        "winLossYTD": "23:10",
+        "winLossCareer": "143:58",
+        "championships": "2026: 7\n2025: 10\n2024: 8"
+      },
+      {
+        "id": "1774854812309",
+        "url": "https://tournaments.tennis.com.au/player-profile/FBE8CE05-98F9-449A-B402-FB076AD50A80",
+        "name": "Zakariyya Rogers",
+        "rank": "-",
+        "points": "127.00",
+        "source": "TA",
+        "utrSingles": "4.4",
+        "winLossYTD": "28:16",
+        "winLossCareer": "95:86",
+        "championships": "2026: 1\n2025: 6\n2024: 2"
+      },
+      {
+        "id": "1774830531032",
+        "url": "https://tournaments.tennis.com.au/player-profile/D8C9AB7B-18A8-4631-B8DE-4EDBF1D543A1",
+        "name": "Jordan Chiu",
+        "rank": "-",
+        "points": "-",
+        "source": "TA",
+        "utrSingles": "4",
+        "winLossYTD": "34:12",
+        "winLossCareer": "90:31",
+        "championships": "2026: 2\n2025: 6\n2024: 1"
+      },
+      {
+        "id": "1774852489789",
+        "url": "https://tournaments.tennis.com.au/player-profile/4625D532-A92D-4155-B515-7AF811D329B6",
+        "name": "Aiden Guo",
+        "rank": "-",
+        "points": "-",
+        "source": "TA",
+        "utrSingles": "4",
+        "winLossYTD": "24:12",
+        "winLossCareer": "50:31",
+        "championships": "2026: 3\n2025: 3"
+      },
+      {
+        "id": "1774852503277",
+        "url": "https://tournaments.tennis.com.au/player-profile/806F94D7-D656-47C7-A99F-321576CC8980",
+        "name": "Henry Wang",
+        "rank": "-",
+        "points": "-",
+        "source": "TA",
+        "utrSingles": "4.1",
+        "winLossYTD": "18:5",
+        "winLossCareer": "58:38",
+        "championships": "2026: 2\n2025: 1"
+      },
+      {
+        "id": "1774853909506",
+        "url": "https://tournaments.tennis.com.au/player-profile/F15291C1-B67A-4EAE-9448-DD6E5BF75953",
+        "name": "Joshua Feng",
+        "rank": "-",
+        "points": "6.00",
+        "source": "TA",
+        "utrSingles": "3.8",
+        "winLossYTD": "13:7",
+        "winLossCareer": "85:46",
+        "championships": "2025: 3\n2024: 4"
+      },
+      {
+        "id": "1774852523592",
+        "url": "https://tournaments.tennis.com.au/player-profile/6657D415-DE03-4B14-B6FB-EB2223C71A0A",
+        "name": "Daniel Graovac",
+        "rank": "-",
+        "points": "-",
+        "source": "TA",
+        "utrSingles": "3.8",
+        "winLossYTD": "9:3",
+        "winLossCareer": "26:30",
+        "championships": "2026: 1\n2024: 1"
+      },
+      {
+        "id": "1774852531343",
+        "url": "https://tournaments.tennis.com.au/player-profile/1D203E27-3EE6-4F02-A3B1-421A308AD58F",
+        "name": "Beau Tindall",
+        "rank": "-",
+        "points": "-",
+        "source": "TA",
+        "utrSingles": "4",
+        "winLossYTD": "31:13",
+        "winLossCareer": "71:50",
+        "championships": "2026: 2\n2025: 3\n2024: 1"
+      },
+      {
+        "id": "1774852542593",
+        "url": "https://tournaments.tennis.com.au/player-profile/E2568F5E-726E-4EF3-A2C7-BC3435B2E04B",
+        "name": "Ryan Xu",
+        "rank": "-",
+        "points": "23.00",
+        "source": "TA",
+        "utrSingles": "3",
+        "winLossYTD": "18:15",
+        "winLossCareer": "83:78",
+        "championships": "2025: 3\n2024: 1"
+      },
+      {
+        "id": "1774852553484",
+        "url": "https://tournaments.tennis.com.au/player-profile/5B29E9F4-E77E-453E-B5E8-868A92A7A57C",
+        "name": "Bisam Chapagain",
+        "rank": "-",
+        "points": "-",
+        "source": "TA",
+        "utrSingles": "4",
+        "winLossYTD": "13:6",
+        "winLossCareer": "46:41",
+        "championships": "2025: 4"
+      },
+      {
+        "id": "1774852571511",
+        "url": "https://tournaments.tennis.com.au/player-profile/EE11357E-B2BA-486B-A896-CDF311D09F90",
+        "name": "Marko Petrovic",
+        "rank": "-",
+        "points": "2.00",
+        "source": "TA",
+        "utrSingles": "3",
+        "winLossYTD": "35:12",
+        "winLossCareer": "49:33",
+        "championships": "2026: 1\n2025: 1"
+      },
+      {
+        "id": "1774852586564",
+        "url": "https://tournaments.tennis.com.au/player-profile/1E57D0C2-F508-44E3-8351-E14191D59BA3",
+        "name": "Aengus Delaney",
+        "rank": "-",
+        "points": "34.00",
+        "source": "TA",
+        "utrSingles": "3.3",
+        "winLossYTD": "22:7",
+        "winLossCareer": "53:61",
+        "championships": "2026: 2\n2025: 1"
+      },
+      {
+        "id": "1774852594184",
+        "url": "https://tournaments.tennis.com.au/player-profile/00948A3B-A264-417B-9CF4-18FAEAE5915D",
+        "name": "Edwin Huxue",
+        "rank": "-",
+        "points": "-",
+        "source": "TA",
+        "utrSingles": "3",
+        "winLossYTD": "23:16",
+        "winLossCareer": "55:32",
+        "championships": "2025: 3"
+      },
+      {
+        "id": "1774852604537",
+        "url": "https://tournaments.tennis.com.au/player-profile/98C08E25-D3E6-440F-BAD4-78332D7671F1",
+        "name": "Andreas Mortel",
+        "rank": "-",
+        "points": "63.00",
+        "source": "TA",
+        "utrSingles": "3.7",
+        "winLossYTD": "28:26",
+        "winLossCareer": "85:111",
+        "championships": "2026: 3\n2025: 8"
+      },
+      {
+        "id": "1774854770264",
+        "url": "https://tournaments.tennis.com.au/player-profile/F64661E0-4EDB-4CE3-922F-7B8835695268",
+        "name": "Artemy Tenyaev",
+        "rank": "-",
+        "points": "39.00",
+        "source": "TA",
+        "utrSingles": "3.6",
+        "winLossYTD": "43:18",
+        "winLossCareer": "88:56",
+        "championships": "2026: 5\n2025: 5"
+      },
+      {
+        "id": "1774852617767",
+        "url": "https://tournaments.tennis.com.au/player-profile/3E97A937-D8DD-4DAD-99D3-3758C164F52C",
+        "name": "Felix Protsenko",
+        "rank": "-",
+        "points": "-",
+        "source": "TA",
+        "utrSingles": "2.6",
+        "winLossYTD": "20:1",
+        "winLossCareer": "32:18",
+        "championships": "2026: 2"
+      },
+      {
+        "id": "1774854726185",
+        "url": "https://tournaments.tennis.com.au/player-profile/D4C5B547-8491-4644-B12C-1E682BECE34C",
+        "name": "Owen Li",
+        "rank": "-",
+        "points": "-",
+        "source": "TA",
+        "utrSingles": "3",
+        "winLossYTD": "8:14",
+        "winLossCareer": "20:19",
+        "championships": "-"
+      },
+      {
+        "id": "1774852625855",
+        "url": "https://tournaments.tennis.com.au/player-profile/7C2D7BDE-3D6D-4EEF-9379-373A6D27F925",
+        "name": "Theo Stathis",
+        "rank": "-",
+        "points": "20.00",
+        "source": "TA",
+        "utrSingles": "2",
+        "winLossYTD": "6:12",
+        "winLossCareer": "29:30",
+        "championships": "2025: 1"
+      },
+      {
+        "id": "1774852634620",
+        "url": "https://tournaments.tennis.com.au/player-profile/19A26C4A-17EF-4259-976F-F04D375D3853",
+        "name": "Zachary Yen",
+        "rank": "-",
+        "points": "19.00",
+        "source": "TA",
+        "utrSingles": "2.9",
+        "winLossYTD": "15:23",
+        "winLossCareer": "29:48",
+        "championships": "2025: 2"
+      },
+      {
+        "id": "1774852645556",
+        "url": "https://tournaments.tennis.com.au/player-profile/3637049C-1E32-4E77-8756-5AA79D321995",
+        "name": "James Soetedja",
+        "rank": "-",
+        "points": "-",
+        "source": "TA",
+        "utrSingles": "2",
+        "winLossYTD": "37:5",
+        "winLossCareer": "67:31",
+        "championships": "2026: 8\n2024: 1"
+      },
+      {
+        "id": "1774852654757",
+        "url": "https://tournaments.tennis.com.au/player-profile/3D864E40-E0C1-4B23-89AD-3AFB63B97B2E",
+        "name": "Steven Saychenko",
+        "rank": "-",
+        "points": "15.00",
+        "source": "TA",
+        "utrSingles": "2.3",
+        "winLossYTD": "13:12",
+        "winLossCareer": "31:37",
+        "championships": "2025: 1"
+      },
+      {
+        "id": "1774854827035",
+        "url": "https://tournaments.tennis.com.au/player-profile/48D73322-95A1-4609-88E1-4654D99A29BC",
+        "name": "Garrett Wang",
+        "rank": "-",
+        "points": "6.00",
+        "source": "TA",
+        "utrSingles": "2",
+        "winLossYTD": "11:17",
+        "winLossCareer": "31:37",
+        "championships": "2026: 2\n2025: 3"
+      },
+      {
+        "id": "1774854855300",
+        "url": "https://tournaments.tennis.com.au/player-profile/144D39F2-EBD5-47B2-B1A7-5CA28199E8E5",
+        "name": "Alistair Cameron",
+        "rank": "-",
+        "points": "-",
+        "source": "TA",
+        "utrSingles": "3",
+        "winLossYTD": "4:2",
+        "winLossCareer": "4:2",
+        "championships": "-"
+      },
+      {
+        "id": "1774853948145",
+        "url": "https://tournaments.tennis.com.au/player-profile/4949A3F0-81BD-4968-85D5-E1E6B3F06D73",
+        "name": "Steven Ye",
+        "rank": "-",
+        "points": "-",
+        "source": "TA",
+        "utrSingles": "2.3",
+        "winLossYTD": "16:14",
+        "winLossCareer": "34:34",
+        "championships": "2026: 2\n2025: 1"
+      },
+      {
+        "id": "1774852672619",
+        "url": "https://tournaments.tennis.com.au/player-profile/72F1DA07-889D-409A-8A33-90B3149B8280",
+        "name": "Noah Yang",
+        "rank": "-",
+        "points": "-",
+        "source": "TA",
+        "utrSingles": "-",
+        "winLossYTD": "0:0",
+        "winLossCareer": "7:4",
+        "championships": "2025: 1"
+      },
+      {
+        "id": "1774884959036",
+        "url": "https://tournaments.tennis.com.au/player-profile/9369488B-34D9-4DA1-91F9-487A7D12A317",
+        "name": "Dylan Du",
+        "rank": "-",
+        "points": "-",
+        "source": "TA",
+        "utrSingles": "2",
+        "winLossYTD": "5:24",
+        "winLossCareer": "5:24",
+        "championships": "-"
+      },
+      {
+        "id": "1775572465212",
+        "url": "https://tournaments.tennis.com.au/player-profile/AD36E999-E7FD-4445-97AC-2A3FE8D9F82A",
+        "name": "Ashril Nur Rizal",
+        "rank": "-",
+        "points": "-",
+        "source": "TA",
+        "utrSingles": "-",
+        "winLossYTD": "36:4",
+        "winLossCareer": "75:51",
+        "championships": "2026: 9\n2025: 3"
+      },
+      {
+        "id": "1777380922933",
+        "url": "https://tournaments.tennis.com.au/player-profile/B600C449-E8E2-4BC4-AC98-5D53C6D5B47B",
+        "name": "Maxime Metayer",
+        "rank": "-",
+        "points": "11.00",
+        "source": "TA",
+        "utrSingles": "3",
+        "winLossYTD": "18:10",
+        "winLossCareer": "18:10",
+        "championships": "2026: 2"
+      }
+    ],
+    "hktaPlayers": [
+      {
+        "id": "1774830588509",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/01F4186B-4381-4B0D-A682-D652B49238D6",
+        "name": "CHIU Jordan Chung Shing",
+        "rank": "355",
+        "points": "6.97",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "0:0",
+        "winLossCareer": "30:25",
+        "championships": "2025: 1\n2024: 1"
+      },
+      {
+        "id": "1774852753599",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/37E374FE-7CA6-4044-AC85-C83E39A8254E",
+        "name": "YANG Noah",
+        "rank": "179",
+        "points": "48.82",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "0:1",
+        "winLossCareer": "46:20",
+        "championships": "2025: 1\n2024: 1\n2023: 6\n2021: 1"
+      },
+      {
+        "id": "1774852774843",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/69E6718B-0DE2-4CEC-939F-3BBAAA892DD3",
+        "name": "HONG Wing Ho",
+        "rank": "194",
+        "points": "44.50",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "14:3",
+        "winLossCareer": "108:38",
+        "championships": "2026: 2\n2025: 2\n2024: 4\n2023: 4\n2022: 1"
+      },
+      {
+        "id": "1774852786167",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/C5970211-DAEB-441A-AF27-2E19D25C6CF5",
+        "name": "PANG Tsz Yui Iden",
+        "rank": "169",
+        "points": "53.78",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "11:2",
+        "winLossCareer": "120:52",
+        "championships": "2026: 2\n2025: 4\n2024: 2\n2023: 5\n2022: 3"
+      },
+      {
+        "id": "1774852795513",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/E8F3B23E-2F78-4519-B36A-202F53E5F01A",
+        "name": "CHAN Pak Hei Isaac",
+        "rank": "245",
+        "points": "22.43",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "14:3",
+        "winLossCareer": "68:26",
+        "championships": "2026: 2\n2025: 3\n2024: 1\n2023: 1"
+      },
+      {
+        "id": "1774852805772",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/352788E6-11CF-4F3A-92EC-AC27C0445BA0",
+        "name": "CHEUNG Arick Ka Wai",
+        "rank": "263",
+        "points": "19.38",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "20:5",
+        "winLossCareer": "56:43",
+        "championships": "2026: 1\n2025: 1\n2023: 1"
+      },
+      {
+        "id": "1774852817154",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/92BAA1EC-1ADC-4716-9B22-D1261105E04B",
+        "name": "KAN Ethan Yin Lok",
+        "rank": "269",
+        "points": "17.73",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "11:7",
+        "winLossCareer": "42:21",
+        "championships": "2026: 1\n2025: 2"
+      },
+      {
+        "id": "1774852827260",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/4DBF1092-68D4-4EBF-8B82-8776AB07E902",
+        "name": "WONG Man Fung",
+        "rank": "348",
+        "points": "7.64",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "8:6",
+        "winLossCareer": "62:54",
+        "championships": "2025: 1\n2024: 1\n2023: 3"
+      },
+      {
+        "id": "1774852838206",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/99AE6E3F-E23B-4E33-8CE8-2B24E2D71CA8",
+        "name": "LIU Zipei",
+        "rank": "403",
+        "points": "3.90",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "0:1",
+        "winLossCareer": "27:11",
+        "championships": "2025: 1\n2024: 1"
+      },
+      {
+        "id": "1774852848735",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/2996953C-3B90-40B4-9780-9240FFEA0E5B",
+        "name": "LEUNG Carson",
+        "rank": "278",
+        "points": "16.25",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "13:6",
+        "winLossCareer": "56:37",
+        "championships": "2026: 1\n2025: 3\n2024: 2"
+      },
+      {
+        "id": "1774852862609",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/7CB8FC98-CB75-46F3-912C-9A4D8FC2C3BB",
+        "name": "LIU Shu Rui Jeremy",
+        "rank": "335",
+        "points": "8.83",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "10:5",
+        "winLossCareer": "59:37",
+        "championships": "2026: 1\n2025: 2\n2024: 1\n2023: 1"
+      },
+      {
+        "id": "1774852878775",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/7B90C216-DA2D-4971-B078-FD250259A71D",
+        "name": "CHAN Chun Yin Jayden",
+        "rank": "353",
+        "points": "7.11",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "8:5",
+        "winLossCareer": "47:31",
+        "championships": "2025: 2\n2024: 2"
+      },
+      {
+        "id": "1774852893136",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/0925605B-9A43-49DE-8A97-11EECEDCF4BF",
+        "name": "LEE Tsz Yuen",
+        "rank": "374",
+        "points": "5.92",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "9:2",
+        "winLossCareer": "62:25",
+        "championships": "2026: 1\n2025: 2\n2024: 2\n2023: 1"
+      },
+      {
+        "id": "1774852919609",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/AEAAEC5B-4D86-4215-BD01-7FCF1D65D482",
+        "name": "LI Youning",
+        "rank": "287",
+        "points": "13.71",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "8:5",
+        "winLossCareer": "40:20",
+        "championships": "2025: 2\n2024: 1\n2023: 2"
+      },
+      {
+        "id": "1774852934673",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/33CA5677-63DE-4D3E-8CB9-9FE5C48717DC",
+        "name": "ADVANI Joshua",
+        "rank": "334",
+        "points": "9.09",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "14:6",
+        "winLossCareer": "32:19",
+        "championships": "2025: 2"
+      },
+      {
+        "id": "1774852955419",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/D1B562B5-5F1C-478A-B759-7EB3601DD0B0",
+        "name": "CHAN Larry Long Wai",
+        "rank": "393",
+        "points": "4.53",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "6:2",
+        "winLossCareer": "49:19",
+        "championships": "2025: 1\n2024: 2\n2023: 1"
+      },
+      {
+        "id": "1774852976537",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/C4D2E37C-7912-496E-AAEB-446E4A702366",
+        "name": "ZHANG Xing Cheng London",
+        "rank": "385",
+        "points": "5.57",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "6:3",
+        "winLossCareer": "25:12",
+        "championships": "2025: 1\n2024: 1"
+      },
+      {
+        "id": "1774853003506",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/E5646E5D-27EA-413A-9C71-78B484D3137B",
+        "name": "CHAUVET Joahny",
+        "rank": "332",
+        "points": "10.42",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "8:5",
+        "winLossCareer": "23:21",
+        "championships": "-"
+      },
+      {
+        "id": "1774853025060",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/495FA938-B485-408E-AC29-682E6F87A538",
+        "name": "LI Terrence",
+        "rank": "356",
+        "points": "6.67",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "6:6",
+        "winLossCareer": "31:26",
+        "championships": "2024: 3"
+      },
+      {
+        "id": "1774853048005",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/7F8281DC-7FB7-4EAE-90BE-1E17684D586D",
+        "name": "NG Sheung Yin",
+        "rank": "389",
+        "points": "4.77",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "2:2",
+        "winLossCareer": "25:22",
+        "championships": "2025: 2"
+      },
+      {
+        "id": "1779894745670",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/854C7D18-BE9D-4577-B547-BAB174780828",
+        "name": "XU Jingtong",
+        "rank": "224",
+        "points": "27.74",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "21:4",
+        "winLossCareer": "93:34",
+        "championships": "2026: 1\n2025: 4\n2024: 2\n2023: 3\n2022: 1"
+      },
+      {
+        "id": "1779894771994",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/90BF56D6-2F09-448E-B62B-EA55F43F61A1",
+        "name": "PERKS Leo",
+        "rank": "279",
+        "points": "15.55",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "17:3",
+        "winLossCareer": "33:17",
+        "championships": "2026: 2\n2025: 1"
+      },
+      {
+        "id": "1779894825667",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/E429ED8E-9D8E-4A1E-89ED-2584FE2BCEA2",
+        "name": "YIP Tsz Hon Henry",
+        "rank": "289",
+        "points": "13.26",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "10:5",
+        "winLossCareer": "28:19",
+        "championships": "2026: 1\n2025: 2"
+      },
+      {
+        "id": "1779894839017",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/BBC05BE0-E203-4897-8B5B-39EF8686F726",
+        "name": "FANG Magnus Qingyuan",
+        "rank": "291",
+        "points": "13.03",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "10:6",
+        "winLossCareer": "44:15",
+        "championships": "2025: 3\n2024: 3"
+      },
+      {
+        "id": "1779894845135",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/38C0249A-E28F-44D5-93A6-85730BACB0AC",
+        "name": "LIK Tsun Hei",
+        "rank": "302",
+        "points": "11.80",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "9:6",
+        "winLossCareer": "43:21",
+        "championships": "2025: 2\n2024: 1"
+      },
+      {
+        "id": "1779894855049",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/FDA89C28-6CD1-465E-83D8-8618EA2476BE",
+        "name": "YIP Christopher",
+        "rank": "325",
+        "points": "11.20",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "12:5",
+        "winLossCareer": "68:23",
+        "championships": "2026: 1\n2025: 2\n2024: 2"
+      },
+      {
+        "id": "1779894867123",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/3640A4CD-CC32-4DF0-96DC-0D814D45965B",
+        "name": "CHAN Yat Fung Nathan",
+        "rank": "329",
+        "points": "10.97",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "17:5",
+        "winLossCareer": "83:31",
+        "championships": "2026: 1\n2025: 3\n2024: 1\n2023: 2\n2022: 1"
+      },
+      {
+        "id": "1779894874954",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/1A123FE1-8A5A-4225-8833-6F006056E85C",
+        "name": "HONG Chi Yui",
+        "rank": "330",
+        "points": "10.63",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "9:6",
+        "winLossCareer": "67:34",
+        "championships": "2026: 1\n2025: 1\n2024: 3\n2023: 1"
+      }
+    ]
+  },
+  {
+    "date": "2026-06-02",
+    "timestamp": "2026-06-02T12:47:27.419Z",
+    "taPlayers": [
+      {
+        "id": "1774838840325",
+        "url": "https://tournaments.tennis.com.au/player-profile/26B6F59E-714F-4852-9D3E-5022A7EBEC99",
+        "name": "Andy (Yuhao) Liu",
+        "rank": "-",
+        "points": "130.00",
+        "source": "TA",
+        "utrSingles": "5.7",
+        "winLossYTD": "11:8",
+        "winLossCareer": "51:29",
+        "championships": "2026: 2\n2025: 3\n2024: 2"
+      },
+      {
+        "id": "1774838616457",
+        "url": "https://tournaments.tennis.com.au/player-profile/30BB29AE-08E1-4684-8333-74E1FE9D8D81",
+        "name": "Gavrilo Novkovic",
+        "rank": "-",
+        "points": "31.00",
+        "source": "TA",
+        "utrSingles": "4.8",
+        "winLossYTD": "25:9",
+        "winLossCareer": "121:62",
+        "championships": "2026: 3\n2025: 5\n2024: 4"
+      },
+      {
+        "id": "1774852422814",
+        "url": "https://tournaments.tennis.com.au/player-profile/AC4465CE-7AC0-40BA-9E1D-C5A5763C8109",
+        "name": "Henry Wen",
+        "rank": "-",
+        "points": "12.00",
+        "source": "TA",
+        "utrSingles": "4.7",
+        "winLossYTD": "24:9",
+        "winLossCareer": "55:62",
+        "championships": "2026: 3\n2025: 1\n2024: 2"
+      },
+      {
+        "id": "1774855004722",
+        "url": "https://tournaments.tennis.com.au/player-profile/8443627D-BFF7-4DF1-A5AC-137C4996E788",
+        "name": "Sam Ritchie",
+        "rank": "-",
+        "points": "26.00",
+        "source": "TA",
+        "utrSingles": "4.6",
+        "winLossYTD": "23:10",
+        "winLossCareer": "143:58",
+        "championships": "2026: 7\n2025: 10\n2024: 8"
+      },
+      {
+        "id": "1774854812309",
+        "url": "https://tournaments.tennis.com.au/player-profile/FBE8CE05-98F9-449A-B402-FB076AD50A80",
+        "name": "Zakariyya Rogers",
+        "rank": "-",
+        "points": "127.00",
+        "source": "TA",
+        "utrSingles": "4.4",
+        "winLossYTD": "28:16",
+        "winLossCareer": "95:86",
+        "championships": "2026: 1\n2025: 6\n2024: 2"
+      },
+      {
+        "id": "1774830531032",
+        "url": "https://tournaments.tennis.com.au/player-profile/D8C9AB7B-18A8-4631-B8DE-4EDBF1D543A1",
+        "name": "Jordan Chiu",
+        "rank": "-",
+        "points": "-",
+        "source": "TA",
+        "utrSingles": "4",
+        "winLossYTD": "34:12",
+        "winLossCareer": "90:31",
+        "championships": "2026: 2\n2025: 6\n2024: 1"
+      },
+      {
+        "id": "1774852489789",
+        "url": "https://tournaments.tennis.com.au/player-profile/4625D532-A92D-4155-B515-7AF811D329B6",
+        "name": "Aiden Guo",
+        "rank": "-",
+        "points": "-",
+        "source": "TA",
+        "utrSingles": "4",
+        "winLossYTD": "24:12",
+        "winLossCareer": "50:31",
+        "championships": "2026: 3\n2025: 3"
+      },
+      {
+        "id": "1774852503277",
+        "url": "https://tournaments.tennis.com.au/player-profile/806F94D7-D656-47C7-A99F-321576CC8980",
+        "name": "Henry Wang",
+        "rank": "-",
+        "points": "-",
+        "source": "TA",
+        "utrSingles": "4.1",
+        "winLossYTD": "18:5",
+        "winLossCareer": "58:38",
+        "championships": "2026: 2\n2025: 1"
+      },
+      {
+        "id": "1774853909506",
+        "url": "https://tournaments.tennis.com.au/player-profile/F15291C1-B67A-4EAE-9448-DD6E5BF75953",
+        "name": "Joshua Feng",
+        "rank": "-",
+        "points": "6.00",
+        "source": "TA",
+        "utrSingles": "3.8",
+        "winLossYTD": "13:7",
+        "winLossCareer": "85:46",
+        "championships": "2025: 3\n2024: 4"
+      },
+      {
+        "id": "1774852523592",
+        "url": "https://tournaments.tennis.com.au/player-profile/6657D415-DE03-4B14-B6FB-EB2223C71A0A",
+        "name": "Daniel Graovac",
+        "rank": "-",
+        "points": "-",
+        "source": "TA",
+        "utrSingles": "3.8",
+        "winLossYTD": "9:3",
+        "winLossCareer": "26:30",
+        "championships": "2026: 1\n2024: 1"
+      },
+      {
+        "id": "1774852531343",
+        "url": "https://tournaments.tennis.com.au/player-profile/1D203E27-3EE6-4F02-A3B1-421A308AD58F",
+        "name": "Beau Tindall",
+        "rank": "-",
+        "points": "-",
+        "source": "TA",
+        "utrSingles": "4",
+        "winLossYTD": "31:13",
+        "winLossCareer": "71:50",
+        "championships": "2026: 2\n2025: 3\n2024: 1"
+      },
+      {
+        "id": "1774852542593",
+        "url": "https://tournaments.tennis.com.au/player-profile/E2568F5E-726E-4EF3-A2C7-BC3435B2E04B",
+        "name": "Ryan Xu",
+        "rank": "-",
+        "points": "23.00",
+        "source": "TA",
+        "utrSingles": "3",
+        "winLossYTD": "18:15",
+        "winLossCareer": "83:78",
+        "championships": "2025: 3\n2024: 1"
+      },
+      {
+        "id": "1774852553484",
+        "url": "https://tournaments.tennis.com.au/player-profile/5B29E9F4-E77E-453E-B5E8-868A92A7A57C",
+        "name": "Bisam Chapagain",
+        "rank": "-",
+        "points": "-",
+        "source": "TA",
+        "utrSingles": "4",
+        "winLossYTD": "13:6",
+        "winLossCareer": "46:41",
+        "championships": "2025: 4"
+      },
+      {
+        "id": "1774852571511",
+        "url": "https://tournaments.tennis.com.au/player-profile/EE11357E-B2BA-486B-A896-CDF311D09F90",
+        "name": "Marko Petrovic",
+        "rank": "-",
+        "points": "2.00",
+        "source": "TA",
+        "utrSingles": "3",
+        "winLossYTD": "35:12",
+        "winLossCareer": "49:33",
+        "championships": "2026: 1\n2025: 1"
+      },
+      {
+        "id": "1774852586564",
+        "url": "https://tournaments.tennis.com.au/player-profile/1E57D0C2-F508-44E3-8351-E14191D59BA3",
+        "name": "Aengus Delaney",
+        "rank": "-",
+        "points": "34.00",
+        "source": "TA",
+        "utrSingles": "3.3",
+        "winLossYTD": "22:7",
+        "winLossCareer": "53:61",
+        "championships": "2026: 2\n2025: 1"
+      },
+      {
+        "id": "1774852594184",
+        "url": "https://tournaments.tennis.com.au/player-profile/00948A3B-A264-417B-9CF4-18FAEAE5915D",
+        "name": "Edwin Huxue",
+        "rank": "-",
+        "points": "-",
+        "source": "TA",
+        "utrSingles": "3",
+        "winLossYTD": "23:16",
+        "winLossCareer": "55:32",
+        "championships": "2025: 3"
+      },
+      {
+        "id": "1774852604537",
+        "url": "https://tournaments.tennis.com.au/player-profile/98C08E25-D3E6-440F-BAD4-78332D7671F1",
+        "name": "Andreas Mortel",
+        "rank": "-",
+        "points": "63.00",
+        "source": "TA",
+        "utrSingles": "3.7",
+        "winLossYTD": "28:26",
+        "winLossCareer": "85:111",
+        "championships": "2026: 3\n2025: 8"
+      },
+      {
+        "id": "1774854770264",
+        "url": "https://tournaments.tennis.com.au/player-profile/F64661E0-4EDB-4CE3-922F-7B8835695268",
+        "name": "Artemy Tenyaev",
+        "rank": "-",
+        "points": "39.00",
+        "source": "TA",
+        "utrSingles": "3.6",
+        "winLossYTD": "43:18",
+        "winLossCareer": "88:56",
+        "championships": "2026: 5\n2025: 5"
+      },
+      {
+        "id": "1774852617767",
+        "url": "https://tournaments.tennis.com.au/player-profile/3E97A937-D8DD-4DAD-99D3-3758C164F52C",
+        "name": "Felix Protsenko",
+        "rank": "-",
+        "points": "-",
+        "source": "TA",
+        "utrSingles": "2.6",
+        "winLossYTD": "20:1",
+        "winLossCareer": "32:18",
+        "championships": "2026: 2"
+      },
+      {
+        "id": "1774854726185",
+        "url": "https://tournaments.tennis.com.au/player-profile/D4C5B547-8491-4644-B12C-1E682BECE34C",
+        "name": "Owen Li",
+        "rank": "-",
+        "points": "-",
+        "source": "TA",
+        "utrSingles": "3",
+        "winLossYTD": "8:14",
+        "winLossCareer": "20:19",
+        "championships": "-"
+      },
+      {
+        "id": "1774852625855",
+        "url": "https://tournaments.tennis.com.au/player-profile/7C2D7BDE-3D6D-4EEF-9379-373A6D27F925",
+        "name": "Theo Stathis",
+        "rank": "-",
+        "points": "20.00",
+        "source": "TA",
+        "utrSingles": "2",
+        "winLossYTD": "6:12",
+        "winLossCareer": "29:30",
+        "championships": "2025: 1"
+      },
+      {
+        "id": "1774852634620",
+        "url": "https://tournaments.tennis.com.au/player-profile/19A26C4A-17EF-4259-976F-F04D375D3853",
+        "name": "Zachary Yen",
+        "rank": "-",
+        "points": "19.00",
+        "source": "TA",
+        "utrSingles": "2.9",
+        "winLossYTD": "15:23",
+        "winLossCareer": "29:48",
+        "championships": "2025: 2"
+      },
+      {
+        "id": "1774852645556",
+        "url": "https://tournaments.tennis.com.au/player-profile/3637049C-1E32-4E77-8756-5AA79D321995",
+        "name": "James Soetedja",
+        "rank": "-",
+        "points": "-",
+        "source": "TA",
+        "utrSingles": "2",
+        "winLossYTD": "37:5",
+        "winLossCareer": "67:31",
+        "championships": "2026: 8\n2024: 1"
+      },
+      {
+        "id": "1774852654757",
+        "url": "https://tournaments.tennis.com.au/player-profile/3D864E40-E0C1-4B23-89AD-3AFB63B97B2E",
+        "name": "Steven Saychenko",
+        "rank": "-",
+        "points": "15.00",
+        "source": "TA",
+        "utrSingles": "2.3",
+        "winLossYTD": "13:12",
+        "winLossCareer": "31:37",
+        "championships": "2025: 1"
+      },
+      {
+        "id": "1774854827035",
+        "url": "https://tournaments.tennis.com.au/player-profile/48D73322-95A1-4609-88E1-4654D99A29BC",
+        "name": "Garrett Wang",
+        "rank": "-",
+        "points": "6.00",
+        "source": "TA",
+        "utrSingles": "2",
+        "winLossYTD": "11:17",
+        "winLossCareer": "31:37",
+        "championships": "2026: 2\n2025: 3"
+      },
+      {
+        "id": "1774854855300",
+        "url": "https://tournaments.tennis.com.au/player-profile/144D39F2-EBD5-47B2-B1A7-5CA28199E8E5",
+        "name": "Alistair Cameron",
+        "rank": "-",
+        "points": "-",
+        "source": "TA",
+        "utrSingles": "3",
+        "winLossYTD": "4:2",
+        "winLossCareer": "4:2",
+        "championships": "-"
+      },
+      {
+        "id": "1774853948145",
+        "url": "https://tournaments.tennis.com.au/player-profile/4949A3F0-81BD-4968-85D5-E1E6B3F06D73",
+        "name": "Steven Ye",
+        "rank": "-",
+        "points": "-",
+        "source": "TA",
+        "utrSingles": "2.3",
+        "winLossYTD": "16:14",
+        "winLossCareer": "34:34",
+        "championships": "2026: 2\n2025: 1"
+      },
+      {
+        "id": "1774852672619",
+        "url": "https://tournaments.tennis.com.au/player-profile/72F1DA07-889D-409A-8A33-90B3149B8280",
+        "name": "Noah Yang",
+        "rank": "-",
+        "points": "-",
+        "source": "TA",
+        "utrSingles": "-",
+        "winLossYTD": "0:0",
+        "winLossCareer": "7:4",
+        "championships": "2025: 1"
+      },
+      {
+        "id": "1774884959036",
+        "url": "https://tournaments.tennis.com.au/player-profile/9369488B-34D9-4DA1-91F9-487A7D12A317",
+        "name": "Dylan Du",
+        "rank": "-",
+        "points": "-",
+        "source": "TA",
+        "utrSingles": "2",
+        "winLossYTD": "5:24",
+        "winLossCareer": "5:24",
+        "championships": "-"
+      },
+      {
+        "id": "1775572465212",
+        "url": "https://tournaments.tennis.com.au/player-profile/AD36E999-E7FD-4445-97AC-2A3FE8D9F82A",
+        "name": "Ashril Nur Rizal",
+        "rank": "-",
+        "points": "-",
+        "source": "TA",
+        "utrSingles": "-",
+        "winLossYTD": "36:4",
+        "winLossCareer": "75:51",
+        "championships": "2026: 9\n2025: 3"
+      },
+      {
+        "id": "1777380922933",
+        "url": "https://tournaments.tennis.com.au/player-profile/B600C449-E8E2-4BC4-AC98-5D53C6D5B47B",
+        "name": "Maxime Metayer",
+        "rank": "-",
+        "points": "11.00",
+        "source": "TA",
+        "utrSingles": "3",
+        "winLossYTD": "18:10",
+        "winLossCareer": "18:10",
+        "championships": "2026: 2"
+      }
+    ],
+    "hktaPlayers": [
+      {
+        "id": "1774830588509",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/01F4186B-4381-4B0D-A682-D652B49238D6",
+        "name": "CHIU Jordan Chung Shing",
+        "rank": "355",
+        "points": "6.97",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "0:0",
+        "winLossCareer": "30:25",
+        "championships": "2025: 1\n2024: 1"
+      },
+      {
+        "id": "1774852753599",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/37E374FE-7CA6-4044-AC85-C83E39A8254E",
+        "name": "YANG Noah",
+        "rank": "179",
+        "points": "48.82",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "0:1",
+        "winLossCareer": "46:20",
+        "championships": "2025: 1\n2024: 1\n2023: 6\n2021: 1"
+      },
+      {
+        "id": "1774852774843",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/69E6718B-0DE2-4CEC-939F-3BBAAA892DD3",
+        "name": "HONG Wing Ho",
+        "rank": "194",
+        "points": "44.50",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "14:3",
+        "winLossCareer": "108:38",
+        "championships": "2026: 2\n2025: 2\n2024: 4\n2023: 4\n2022: 1"
+      },
+      {
+        "id": "1774852786167",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/C5970211-DAEB-441A-AF27-2E19D25C6CF5",
+        "name": "PANG Tsz Yui Iden",
+        "rank": "169",
+        "points": "53.78",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "11:2",
+        "winLossCareer": "120:52",
+        "championships": "2026: 2\n2025: 4\n2024: 2\n2023: 5\n2022: 3"
+      },
+      {
+        "id": "1774852795513",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/E8F3B23E-2F78-4519-B36A-202F53E5F01A",
+        "name": "CHAN Pak Hei Isaac",
+        "rank": "245",
+        "points": "22.43",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "14:3",
+        "winLossCareer": "68:26",
+        "championships": "2026: 2\n2025: 3\n2024: 1\n2023: 1"
+      },
+      {
+        "id": "1774852805772",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/352788E6-11CF-4F3A-92EC-AC27C0445BA0",
+        "name": "CHEUNG Arick Ka Wai",
+        "rank": "263",
+        "points": "19.38",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "20:5",
+        "winLossCareer": "56:43",
+        "championships": "2026: 1\n2025: 1\n2023: 1"
+      },
+      {
+        "id": "1774852817154",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/92BAA1EC-1ADC-4716-9B22-D1261105E04B",
+        "name": "KAN Ethan Yin Lok",
+        "rank": "269",
+        "points": "17.73",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "11:7",
+        "winLossCareer": "42:21",
+        "championships": "2026: 1\n2025: 2"
+      },
+      {
+        "id": "1774852827260",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/4DBF1092-68D4-4EBF-8B82-8776AB07E902",
+        "name": "WONG Man Fung",
+        "rank": "348",
+        "points": "7.64",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "8:6",
+        "winLossCareer": "62:54",
+        "championships": "2025: 1\n2024: 1\n2023: 3"
+      },
+      {
+        "id": "1774852838206",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/99AE6E3F-E23B-4E33-8CE8-2B24E2D71CA8",
+        "name": "LIU Zipei",
+        "rank": "403",
+        "points": "3.90",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "0:1",
+        "winLossCareer": "27:11",
+        "championships": "2025: 1\n2024: 1"
+      },
+      {
+        "id": "1774852848735",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/2996953C-3B90-40B4-9780-9240FFEA0E5B",
+        "name": "LEUNG Carson",
+        "rank": "278",
+        "points": "16.25",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "13:6",
+        "winLossCareer": "56:37",
+        "championships": "2026: 1\n2025: 3\n2024: 2"
+      },
+      {
+        "id": "1774852862609",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/7CB8FC98-CB75-46F3-912C-9A4D8FC2C3BB",
+        "name": "LIU Shu Rui Jeremy",
+        "rank": "335",
+        "points": "8.83",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "10:5",
+        "winLossCareer": "59:37",
+        "championships": "2026: 1\n2025: 2\n2024: 1\n2023: 1"
+      },
+      {
+        "id": "1774852878775",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/7B90C216-DA2D-4971-B078-FD250259A71D",
+        "name": "CHAN Chun Yin Jayden",
+        "rank": "353",
+        "points": "7.11",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "8:5",
+        "winLossCareer": "47:31",
+        "championships": "2025: 2\n2024: 2"
+      },
+      {
+        "id": "1774852893136",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/0925605B-9A43-49DE-8A97-11EECEDCF4BF",
+        "name": "LEE Tsz Yuen",
+        "rank": "374",
+        "points": "5.92",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "9:2",
+        "winLossCareer": "62:25",
+        "championships": "2026: 1\n2025: 2\n2024: 2\n2023: 1"
+      },
+      {
+        "id": "1774852919609",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/AEAAEC5B-4D86-4215-BD01-7FCF1D65D482",
+        "name": "LI Youning",
+        "rank": "287",
+        "points": "13.71",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "8:5",
+        "winLossCareer": "40:20",
+        "championships": "2025: 2\n2024: 1\n2023: 2"
+      },
+      {
+        "id": "1774852934673",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/33CA5677-63DE-4D3E-8CB9-9FE5C48717DC",
+        "name": "ADVANI Joshua",
+        "rank": "334",
+        "points": "9.09",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "14:6",
+        "winLossCareer": "32:19",
+        "championships": "2025: 2"
+      },
+      {
+        "id": "1774852955419",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/D1B562B5-5F1C-478A-B759-7EB3601DD0B0",
+        "name": "CHAN Larry Long Wai",
+        "rank": "393",
+        "points": "4.53",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "6:2",
+        "winLossCareer": "49:19",
+        "championships": "2025: 1\n2024: 2\n2023: 1"
+      },
+      {
+        "id": "1774852976537",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/C4D2E37C-7912-496E-AAEB-446E4A702366",
+        "name": "ZHANG Xing Cheng London",
+        "rank": "385",
+        "points": "5.57",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "6:3",
+        "winLossCareer": "25:12",
+        "championships": "2025: 1\n2024: 1"
+      },
+      {
+        "id": "1774853003506",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/E5646E5D-27EA-413A-9C71-78B484D3137B",
+        "name": "CHAUVET Joahny",
+        "rank": "332",
+        "points": "10.42",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "8:5",
+        "winLossCareer": "23:21",
+        "championships": "-"
+      },
+      {
+        "id": "1774853025060",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/495FA938-B485-408E-AC29-682E6F87A538",
+        "name": "LI Terrence",
+        "rank": "356",
+        "points": "6.67",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "6:6",
+        "winLossCareer": "31:26",
+        "championships": "2024: 3"
+      },
+      {
+        "id": "1774853048005",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/7F8281DC-7FB7-4EAE-90BE-1E17684D586D",
+        "name": "NG Sheung Yin",
+        "rank": "389",
+        "points": "4.77",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "2:2",
+        "winLossCareer": "25:22",
+        "championships": "2025: 2"
+      },
+      {
+        "id": "1779894745670",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/854C7D18-BE9D-4577-B547-BAB174780828",
+        "name": "XU Jingtong",
+        "rank": "224",
+        "points": "27.74",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "21:4",
+        "winLossCareer": "93:34",
+        "championships": "2026: 1\n2025: 4\n2024: 2\n2023: 3\n2022: 1"
+      },
+      {
+        "id": "1779894771994",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/90BF56D6-2F09-448E-B62B-EA55F43F61A1",
+        "name": "PERKS Leo",
+        "rank": "279",
+        "points": "15.55",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "17:3",
+        "winLossCareer": "33:17",
+        "championships": "2026: 2\n2025: 1"
+      },
+      {
+        "id": "1779894825667",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/E429ED8E-9D8E-4A1E-89ED-2584FE2BCEA2",
+        "name": "YIP Tsz Hon Henry",
+        "rank": "289",
+        "points": "13.26",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "10:5",
+        "winLossCareer": "28:19",
+        "championships": "2026: 1\n2025: 2"
+      },
+      {
+        "id": "1779894839017",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/BBC05BE0-E203-4897-8B5B-39EF8686F726",
+        "name": "FANG Magnus Qingyuan",
+        "rank": "291",
+        "points": "13.03",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "10:6",
+        "winLossCareer": "44:15",
+        "championships": "2025: 3\n2024: 3"
+      },
+      {
+        "id": "1779894845135",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/38C0249A-E28F-44D5-93A6-85730BACB0AC",
+        "name": "LIK Tsun Hei",
+        "rank": "302",
+        "points": "11.80",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "9:6",
+        "winLossCareer": "43:21",
+        "championships": "2025: 2\n2024: 1"
+      },
+      {
+        "id": "1779894855049",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/FDA89C28-6CD1-465E-83D8-8618EA2476BE",
+        "name": "YIP Christopher",
+        "rank": "325",
+        "points": "11.20",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "12:5",
+        "winLossCareer": "68:23",
+        "championships": "2026: 1\n2025: 2\n2024: 2"
+      },
+      {
+        "id": "1779894867123",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/3640A4CD-CC32-4DF0-96DC-0D814D45965B",
+        "name": "CHAN Yat Fung Nathan",
+        "rank": "329",
+        "points": "10.97",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "17:5",
+        "winLossCareer": "83:31",
+        "championships": "2026: 1\n2025: 3\n2024: 1\n2023: 2\n2022: 1"
+      },
+      {
+        "id": "1779894874954",
+        "url": "https://hkta.tournamentsoftware.com/player-profile/1A123FE1-8A5A-4225-8833-6F006056E85C",
+        "name": "HONG Chi Yui",
+        "rank": "330",
+        "points": "10.63",
+        "source": "HKTA",
+        "utrSingles": "-",
+        "winLossYTD": "9:6",
+        "winLossCareer": "67:34",
+        "championships": "2026: 1\n2025: 1\n2024: 3\n2023: 1"
+      }
+    ]
+  },
+  {
     "date": "2026-06-01",
-    "timestamp": "2026-06-01T14:57:39.144Z",
+    "timestamp": "2026-06-01T16:55:24.460Z",
     "taPlayers": [
       {
         "id": "1774838840325",
@@ -50548,1865 +52696,4 @@
       },
       {
         "id": "1774852827260",
-        "url": "https://hkta.tournamentsoftware.com/player-profile/4DBF1092-68D4-4EBF-8B82-8776AB07E902",
-        "name": "WONG Man Fung",
-        "rank": "347",
-        "points": "7.64",
-        "source": "HKTA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://hkta.tournamentsoftware.com/sport/tournament?id=E82153FE-2A33-4E9F-A65F-64FFBA70F62C",
-            "tournamentName": "Nissin Demae Iccho HK Jr. Novice 2026 C2_HKTC",
-            "tournamentDates": "11/4/202626/4/202633m59m1h 53m"
-          }
-        ],
-        "utrSingles": "34.2",
-        "winLossYTD": "8 / 5 (13)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-21T23:40:49.319Z",
-        "championships": "2025: 1\n2024: 1\n2023: 3",
-        "winLossCareer": "62 / 53 (115)"
-      },
-      {
-        "id": "1774852838206",
-        "url": "https://hkta.tournamentsoftware.com/player-profile/99AE6E3F-E23B-4E33-8CE8-2B24E2D71CA8",
-        "name": "LIU Zipei",
-        "rank": "383",
-        "points": "5.35",
-        "source": "HKTA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://hkta.tournamentsoftware.com/sport/tournament?id=7C5ADF25-C5D5-4198-B869-E96C476A17EA",
-            "tournamentName": "Nissin HK National Jr Tennis Championships 2026 (Victoria Park)",
-            "tournamentDates": "24/1/202615/3/20261h 50m"
-          }
-        ],
-        "utrSingles": "35.0",
-        "winLossYTD": "0 / 1 (1)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-21T23:40:49.319Z",
-        "championships": "2025: 1\n2024: 1",
-        "winLossCareer": "27 / 12 (39)"
-      },
-      {
-        "id": "1774852848735",
-        "url": "https://hkta.tournamentsoftware.com/player-profile/2996953C-3B90-40B4-9780-9240FFEA0E5B",
-        "name": "LEUNG Carson",
-        "rank": "284",
-        "points": "15.00",
-        "source": "HKTA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://hkta.tournamentsoftware.com/sport/tournament?id=CFBF07A3-D8D3-4BCE-8AC0-FD962A7D3D9E",
-            "tournamentName": "Nissin Demae Iccho HK Jr. Novice 2026 C2_JRP",
-            "tournamentDates": "11/4/202626/4/202651m46m1h 02m1h 25m"
-          }
-        ],
-        "utrSingles": "33.1",
-        "winLossYTD": "12 / 5 (17)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-21T23:40:49.319Z",
-        "championships": "2026: 1\n2025: 3\n2024: 2",
-        "winLossCareer": "57 / 38 (95)"
-      },
-      {
-        "id": "1774852862609",
-        "url": "https://hkta.tournamentsoftware.com/player-profile/7CB8FC98-CB75-46F3-912C-9A4D8FC2C3BB",
-        "name": "LIU Shu Rui Jeremy",
-        "rank": "346",
-        "points": "7.93",
-        "source": "HKTA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://hkta.tournamentsoftware.com/sport/tournament?id=906DC78B-46EC-475F-B404-91E98FDE2144",
-            "tournamentName": "Nissin Demae Iccho HK Jr. Novice 2026 C2_YWR",
-            "tournamentDates": "11/4/202626/4/202623m1h 17m"
-          }
-        ],
-        "utrSingles": "33.0",
-        "winLossYTD": "10 / 4 (14)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-21T23:40:49.319Z",
-        "championships": "2026: 1\n2025: 2\n2024: 1\n2023: 1",
-        "winLossCareer": "59 / 37 (96)"
-      },
-      {
-        "id": "1774852878775",
-        "url": "https://hkta.tournamentsoftware.com/player-profile/7B90C216-DA2D-4971-B078-FD250259A71D",
-        "name": "CHAN Chun Yin Jayden",
-        "rank": "355",
-        "points": "6.62",
-        "source": "HKTA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://hkta.tournamentsoftware.com/sport/tournament?id=CFBF07A3-D8D3-4BCE-8AC0-FD962A7D3D9E",
-            "tournamentName": "Nissin Demae Iccho HK Jr. Novice 2026 C2_JRP",
-            "tournamentDates": "11/4/202626/4/202646m20m53m"
-          }
-        ],
-        "utrSingles": "33.5",
-        "winLossYTD": "8 / 5 (13)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-21T23:40:49.319Z",
-        "championships": "2025: 2\n2024: 2",
-        "winLossCareer": "49 / 32 (81)"
-      },
-      {
-        "id": "1774852893136",
-        "url": "https://hkta.tournamentsoftware.com/player-profile/0925605B-9A43-49DE-8A97-11EECEDCF4BF",
-        "name": "LEE Tsz Yuen",
-        "rank": "356",
-        "points": "6.38",
-        "source": "HKTA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://hkta.tournamentsoftware.com/sport/tournament?id=10158A46-28C7-4E2E-BC17-B336E8C4067C",
-            "tournamentName": "Nissin Demae Iccho HK Jr. Novice 2026 C1_TYP",
-            "tournamentDates": "14/3/202628/3/202627m25m42m46m"
-          }
-        ],
-        "utrSingles": "35.2",
-        "winLossYTD": "10 / 2 (12)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-21T23:40:49.319Z",
-        "championships": "2026: 1\n2025: 2\n2024: 2\n2023: 1",
-        "winLossCareer": "63 / 25 (88)"
-      },
-      {
-        "id": "1774852919609",
-        "url": "https://hkta.tournamentsoftware.com/player-profile/AEAAEC5B-4D86-4215-BD01-7FCF1D65D482",
-        "name": "LI Youning",
-        "rank": "289",
-        "points": "13.06",
-        "source": "HKTA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://hkta.tournamentsoftware.com/sport/tournament?id=E82153FE-2A33-4E9F-A65F-64FFBA70F62C",
-            "tournamentName": "Nissin Demae Iccho HK Jr. Novice 2026 C2_HKTC",
-            "tournamentDates": "11/4/202626/4/202620m30m53m51m"
-          }
-        ],
-        "utrSingles": "34.3",
-        "winLossYTD": "8 / 4 (12)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-21T23:40:49.319Z",
-        "championships": "2025: 2\n2024: 1\n2023: 2",
-        "winLossCareer": "40 / 19 (59)"
-      },
-      {
-        "id": "1774852934673",
-        "url": "https://hkta.tournamentsoftware.com/player-profile/33CA5677-63DE-4D3E-8CB9-9FE5C48717DC",
-        "name": "ADVANI Joshua",
-        "rank": "351",
-        "points": "7.34",
-        "source": "HKTA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://hkta.tournamentsoftware.com/sport/tournament?id=E82153FE-2A33-4E9F-A65F-64FFBA70F62C",
-            "tournamentName": "Nissin Demae Iccho HK Jr. Novice 2026 C2_HKTC",
-            "tournamentDates": "11/4/202626/4/202635m38m1h 36m52m"
-          }
-        ],
-        "utrSingles": "33.8",
-        "winLossYTD": "13 / 6 (19)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-21T23:40:49.319Z",
-        "championships": "2025: 2",
-        "winLossCareer": "31 / 19 (50)"
-      },
-      {
-        "id": "1774852955419",
-        "url": "https://hkta.tournamentsoftware.com/player-profile/D1B562B5-5F1C-478A-B759-7EB3601DD0B0",
-        "name": "CHAN Larry Long Wai",
-        "rank": "404",
-        "points": "3.68",
-        "source": "HKTA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://hkta.tournamentsoftware.com/sport/tournament?id=E82153FE-2A33-4E9F-A65F-64FFBA70F62C",
-            "tournamentName": "Nissin Demae Iccho HK Jr. Novice 2026 C2_HKTC",
-            "tournamentDates": "11/4/202626/4/202630m46m33m44m"
-          }
-        ],
-        "utrSingles": "-",
-        "winLossYTD": "6 / 2 (8)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-21T23:40:49.319Z",
-        "championships": "2025: 1\n2024: 2\n2023: 1",
-        "winLossCareer": "49 / 20 (69)"
-      },
-      {
-        "id": "1774852976537",
-        "url": "https://hkta.tournamentsoftware.com/player-profile/C4D2E37C-7912-496E-AAEB-446E4A702366",
-        "name": "ZHANG Xing Cheng London",
-        "rank": "390",
-        "points": "4.71",
-        "source": "HKTA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://hkta.tournamentsoftware.com/sport/tournament?id=CFBF07A3-D8D3-4BCE-8AC0-FD962A7D3D9E",
-            "tournamentName": "Nissin Demae Iccho HK Jr. Novice 2026 C2_JRP",
-            "tournamentDates": "11/4/202626/4/202617m22m"
-          }
-        ],
-        "utrSingles": "33.8",
-        "winLossYTD": "6 / 3 (9)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-21T23:40:49.319Z",
-        "championships": "2025: 1\n2024: 1",
-        "winLossCareer": "25 / 12 (37)"
-      },
-      {
-        "id": "1774853003506",
-        "url": "https://hkta.tournamentsoftware.com/player-profile/E5646E5D-27EA-413A-9C71-78B484D3137B",
-        "name": "CHAUVET Joahny",
-        "rank": "333",
-        "points": "10.03",
-        "source": "HKTA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://hkta.tournamentsoftware.com/sport/tournament?id=E82153FE-2A33-4E9F-A65F-64FFBA70F62C",
-            "tournamentName": "Nissin Demae Iccho HK Jr. Novice 2026 C2_HKTC",
-            "tournamentDates": "11/4/202626/4/202638m59m"
-          }
-        ],
-        "utrSingles": "33.9",
-        "winLossYTD": "8 / 5 (13)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-21T23:40:49.319Z",
-        "championships": "-",
-        "winLossCareer": "23 / 21 (44)"
-      },
-      {
-        "id": "1774853025060",
-        "url": "https://hkta.tournamentsoftware.com/player-profile/495FA938-B485-408E-AC29-682E6F87A538",
-        "name": "LI Terrence",
-        "rank": "371",
-        "points": "5.97",
-        "source": "HKTA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://hkta.tournamentsoftware.com/sport/tournament?id=906DC78B-46EC-475F-B404-91E98FDE2144",
-            "tournamentName": "Nissin Demae Iccho HK Jr. Novice 2026 C2_YWR",
-            "tournamentDates": "11/4/202626/4/202630m30m"
-          }
-        ],
-        "utrSingles": "34.9",
-        "winLossYTD": "6 / 5 (11)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-21T23:40:49.319Z",
-        "championships": "2024: 3",
-        "winLossCareer": "31 / 25 (56)"
-      },
-      {
-        "id": "1774853048005",
-        "url": "https://hkta.tournamentsoftware.com/player-profile/7F8281DC-7FB7-4EAE-90BE-1E17684D586D",
-        "name": "NG Sheung Yin",
-        "rank": "389",
-        "points": "4.77",
-        "source": "HKTA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://hkta.tournamentsoftware.com/sport/tournament?id=191EA7DA-DA5D-4803-8581-8F22061EDD70",
-            "tournamentName": "Nissin Demae Iccho HK Jr. Novice 2026 C1_HKTC",
-            "tournamentDates": "14/3/202629/3/202654m22m"
-          }
-        ],
-        "utrSingles": "33.9",
-        "winLossYTD": "2 / 2 (4)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-21T23:40:49.319Z",
-        "championships": "2025: 2",
-        "winLossCareer": "25 / 22 (47)"
-      }
-    ]
-  },
-  {
-    "date": "2026-04-20",
-    "taPlayers": [
-      {
-        "id": "1774838840325",
-        "url": "https://tournaments.tennis.com.au/player-profile/26B6F59E-714F-4852-9D3E-5022A7EBEC99",
-        "name": "Andy (Yuhao) Liu",
-        "rank": "15",
-        "points": "24.00",
-        "source": "TA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://tournaments.tennis.com.au/sport/tournament?id=05E1CC4F-1F97-4107-8B32-51681F6D3AEA",
-            "tournamentName": "2026 J125 Hills",
-            "tournamentDates": "17/04/202620/04/20261h 33m1h 12m"
-          }
-        ],
-        "utrSingles": "5.5",
-        "winLossYTD": "16 / 8 (24)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-20T23:11:18.722Z",
-        "championships": "2026: 2\n2025: 3\n2024: 2",
-        "utrProfileUrl": "https://app.utrsports.net/profiles/4398152",
-        "winLossCareer": "57 / 31 (88)"
-      },
-      {
-        "id": "1774838616457",
-        "url": "https://tournaments.tennis.com.au/player-profile/30BB29AE-08E1-4684-8333-74E1FE9D8D81",
-        "name": "Gavrilo Novkovic",
-        "rank": "15",
-        "points": "18.00",
-        "source": "TA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://tournaments.tennis.com.au/sport/tournament?id=7F5EC442-2261-4AF6-A664-E114FAD1BD23",
-            "tournamentName": "2026 O3k J125 Illawarra",
-            "tournamentDates": "17/04/202620/04/20261h 32m57m1h 25m1h 10m1h 04m1h 12m"
-          }
-        ],
-        "utrSingles": "4.6",
-        "winLossYTD": "19 / 8 (27)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-20T23:11:18.722Z",
-        "championships": "2026: 3\n2025: 5\n2024: 4",
-        "utrProfileUrl": "https://app.utrsports.net/profiles/4152698",
-        "winLossCareer": "119 / 62 (181)"
-      },
-      {
-        "id": "1774852422814",
-        "url": "https://tournaments.tennis.com.au/player-profile/AC4465CE-7AC0-40BA-9E1D-C5A5763C8109",
-        "name": "Henry Wen",
-        "rank": "15",
-        "points": "1.00",
-        "source": "TA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://tournaments.tennis.com.au/sport/tournament?id=05E1CC4F-1F97-4107-8B32-51681F6D3AEA",
-            "tournamentName": "2026 J125 Hills",
-            "tournamentDates": "17/04/202620/04/20262h 06m1h 51m58m"
-          }
-        ],
-        "utrSingles": "4.4",
-        "winLossYTD": "13 / 9 (22)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-20T23:11:18.722Z",
-        "championships": "2026: 1\n2025: 1\n2024: 2",
-        "utrProfileUrl": "https://app.utrsports.net/profiles/5780235",
-        "winLossCareer": "45 / 63 (108)"
-      },
-      {
-        "id": "1774855004722",
-        "url": "https://tournaments.tennis.com.au/player-profile/8443627D-BFF7-4DF1-A5AC-137C4996E788",
-        "name": "Sam Ritchie",
-        "rank": "15",
-        "points": "26.00",
-        "source": "TA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://tournaments.tennis.com.au/sport/tournament?id=7494F42C-B0B1-4A1A-80D6-DD7C00A992EF",
-            "tournamentName": "2026 O9k J250 J125 CBC Green Ashley Cooper Open Age Champs (Open & Junior Autumn Swing - Final Leg)",
-            "tournamentDates": "13/04/202619/04/20261h 21m59m56m1h 39m56m1h 34m"
-          }
-        ],
-        "utrSingles": "4.3",
-        "winLossYTD": "26 / 13 (39)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-20T23:11:18.722Z",
-        "championships": "2026: 6\n2025: 10\n2024: 8",
-        "utrProfileUrl": "https://app.utrsports.net/profiles/5121633",
-        "winLossCareer": "163 / 77 (240)"
-      },
-      {
-        "id": "1774854812309",
-        "url": "https://tournaments.tennis.com.au/player-profile/FBE8CE05-98F9-449A-B402-FB076AD50A80",
-        "name": "Zakariyya Rogers",
-        "rank": "15",
-        "points": "95.00",
-        "source": "TA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://tournaments.tennis.com.au/sport/tournament?id=05E1CC4F-1F97-4107-8B32-51681F6D3AEA",
-            "tournamentName": "2026 J125 Hills",
-            "tournamentDates": "17/04/202620/04/202656m1h 47m56m"
-          }
-        ],
-        "utrSingles": "4",
-        "winLossYTD": "20 / 18 (38)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-20T23:11:18.722Z",
-        "championships": "2026: 1\n2025: 6\n2024: 2",
-        "utrProfileUrl": "https://app.utrsports.net/profiles/5761942",
-        "winLossCareer": "98 / 99 (197)"
-      },
-      {
-        "id": "1774830531032",
-        "url": "https://tournaments.tennis.com.au/player-profile/D8C9AB7B-18A8-4631-B8DE-4EDBF1D543A1",
-        "name": "Jordan Chiu",
-        "rank": "-",
-        "points": "-",
-        "source": "TA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://tournaments.tennis.com.au/sport/tournament?id=26AD1E39-34A7-4E74-A456-AD76000895A6",
-            "tournamentName": "2026 JDS CBC Metro Superb Tennis 10u Green Ball #2",
-            "tournamentDates": "22/03/2026"
-          }
-        ],
-        "utrSingles": "3",
-        "winLossYTD": "27 / 9 (36)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-20T23:11:18.722Z",
-        "championships": "2026: 2\n2025: 6\n2024: 1",
-        "utrProfileUrl": "https://app.utrsports.net/profiles/5711293",
-        "winLossCareer": "83 / 28 (111)"
-      },
-      {
-        "id": "1774852489789",
-        "url": "https://tournaments.tennis.com.au/player-profile/4625D532-A92D-4155-B515-7AF811D329B6",
-        "name": "Aiden Guo",
-        "rank": "-",
-        "points": "-",
-        "source": "TA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://tournaments.tennis.com.au/sport/tournament?id=88A7B04E-6529-46BF-A56C-3463B2C81979",
-            "tournamentName": "2026 J125 Macquarie",
-            "tournamentDates": "14/04/202616/04/20261h 10m"
-          }
-        ],
-        "utrSingles": "3.9",
-        "winLossYTD": "11 / 11 (22)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-20T23:11:18.722Z",
-        "championships": "2026: 1\n2025: 3",
-        "utrProfileUrl": "https://app.utrsports.net/profiles/4569536",
-        "winLossCareer": "37 / 30 (67)"
-      },
-      {
-        "id": "1774852503277",
-        "url": "https://tournaments.tennis.com.au/player-profile/806F94D7-D656-47C7-A99F-321576CC8980",
-        "name": "Henry Wang",
-        "rank": "-",
-        "points": "-",
-        "source": "TA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://tournaments.tennis.com.au/sport/tournament?id=D28127E8-2743-42F3-8B9A-92202F369972",
-            "tournamentName": "2026 JDS CBC Metro North West Sydney Tennis 10u & 14u",
-            "tournamentDates": "8/03/2026"
-          }
-        ],
-        "utrSingles": "3.8",
-        "winLossYTD": "9 / 1 (10)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-20T23:11:18.722Z",
-        "championships": "2026: 1\n2025: 1",
-        "utrProfileUrl": "https://app.utrsports.net/profiles/4895377",
-        "winLossCareer": "49 / 35 (84)"
-      },
-      {
-        "id": "1774853909506",
-        "url": "https://tournaments.tennis.com.au/player-profile/F15291C1-B67A-4EAE-9448-DD6E5BF75953",
-        "name": "Joshua Feng",
-        "rank": "-",
-        "points": "-",
-        "source": "TA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://tournaments.tennis.com.au/sport/tournament?id=05E1CC4F-1F97-4107-8B32-51681F6D3AEA",
-            "tournamentName": "2026 J125 Hills",
-            "tournamentDates": "17/04/202620/04/202655m1h 22m"
-          }
-        ],
-        "utrSingles": "3.5",
-        "winLossYTD": "7 / 6 (13)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-20T23:11:18.722Z",
-        "championships": "2025: 3\n2024: 4",
-        "utrProfileUrl": "https://app.utrsports.net/profiles/4414584",
-        "winLossCareer": "83 / 46 (129)"
-      },
-      {
-        "id": "1774852523592",
-        "url": "https://tournaments.tennis.com.au/player-profile/6657D415-DE03-4B14-B6FB-EB2223C71A0A",
-        "name": "Daniel Graovac",
-        "rank": "-",
-        "points": "-",
-        "source": "TA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://tournaments.tennis.com.au/sport/tournament?id=278EBC1D-2998-46A5-8C6A-6C7DC192258B",
-            "tournamentName": "2026 O3k/OC J125/JC Nepean 60th Easter Open & Junior",
-            "tournamentDates": "2/04/20266/04/2026"
-          }
-        ],
-        "utrSingles": "3.6",
-        "winLossYTD": "9 / 3 (12)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-20T23:11:18.722Z",
-        "championships": "2026: 1\n2024: 1",
-        "utrProfileUrl": "https://app.utrsports.net/profiles/3630454",
-        "winLossCareer": "26 / 30 (56)"
-      },
-      {
-        "id": "1774852531343",
-        "url": "https://tournaments.tennis.com.au/player-profile/1D203E27-3EE6-4F02-A3B1-421A308AD58F",
-        "name": "Beau Tindall",
-        "rank": "-",
-        "points": "-",
-        "source": "TA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://tournaments.tennis.com.au/sport/tournament?id=278EBC1D-2998-46A5-8C6A-6C7DC192258B",
-            "tournamentName": "2026 O3k/OC J125/JC Nepean 60th Easter Open & Junior",
-            "tournamentDates": "2/04/20266/04/2026"
-          }
-        ],
-        "utrSingles": "3",
-        "winLossYTD": "24 / 9 (33)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-20T23:11:18.722Z",
-        "championships": "2026: 2\n2025: 3\n2024: 1",
-        "utrProfileUrl": "https://app.utrsports.net/profiles/4585575",
-        "winLossCareer": "65 / 49 (114)"
-      },
-      {
-        "id": "1774852542593",
-        "url": "https://tournaments.tennis.com.au/player-profile/E2568F5E-726E-4EF3-A2C7-BC3435B2E04B",
-        "name": "Ryan Xu",
-        "rank": "15",
-        "points": "12.00",
-        "source": "TA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://tournaments.tennis.com.au/sport/tournament?id=88A7B04E-6529-46BF-A56C-3463B2C81979",
-            "tournamentName": "2026 J125 Macquarie",
-            "tournamentDates": "14/04/202616/04/20261h 19m1h 18m59m"
-          }
-        ],
-        "utrSingles": "3",
-        "winLossYTD": "12 / 12 (24)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-20T23:11:18.722Z",
-        "championships": "2025: 3\n2024: 1",
-        "utrProfileUrl": "https://app.utrsports.net/profiles/4355333",
-        "winLossCareer": "77 / 77 (154)"
-      },
-      {
-        "id": "1774852553484",
-        "url": "https://tournaments.tennis.com.au/player-profile/5B29E9F4-E77E-453E-B5E8-868A92A7A57C",
-        "name": "Bisam Chapagain",
-        "rank": "-",
-        "points": "-",
-        "source": "TA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://tournaments.tennis.com.au/sport/tournament?id=26AD1E39-34A7-4E74-A456-AD76000895A6",
-            "tournamentName": "2026 JDS CBC Metro Superb Tennis 10u Green Ball #2",
-            "tournamentDates": "22/03/2026"
-          }
-        ],
-        "utrSingles": "3",
-        "winLossYTD": "10 / 5 (15)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-20T23:11:18.722Z",
-        "championships": "2025: 4",
-        "utrProfileUrl": "https://app.utrsports.net/profiles/4772630",
-        "winLossCareer": "44 / 40 (84)"
-      },
-      {
-        "id": "1774852571511",
-        "url": "https://tournaments.tennis.com.au/player-profile/EE11357E-B2BA-486B-A896-CDF311D09F90",
-        "name": "Marko Petrovic",
-        "rank": "15",
-        "points": "1.00",
-        "source": "TA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://tournaments.tennis.com.au/sport/tournament?id=7F5EC442-2261-4AF6-A664-E114FAD1BD23",
-            "tournamentName": "2026 O3k J125 Illawarra",
-            "tournamentDates": "17/04/202620/04/202647m1h 01m"
-          }
-        ],
-        "utrSingles": "3",
-        "winLossYTD": "28 / 8 (36)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-20T23:11:18.722Z",
-        "championships": "2026: 1\n2025: 1",
-        "utrProfileUrl": "https://app.utrsports.net/profiles/4652591",
-        "winLossCareer": "42 / 29 (71)"
-      },
-      {
-        "id": "1774852586564",
-        "url": "https://tournaments.tennis.com.au/player-profile/1E57D0C2-F508-44E3-8351-E14191D59BA3",
-        "name": "Aengus Delaney",
-        "rank": "15",
-        "points": "24.00",
-        "source": "TA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://tournaments.tennis.com.au/sport/tournament?id=742891D1-6D4C-4ACB-ABED-879AD981262E",
-            "tournamentName": "2026 O3k J125 Bathurst Autumn Open & Junior",
-            "tournamentDates": "7/04/202610/04/202630m19m09m1h 09m1h 08m1h 07m"
-          }
-        ],
-        "utrSingles": "3",
-        "winLossYTD": "24 / 10 (34)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-20T23:11:18.722Z",
-        "championships": "2026: 2\n2025: 1",
-        "utrProfileUrl": "https://app.utrsports.net/profiles/4542643",
-        "winLossCareer": "58 / 70 (128)"
-      },
-      {
-        "id": "1774852594184",
-        "url": "https://tournaments.tennis.com.au/player-profile/00948A3B-A264-417B-9CF4-18FAEAE5915D",
-        "name": "Edwin Huxue",
-        "rank": "-",
-        "points": "-",
-        "source": "TA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://tournaments.tennis.com.au/sport/tournament?id=278EBC1D-2998-46A5-8C6A-6C7DC192258B",
-            "tournamentName": "2026 O3k/OC J125/JC Nepean 60th Easter Open & Junior",
-            "tournamentDates": "2/04/20266/04/2026"
-          }
-        ],
-        "utrSingles": "3",
-        "winLossYTD": "18 / 10 (28)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-20T23:11:18.722Z",
-        "championships": "2025: 3",
-        "utrProfileUrl": "https://app.utrsports.net/profiles/4804237",
-        "winLossCareer": "51 / 27 (78)"
-      },
-      {
-        "id": "1774852604537",
-        "url": "https://tournaments.tennis.com.au/player-profile/98C08E25-D3E6-440F-BAD4-78332D7671F1",
-        "name": "Andreas Mortel",
-        "rank": "15",
-        "points": "30.00",
-        "source": "TA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://tournaments.tennis.com.au/sport/tournament?id=7F5EC442-2261-4AF6-A664-E114FAD1BD23",
-            "tournamentName": "2026 O3k J125 Illawarra",
-            "tournamentDates": "17/04/202620/04/20261h 36m1h 57m1h 12m"
-          }
-        ],
-        "utrSingles": "3.4",
-        "winLossYTD": "30 / 27 (57)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-20T23:11:18.722Z",
-        "championships": "2026: 3\n2025: 8",
-        "utrProfileUrl": "https://app.utrsports.net/profiles/4097505",
-        "winLossCareer": "92 / 128 (220)"
-      },
-      {
-        "id": "1774854770264",
-        "url": "https://tournaments.tennis.com.au/player-profile/F64661E0-4EDB-4CE3-922F-7B8835695268",
-        "name": "Artemy Tenyaev",
-        "rank": "15",
-        "points": "14.00",
-        "source": "TA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://tournaments.tennis.com.au/sport/tournament?id=F4CE730A-634F-4D57-B0FC-359AA191B13E",
-            "tournamentName": "2026 OC J125 Wollongong Open & Junior",
-            "tournamentDates": "11/04/202613/04/202609m1h 31m1h 14m1h 28m"
-          }
-        ],
-        "utrSingles": "3.5",
-        "winLossYTD": "40 / 17 (57)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-20T23:11:18.722Z",
-        "championships": "2026: 4\n2025: 5",
-        "utrProfileUrl": "https://app.utrsports.net/profiles/5782455",
-        "winLossCareer": "91 / 60 (151)"
-      },
-      {
-        "id": "1774852617767",
-        "url": "https://tournaments.tennis.com.au/player-profile/3E97A937-D8DD-4DAD-99D3-3758C164F52C",
-        "name": "Felix Protsenko",
-        "rank": "-",
-        "points": "-",
-        "source": "TA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://tournaments.tennis.com.au/sport/tournament?id=7F5EC442-2261-4AF6-A664-E114FAD1BD23",
-            "tournamentName": "2026 O3k J125 Illawarra",
-            "tournamentDates": "17/04/202620/04/2026"
-          }
-        ],
-        "utrSingles": "2.5",
-        "winLossYTD": "8 / 1 (9)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-20T23:11:18.722Z",
-        "championships": "-",
-        "utrProfileUrl": "https://app.utrsports.net/profiles/4562527",
-        "winLossCareer": "20 / 19 (39)"
-      },
-      {
-        "id": "1774854726185",
-        "url": "https://tournaments.tennis.com.au/player-profile/D4C5B547-8491-4644-B12C-1E682BECE34C",
-        "name": "Owen Li",
-        "rank": "-",
-        "points": "-",
-        "source": "TA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://tournaments.tennis.com.au/sport/tournament?id=D28127E8-2743-42F3-8B9A-92202F369972",
-            "tournamentName": "2026 JDS CBC Metro North West Sydney Tennis 10u & 14u",
-            "tournamentDates": "8/03/2026"
-          }
-        ],
-        "utrSingles": "3",
-        "winLossYTD": "7 / 4 (11)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-20T23:11:18.722Z",
-        "championships": "-",
-        "utrProfileUrl": "https://app.utrsports.net/profiles/5274822",
-        "winLossCareer": "19 / 9 (28)"
-      },
-      {
-        "id": "1774852625855",
-        "url": "https://tournaments.tennis.com.au/player-profile/7C2D7BDE-3D6D-4EEF-9379-373A6D27F925",
-        "name": "Theo Stathis",
-        "rank": "15",
-        "points": "20.00",
-        "source": "TA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://tournaments.tennis.com.au/sport/tournament?id=D28127E8-2743-42F3-8B9A-92202F369972",
-            "tournamentName": "2026 JDS CBC Metro North West Sydney Tennis 10u & 14u",
-            "tournamentDates": "8/03/2026"
-          }
-        ],
-        "utrSingles": "2",
-        "winLossYTD": "5 / 9 (14)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-20T23:11:18.722Z",
-        "championships": "2025: 1",
-        "utrProfileUrl": "https://app.utrsports.net/profiles/4559985",
-        "winLossCareer": "28 / 27 (55)"
-      },
-      {
-        "id": "1774852634620",
-        "url": "https://tournaments.tennis.com.au/player-profile/19A26C4A-17EF-4259-976F-F04D375D3853",
-        "name": "Zachary Yen",
-        "rank": "15",
-        "points": "2.00",
-        "source": "TA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://tournaments.tennis.com.au/sport/tournament?id=05E1CC4F-1F97-4107-8B32-51681F6D3AEA",
-            "tournamentName": "2026 J125 Hills",
-            "tournamentDates": "17/04/202620/04/20261h 55m1h 24m1h 56m1h 11m"
-          }
-        ],
-        "utrSingles": "2.6",
-        "winLossYTD": "12 / 16 (28)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-20T23:11:18.722Z",
-        "championships": "2025: 2",
-        "utrProfileUrl": "https://app.utrsports.net/profiles/3665316",
-        "winLossCareer": "26 / 41 (67)"
-      },
-      {
-        "id": "1774852645556",
-        "url": "https://tournaments.tennis.com.au/player-profile/3637049C-1E32-4E77-8756-5AA79D321995",
-        "name": "James Soetedja",
-        "rank": "-",
-        "points": "-",
-        "source": "TA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://tournaments.tennis.com.au/sport/tournament?id=D39A4E5F-9E88-46CA-91C7-2D334F2607F0",
-            "tournamentName": "2026 JDS South Canberra",
-            "tournamentDates": "18/04/202619/04/2026"
-          }
-        ],
-        "utrSingles": "2",
-        "winLossYTD": "16 / 5 (21)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-20T23:11:18.722Z",
-        "championships": "2026: 4\n2024: 1",
-        "utrProfileUrl": "https://app.utrsports.net/profiles/4236751",
-        "winLossCareer": "46 / 31 (77)"
-      },
-      {
-        "id": "1774852654757",
-        "url": "https://tournaments.tennis.com.au/player-profile/3D864E40-E0C1-4B23-89AD-3AFB63B97B2E",
-        "name": "Steven Saychenko",
-        "rank": "15",
-        "points": "15.00",
-        "source": "TA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://tournaments.tennis.com.au/sport/tournament?id=7F5EC442-2261-4AF6-A664-E114FAD1BD23",
-            "tournamentName": "2026 O3k J125 Illawarra",
-            "tournamentDates": "17/04/202620/04/2026"
-          }
-        ],
-        "utrSingles": "2.0",
-        "winLossYTD": "13 / 12 (25)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-20T23:11:18.722Z",
-        "championships": "2025: 1",
-        "utrProfileUrl": "https://app.utrsports.net/profiles/5385738",
-        "winLossCareer": "31 / 38 (69)"
-      },
-      {
-        "id": "1774854827035",
-        "url": "https://tournaments.tennis.com.au/player-profile/48D73322-95A1-4609-88E1-4654D99A29BC",
-        "name": "Garrett Wang",
-        "rank": "-",
-        "points": "-",
-        "source": "TA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://tournaments.tennis.com.au/sport/tournament?id=7F5EC442-2261-4AF6-A664-E114FAD1BD23",
-            "tournamentName": "2026 O3k J125 Illawarra",
-            "tournamentDates": "17/04/202620/04/2026"
-          }
-        ],
-        "utrSingles": "2",
-        "winLossYTD": "10 / 11 (21)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-20T23:11:18.722Z",
-        "championships": "2026: 2\n2025: 3",
-        "utrProfileUrl": "https://app.utrsports.net/profiles/5626868",
-        "winLossCareer": "32 / 32 (64)"
-      },
-      {
-        "id": "1774854855300",
-        "url": "https://tournaments.tennis.com.au/player-profile/144D39F2-EBD5-47B2-B1A7-5CA28199E8E5",
-        "name": "Alistair Cameron",
-        "rank": "-",
-        "points": "-",
-        "source": "TA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://tournaments.tennis.com.au/sport/tournament?id=26AD1E39-34A7-4E74-A456-AD76000895A6",
-            "tournamentName": "2026 JDS CBC Metro Superb Tennis 10u Green Ball #2",
-            "tournamentDates": "22/03/2026"
-          }
-        ],
-        "utrSingles": "3",
-        "winLossYTD": "4 / 2 (6)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-20T23:11:18.722Z",
-        "championships": "-",
-        "utrProfileUrl": "https://app.utrsports.net/profiles/4750585",
-        "winLossCareer": "4 / 2 (6)"
-      },
-      {
-        "id": "1774853948145",
-        "url": "https://tournaments.tennis.com.au/player-profile/4949A3F0-81BD-4968-85D5-E1E6B3F06D73",
-        "name": "Steven Ye",
-        "rank": "-",
-        "points": "-",
-        "source": "TA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://tournaments.tennis.com.au/sport/tournament?id=151A2024-1B80-4277-ABAB-5C24159123A5",
-            "tournamentName": "2026 JDS CBC Green Central West RMS - Nepean",
-            "tournamentDates": "15/03/2026"
-          }
-        ],
-        "utrSingles": "1.9",
-        "winLossYTD": "7 / 6 (13)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-20T23:11:18.722Z",
-        "championships": "2026: 1\n2025: 1",
-        "utrProfileUrl": "https://app.utrsports.net/profiles/3585142",
-        "winLossCareer": "25 / 26 (51)"
-      },
-      {
-        "id": "1774852672619",
-        "url": "https://tournaments.tennis.com.au/player-profile/72F1DA07-889D-409A-8A33-90B3149B8280",
-        "name": "Noah Yang",
-        "rank": "-",
-        "points": "-",
-        "source": "TA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://tournaments.tennis.com.au/sport/tournament?id=6CC0DC75-5CDA-48A9-8E51-94DF8A3D7A98",
-            "tournamentName": "2025 GBS Metro East GWSH #3",
-            "tournamentDates": "10/07/202511/07/2025"
-          }
-        ],
-        "utrSingles": "-",
-        "winLossYTD": "0 / 0 (0)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-20T23:11:18.722Z",
-        "championships": "2025: 1",
-        "utrProfileUrl": "https://app.utrsports.net/profiles/4302868",
-        "winLossCareer": "7 / 4 (11)"
-      },
-      {
-        "id": "1774884959036",
-        "url": "https://tournaments.tennis.com.au/player-profile/9369488B-34D9-4DA1-91F9-487A7D12A317",
-        "name": "Dylan Du",
-        "rank": "-",
-        "points": "-",
-        "source": "TA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://tournaments.tennis.com.au/sport/tournament?id=7F5EC442-2261-4AF6-A664-E114FAD1BD23",
-            "tournamentName": "2026 O3k J125 Illawarra",
-            "tournamentDates": "17/04/202620/04/2026"
-          }
-        ],
-        "utrSingles": "2",
-        "winLossYTD": "3 / 18 (21)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-20T23:11:18.722Z",
-        "championships": "-",
-        "utrProfileUrl": "https://app.utrsports.net/profiles/5312278",
-        "winLossCareer": "3 / 18 (21)"
-      },
-      {
-        "id": "1775572465212",
-        "url": "https://tournaments.tennis.com.au/player-profile/AD36E999-E7FD-4445-97AC-2A3FE8D9F82A",
-        "name": "Ashril Nur Rizal",
-        "rank": "-",
-        "points": "-",
-        "source": "TA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://tournaments.tennis.com.au/sport/tournament?id=968BB816-8AF8-4A7F-831C-EE32DC341278",
-            "tournamentName": "2026 O3k J125 Newcastle Autumn Open and Junior",
-            "tournamentDates": "11/04/202613/04/20261h 04m30m1h 02m"
-          }
-        ],
-        "utrSingles": "-",
-        "winLossYTD": "19 / 1 (20)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-20T23:11:18.722Z",
-        "championships": "2026: 4\n2025: 3",
-        "utrProfileUrl": "https://app.utrsports.net/profiles/5887548",
-        "winLossCareer": "58 / 48 (106)"
-      }
-    ],
-    "timestamp": "2026-04-20T23:17:16.149Z",
-    "hktaPlayers": [
-      {
-        "id": "1774830588509",
-        "url": "https://hkta.tournamentsoftware.com/player-profile/01F4186B-4381-4B0D-A682-D652B49238D6",
-        "name": "CHIU Jordan Chung Shing",
-        "rank": "429",
-        "points": "2.53",
-        "source": "HKTA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://hkta.tournamentsoftware.com/sport/tournament?id=1B57DCC5-D851-4EEF-840A-5DEAF10B5799",
-            "tournamentName": "Bank of China Hong Kong National Tennis Championships 2026",
-            "tournamentDates": "14/3/202610/5/2026"
-          }
-        ],
-        "utrSingles": "-",
-        "winLossYTD": "0 / 0 (0)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-20T23:11:18.722Z",
-        "championships": "2025: 1\n2024: 1",
-        "winLossCareer": "30 / 25 (55)"
-      },
-      {
-        "id": "1774852753599",
-        "url": "https://hkta.tournamentsoftware.com/player-profile/37E374FE-7CA6-4044-AC85-C83E39A8254E",
-        "name": "YANG Noah",
-        "rank": "174",
-        "points": "48.82",
-        "source": "HKTA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://hkta.tournamentsoftware.com/sport/tournament?id=7C5ADF25-C5D5-4198-B869-E96C476A17EA",
-            "tournamentName": "Nissin HK National Jr Tennis Championships 2026 (Victoria Park)",
-            "tournamentDates": "24/1/202615/3/20261h 37m"
-          }
-        ],
-        "utrSingles": "35.9",
-        "winLossYTD": "0 / 1 (1)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-20T23:11:18.722Z",
-        "championships": "2025: 1\n2024: 1\n2023: 6\n2021: 1",
-        "winLossCareer": "46 / 20 (66)"
-      },
-      {
-        "id": "1774852774843",
-        "url": "https://hkta.tournamentsoftware.com/player-profile/69E6718B-0DE2-4CEC-939F-3BBAAA892DD3",
-        "name": "HONG Wing Ho",
-        "rank": "190",
-        "points": "44.50",
-        "source": "HKTA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://hkta.tournamentsoftware.com/sport/tournament?id=CFBF07A3-D8D3-4BCE-8AC0-FD962A7D3D9E",
-            "tournamentName": "Nissin Demae Iccho HK Jr. Novice 2026 C2_JRP",
-            "tournamentDates": "11/4/202626/4/202618m21m53m45m1h 25m"
-          }
-        ],
-        "utrSingles": "32.6",
-        "winLossYTD": "17 / 3 (20)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-20T23:11:18.722Z",
-        "championships": "2026: 2\n2025: 2\n2024: 4\n2023: 4\n2022: 1",
-        "winLossCareer": "111 / 40 (151)"
-      },
-      {
-        "id": "1774852786167",
-        "url": "https://hkta.tournamentsoftware.com/player-profile/C5970211-DAEB-441A-AF27-2E19D25C6CF5",
-        "name": "PANG Tsz Yui Iden",
-        "rank": "198",
-        "points": "43.34",
-        "source": "HKTA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://hkta.tournamentsoftware.com/sport/tournament?id=7C5ADF25-C5D5-4198-B869-E96C476A17EA",
-            "tournamentName": "Nissin HK National Jr Tennis Championships 2026 (Victoria Park)",
-            "tournamentDates": "24/1/202615/3/202639m43m48m2h 26m43m1h 45m"
-          }
-        ],
-        "utrSingles": "31.5",
-        "winLossYTD": "10 / 1 (11)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-20T23:11:18.722Z",
-        "championships": "2026: 2\n2025: 4\n2024: 2\n2023: 5\n2022: 3",
-        "winLossCareer": "119 / 51 (170)"
-      },
-      {
-        "id": "1774852795513",
-        "url": "https://hkta.tournamentsoftware.com/player-profile/E8F3B23E-2F78-4519-B36A-202F53E5F01A",
-        "name": "CHAN Pak Hei Isaac",
-        "rank": "255",
-        "points": "20.81",
-        "source": "HKTA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://hkta.tournamentsoftware.com/sport/tournament?id=906DC78B-46EC-475F-B404-91E98FDE2144",
-            "tournamentName": "Nissin Demae Iccho HK Jr. Novice 2026 C2_YWR",
-            "tournamentDates": "11/4/202626/4/202625m30m"
-          }
-        ],
-        "utrSingles": "31.7",
-        "winLossYTD": "14 / 3 (17)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-20T23:11:18.722Z",
-        "championships": "2026: 1\n2025: 3\n2024: 1\n2023: 1",
-        "winLossCareer": "68 / 27 (95)"
-      },
-      {
-        "id": "1774852805772",
-        "url": "https://hkta.tournamentsoftware.com/player-profile/352788E6-11CF-4F3A-92EC-AC27C0445BA0",
-        "name": "CHEUNG Arick Ka Wai",
-        "rank": "260",
-        "points": "18.98",
-        "source": "HKTA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://hkta.tournamentsoftware.com/sport/tournament?id=906DC78B-46EC-475F-B404-91E98FDE2144",
-            "tournamentName": "Nissin Demae Iccho HK Jr. Novice 2026 C2_YWR",
-            "tournamentDates": "11/4/202626/4/202638m1h 06m"
-          }
-        ],
-        "utrSingles": "32.6",
-        "winLossYTD": "28 / 5 (33)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-20T23:11:18.722Z",
-        "championships": "2026: 1\n2025: 1\n2023: 1",
-        "winLossCareer": "66 / 46 (112)"
-      },
-      {
-        "id": "1774852817154",
-        "url": "https://hkta.tournamentsoftware.com/player-profile/92BAA1EC-1ADC-4716-9B22-D1261105E04B",
-        "name": "KAN Ethan Yin Lok",
-        "rank": "268",
-        "points": "17.32",
-        "source": "HKTA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://hkta.tournamentsoftware.com/sport/tournament?id=CFBF07A3-D8D3-4BCE-8AC0-FD962A7D3D9E",
-            "tournamentName": "Nissin Demae Iccho HK Jr. Novice 2026 C2_JRP",
-            "tournamentDates": "11/4/202626/4/202620m23m45m45m"
-          }
-        ],
-        "utrSingles": "33.2",
-        "winLossYTD": "16 / 9 (25)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-20T23:11:18.722Z",
-        "championships": "2026: 1\n2025: 2",
-        "winLossCareer": "50 / 24 (74)"
-      },
-      {
-        "id": "1774852827260",
-        "url": "https://hkta.tournamentsoftware.com/player-profile/4DBF1092-68D4-4EBF-8B82-8776AB07E902",
-        "name": "WONG Man Fung",
-        "rank": "347",
-        "points": "7.64",
-        "source": "HKTA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://hkta.tournamentsoftware.com/sport/tournament?id=E82153FE-2A33-4E9F-A65F-64FFBA70F62C",
-            "tournamentName": "Nissin Demae Iccho HK Jr. Novice 2026 C2_HKTC",
-            "tournamentDates": "11/4/202626/4/202633m59m1h 53m"
-          }
-        ],
-        "utrSingles": "34.2",
-        "winLossYTD": "8 / 5 (13)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-20T23:11:18.722Z",
-        "championships": "2025: 1\n2024: 1\n2023: 3",
-        "winLossCareer": "62 / 53 (115)"
-      },
-      {
-        "id": "1774852838206",
-        "url": "https://hkta.tournamentsoftware.com/player-profile/99AE6E3F-E23B-4E33-8CE8-2B24E2D71CA8",
-        "name": "LIU Zipei",
-        "rank": "383",
-        "points": "5.35",
-        "source": "HKTA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://hkta.tournamentsoftware.com/sport/tournament?id=7C5ADF25-C5D5-4198-B869-E96C476A17EA",
-            "tournamentName": "Nissin HK National Jr Tennis Championships 2026 (Victoria Park)",
-            "tournamentDates": "24/1/202615/3/20261h 50m"
-          }
-        ],
-        "utrSingles": "35.0",
-        "winLossYTD": "0 / 1 (1)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-20T23:11:18.722Z",
-        "championships": "2025: 1\n2024: 1",
-        "winLossCareer": "27 / 12 (39)"
-      },
-      {
-        "id": "1774852848735",
-        "url": "https://hkta.tournamentsoftware.com/player-profile/2996953C-3B90-40B4-9780-9240FFEA0E5B",
-        "name": "LEUNG Carson",
-        "rank": "284",
-        "points": "15.00",
-        "source": "HKTA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://hkta.tournamentsoftware.com/sport/tournament?id=CFBF07A3-D8D3-4BCE-8AC0-FD962A7D3D9E",
-            "tournamentName": "Nissin Demae Iccho HK Jr. Novice 2026 C2_JRP",
-            "tournamentDates": "11/4/202626/4/202651m46m1h 02m1h 25m"
-          }
-        ],
-        "utrSingles": "33.1",
-        "winLossYTD": "12 / 5 (17)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-20T23:11:18.722Z",
-        "championships": "2026: 1\n2025: 3\n2024: 2",
-        "winLossCareer": "57 / 38 (95)"
-      },
-      {
-        "id": "1774852862609",
-        "url": "https://hkta.tournamentsoftware.com/player-profile/7CB8FC98-CB75-46F3-912C-9A4D8FC2C3BB",
-        "name": "LIU Shu Rui Jeremy",
-        "rank": "346",
-        "points": "7.93",
-        "source": "HKTA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://hkta.tournamentsoftware.com/sport/tournament?id=906DC78B-46EC-475F-B404-91E98FDE2144",
-            "tournamentName": "Nissin Demae Iccho HK Jr. Novice 2026 C2_YWR",
-            "tournamentDates": "11/4/202626/4/202623m1h 17m"
-          }
-        ],
-        "utrSingles": "33.0",
-        "winLossYTD": "10 / 4 (14)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-20T23:11:18.722Z",
-        "championships": "2026: 1\n2025: 2\n2024: 1\n2023: 1",
-        "winLossCareer": "59 / 37 (96)"
-      },
-      {
-        "id": "1774852878775",
-        "url": "https://hkta.tournamentsoftware.com/player-profile/7B90C216-DA2D-4971-B078-FD250259A71D",
-        "name": "CHAN Chun Yin Jayden",
-        "rank": "355",
-        "points": "6.62",
-        "source": "HKTA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://hkta.tournamentsoftware.com/sport/tournament?id=CFBF07A3-D8D3-4BCE-8AC0-FD962A7D3D9E",
-            "tournamentName": "Nissin Demae Iccho HK Jr. Novice 2026 C2_JRP",
-            "tournamentDates": "11/4/202626/4/202646m20m53m"
-          }
-        ],
-        "utrSingles": "33.5",
-        "winLossYTD": "8 / 5 (13)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-20T23:11:18.722Z",
-        "championships": "2025: 2\n2024: 2",
-        "winLossCareer": "49 / 32 (81)"
-      },
-      {
-        "id": "1774852893136",
-        "url": "https://hkta.tournamentsoftware.com/player-profile/0925605B-9A43-49DE-8A97-11EECEDCF4BF",
-        "name": "LEE Tsz Yuen",
-        "rank": "356",
-        "points": "6.38",
-        "source": "HKTA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://hkta.tournamentsoftware.com/sport/tournament?id=10158A46-28C7-4E2E-BC17-B336E8C4067C",
-            "tournamentName": "Nissin Demae Iccho HK Jr. Novice 2026 C1_TYP",
-            "tournamentDates": "14/3/202628/3/202627m25m42m46m"
-          }
-        ],
-        "utrSingles": "35.2",
-        "winLossYTD": "10 / 2 (12)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-20T23:11:18.722Z",
-        "championships": "2026: 1\n2025: 2\n2024: 2\n2023: 1",
-        "winLossCareer": "63 / 25 (88)"
-      },
-      {
-        "id": "1774852919609",
-        "url": "https://hkta.tournamentsoftware.com/player-profile/AEAAEC5B-4D86-4215-BD01-7FCF1D65D482",
-        "name": "LI Youning",
-        "rank": "289",
-        "points": "13.06",
-        "source": "HKTA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://hkta.tournamentsoftware.com/sport/tournament?id=E82153FE-2A33-4E9F-A65F-64FFBA70F62C",
-            "tournamentName": "Nissin Demae Iccho HK Jr. Novice 2026 C2_HKTC",
-            "tournamentDates": "11/4/202626/4/202620m30m53m51m"
-          }
-        ],
-        "utrSingles": "34.3",
-        "winLossYTD": "8 / 4 (12)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-20T23:11:18.722Z",
-        "championships": "2025: 2\n2024: 1\n2023: 2",
-        "winLossCareer": "40 / 19 (59)"
-      },
-      {
-        "id": "1774852934673",
-        "url": "https://hkta.tournamentsoftware.com/player-profile/33CA5677-63DE-4D3E-8CB9-9FE5C48717DC",
-        "name": "ADVANI Joshua",
-        "rank": "351",
-        "points": "7.34",
-        "source": "HKTA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://hkta.tournamentsoftware.com/sport/tournament?id=E82153FE-2A33-4E9F-A65F-64FFBA70F62C",
-            "tournamentName": "Nissin Demae Iccho HK Jr. Novice 2026 C2_HKTC",
-            "tournamentDates": "11/4/202626/4/202635m38m1h 36m52m"
-          }
-        ],
-        "utrSingles": "33.8",
-        "winLossYTD": "13 / 6 (19)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-20T23:11:18.722Z",
-        "championships": "2025: 2",
-        "winLossCareer": "31 / 19 (50)"
-      },
-      {
-        "id": "1774852955419",
-        "url": "https://hkta.tournamentsoftware.com/player-profile/D1B562B5-5F1C-478A-B759-7EB3601DD0B0",
-        "name": "CHAN Larry Long Wai",
-        "rank": "404",
-        "points": "3.68",
-        "source": "HKTA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://hkta.tournamentsoftware.com/sport/tournament?id=E82153FE-2A33-4E9F-A65F-64FFBA70F62C",
-            "tournamentName": "Nissin Demae Iccho HK Jr. Novice 2026 C2_HKTC",
-            "tournamentDates": "11/4/202626/4/202630m46m33m44m"
-          }
-        ],
-        "utrSingles": "-",
-        "winLossYTD": "6 / 2 (8)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-20T23:11:18.722Z",
-        "championships": "2025: 1\n2024: 2\n2023: 1",
-        "winLossCareer": "49 / 20 (69)"
-      },
-      {
-        "id": "1774852976537",
-        "url": "https://hkta.tournamentsoftware.com/player-profile/C4D2E37C-7912-496E-AAEB-446E4A702366",
-        "name": "ZHANG Xing Cheng London",
-        "rank": "390",
-        "points": "4.71",
-        "source": "HKTA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://hkta.tournamentsoftware.com/sport/tournament?id=CFBF07A3-D8D3-4BCE-8AC0-FD962A7D3D9E",
-            "tournamentName": "Nissin Demae Iccho HK Jr. Novice 2026 C2_JRP",
-            "tournamentDates": "11/4/202626/4/202617m22m"
-          }
-        ],
-        "utrSingles": "33.8",
-        "winLossYTD": "6 / 3 (9)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-20T23:11:18.722Z",
-        "championships": "2025: 1\n2024: 1",
-        "winLossCareer": "25 / 12 (37)"
-      },
-      {
-        "id": "1774853003506",
-        "url": "https://hkta.tournamentsoftware.com/player-profile/E5646E5D-27EA-413A-9C71-78B484D3137B",
-        "name": "CHAUVET Joahny",
-        "rank": "333",
-        "points": "10.03",
-        "source": "HKTA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://hkta.tournamentsoftware.com/sport/tournament?id=E82153FE-2A33-4E9F-A65F-64FFBA70F62C",
-            "tournamentName": "Nissin Demae Iccho HK Jr. Novice 2026 C2_HKTC",
-            "tournamentDates": "11/4/202626/4/202638m59m"
-          }
-        ],
-        "utrSingles": "33.9",
-        "winLossYTD": "8 / 5 (13)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-20T23:11:18.722Z",
-        "championships": "-",
-        "winLossCareer": "23 / 21 (44)"
-      },
-      {
-        "id": "1774853025060",
-        "url": "https://hkta.tournamentsoftware.com/player-profile/495FA938-B485-408E-AC29-682E6F87A538",
-        "name": "LI Terrence",
-        "rank": "371",
-        "points": "5.97",
-        "source": "HKTA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://hkta.tournamentsoftware.com/sport/tournament?id=906DC78B-46EC-475F-B404-91E98FDE2144",
-            "tournamentName": "Nissin Demae Iccho HK Jr. Novice 2026 C2_YWR",
-            "tournamentDates": "11/4/202626/4/202630m30m"
-          }
-        ],
-        "utrSingles": "34.9",
-        "winLossYTD": "6 / 5 (11)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-20T23:11:18.722Z",
-        "championships": "2024: 3",
-        "winLossCareer": "31 / 25 (56)"
-      },
-      {
-        "id": "1774853048005",
-        "url": "https://hkta.tournamentsoftware.com/player-profile/7F8281DC-7FB7-4EAE-90BE-1E17684D586D",
-        "name": "NG Sheung Yin",
-        "rank": "389",
-        "points": "4.77",
-        "source": "HKTA",
-        "matches": [
-          {
-            "drawLink": "",
-            "drawName": "Singles",
-            "tournamentLink": "https://hkta.tournamentsoftware.com/sport/tournament?id=191EA7DA-DA5D-4803-8581-8F22061EDD70",
-            "tournamentName": "Nissin Demae Iccho HK Jr. Novice 2026 C1_HKTC",
-            "tournamentDates": "14/3/202629/3/202654m22m"
-          }
-        ],
-        "utrSingles": "33.9",
-        "winLossYTD": "2 / 2 (4)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-20T23:11:18.722Z",
-        "championships": "2025: 2",
-        "winLossCareer": "25 / 22 (47)"
-      }
-    ]
-  },
-  {
-    "date": "2026-04-19",
-    "taPlayers": [
-      {
-        "id": "1774838840325",
-        "url": "https://tournaments.tennis.com.au/player-profile/26B6F59E-714F-4852-9D3E-5022A7EBEC99",
-        "name": "Andy (Yuhao) Liu",
-        "rank": "15",
-        "points": "24.00",
-        "source": "TA",
-        "utrSingles": "5.5",
-        "winLossYTD": "16 / 8 (24)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-19T23:52:09.741Z",
-        "championships": "2026: 2\n2025: 3\n2024: 2",
-        "utrProfileUrl": "https://app.utrsports.net/profiles/4398152",
-        "winLossCareer": "57 / 31 (88)"
-      },
-      {
-        "id": "1774838616457",
-        "url": "https://tournaments.tennis.com.au/player-profile/30BB29AE-08E1-4684-8333-74E1FE9D8D81",
-        "name": "Gavrilo Novkovic",
-        "rank": "15",
-        "points": "18.00",
-        "source": "TA",
-        "utrSingles": "4.5",
-        "winLossYTD": "18 / 7 (25)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-19T23:52:09.741Z",
-        "championships": "2026: 2\n2025: 5\n2024: 4",
-        "utrProfileUrl": "https://app.utrsports.net/profiles/4152698",
-        "winLossCareer": "118 / 61 (179)"
-      },
-      {
-        "id": "1774852422814",
-        "url": "https://tournaments.tennis.com.au/player-profile/AC4465CE-7AC0-40BA-9E1D-C5A5763C8109",
-        "name": "Henry Wen",
-        "rank": "15",
-        "points": "1.00",
-        "source": "TA",
-        "utrSingles": "4.4",
-        "winLossYTD": "13 / 9 (22)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-19T23:52:09.741Z",
-        "championships": "2026: 1\n2025: 1\n2024: 2",
-        "utrProfileUrl": "https://app.utrsports.net/profiles/5780235",
-        "winLossCareer": "45 / 63 (108)"
-      },
-      {
-        "id": "1774855004722",
-        "url": "https://tournaments.tennis.com.au/player-profile/8443627D-BFF7-4DF1-A5AC-137C4996E788",
-        "name": "Sam Ritchie",
-        "rank": "15",
-        "points": "26.00",
-        "source": "TA",
-        "utrSingles": "4.3",
-        "winLossYTD": "26 / 13 (39)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-19T23:52:09.741Z",
-        "championships": "2026: 6\n2025: 10\n2024: 8",
-        "utrProfileUrl": "https://app.utrsports.net/profiles/5121633",
-        "winLossCareer": "163 / 77 (240)"
-      },
-      {
-        "id": "1774854812309",
-        "url": "https://tournaments.tennis.com.au/player-profile/FBE8CE05-98F9-449A-B402-FB076AD50A80",
-        "name": "Zakariyya Rogers",
-        "rank": "15",
-        "points": "95.00",
-        "source": "TA",
-        "utrSingles": "4",
-        "winLossYTD": "20 / 18 (38)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-19T23:52:09.741Z",
-        "championships": "2026: 1\n2025: 6\n2024: 2",
-        "utrProfileUrl": "https://app.utrsports.net/profiles/5761942",
-        "winLossCareer": "98 / 99 (197)"
-      },
-      {
-        "id": "1774830531032",
-        "url": "https://tournaments.tennis.com.au/player-profile/D8C9AB7B-18A8-4631-B8DE-4EDBF1D543A1",
-        "name": "Jordan Chiu",
-        "rank": "-",
-        "points": "-",
-        "source": "TA",
-        "utrSingles": "3",
-        "winLossYTD": "27 / 9 (36)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-19T23:52:09.741Z",
-        "championships": "2026: 2\n2025: 6\n2024: 1",
-        "utrProfileUrl": "https://app.utrsports.net/profiles/5711293",
-        "winLossCareer": "83 / 28 (111)"
-      },
-      {
-        "id": "1774852489789",
-        "url": "https://tournaments.tennis.com.au/player-profile/4625D532-A92D-4155-B515-7AF811D329B6",
-        "name": "Aiden Guo",
-        "rank": "-",
-        "points": "-",
-        "source": "TA",
-        "utrSingles": "3.9",
-        "winLossYTD": "11 / 11 (22)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-19T23:52:09.741Z",
-        "championships": "2026: 1\n2025: 3",
-        "utrProfileUrl": "https://app.utrsports.net/profiles/4569536",
-        "winLossCareer": "37 / 30 (67)"
-      },
-      {
-        "id": "1774852503277",
-        "url": "https://tournaments.tennis.com.au/player-profile/806F94D7-D656-47C7-A99F-321576CC8980",
-        "name": "Henry Wang",
-        "rank": "-",
-        "points": "-",
-        "source": "TA",
-        "utrSingles": "3.8",
-        "winLossYTD": "9 / 1 (10)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-19T23:52:09.741Z",
-        "championships": "2026: 1\n2025: 1",
-        "utrProfileUrl": "https://app.utrsports.net/profiles/4895377",
-        "winLossCareer": "49 / 35 (84)"
-      },
-      {
-        "id": "1774853909506",
-        "url": "https://tournaments.tennis.com.au/player-profile/F15291C1-B67A-4EAE-9448-DD6E5BF75953",
-        "name": "Joshua Feng",
-        "rank": "-",
-        "points": "-",
-        "source": "TA",
-        "utrSingles": "3.5",
-        "winLossYTD": "7 / 6 (13)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-19T23:52:09.741Z",
-        "championships": "2025: 3\n2024: 4",
-        "utrProfileUrl": "https://app.utrsports.net/profiles/4414584",
-        "winLossCareer": "83 / 46 (129)"
-      },
-      {
-        "id": "1774852523592",
-        "url": "https://tournaments.tennis.com.au/player-profile/6657D415-DE03-4B14-B6FB-EB2223C71A0A",
-        "name": "Daniel Graovac",
-        "rank": "-",
-        "points": "-",
-        "source": "TA",
-        "utrSingles": "3.5",
-        "winLossYTD": "9 / 3 (12)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-19T23:52:09.741Z",
-        "championships": "2026: 1\n2024: 1",
-        "utrProfileUrl": "https://app.utrsports.net/profiles/3630454",
-        "winLossCareer": "26 / 30 (56)"
-      },
-      {
-        "id": "1774852531343",
-        "url": "https://tournaments.tennis.com.au/player-profile/1D203E27-3EE6-4F02-A3B1-421A308AD58F",
-        "name": "Beau Tindall",
-        "rank": "-",
-        "points": "-",
-        "source": "TA",
-        "utrSingles": "3",
-        "winLossYTD": "24 / 9 (33)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-19T23:52:09.741Z",
-        "championships": "2026: 2\n2025: 3\n2024: 1",
-        "utrProfileUrl": "https://app.utrsports.net/profiles/4585575",
-        "winLossCareer": "65 / 49 (114)"
-      },
-      {
-        "id": "1774852542593",
-        "url": "https://tournaments.tennis.com.au/player-profile/E2568F5E-726E-4EF3-A2C7-BC3435B2E04B",
-        "name": "Ryan Xu",
-        "rank": "15",
-        "points": "12.00",
-        "source": "TA",
-        "utrSingles": "3",
-        "winLossYTD": "12 / 12 (24)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-19T23:52:09.741Z",
-        "championships": "2025: 3\n2024: 1",
-        "utrProfileUrl": "https://app.utrsports.net/profiles/4355333",
-        "winLossCareer": "77 / 77 (154)"
-      },
-      {
-        "id": "1774852553484",
-        "url": "https://tournaments.tennis.com.au/player-profile/5B29E9F4-E77E-453E-B5E8-868A92A7A57C",
-        "name": "Bisam Chapagain",
-        "rank": "-",
-        "points": "-",
-        "source": "TA",
-        "utrSingles": "3",
-        "winLossYTD": "10 / 5 (15)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-19T23:52:09.741Z",
-        "championships": "2025: 4",
-        "utrProfileUrl": "https://app.utrsports.net/profiles/4772630",
-        "winLossCareer": "44 / 40 (84)"
-      },
-      {
-        "id": "1774852571511",
-        "url": "https://tournaments.tennis.com.au/player-profile/EE11357E-B2BA-486B-A896-CDF311D09F90",
-        "name": "Marko Petrovic",
-        "rank": "15",
-        "points": "1.00",
-        "source": "TA",
-        "utrSingles": "3",
-        "winLossYTD": "28 / 8 (36)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-19T23:52:09.741Z",
-        "championships": "2026: 1\n2025: 1",
-        "utrProfileUrl": "https://app.utrsports.net/profiles/4652591",
-        "winLossCareer": "42 / 29 (71)"
-      },
-      {
-        "id": "1774852586564",
-        "url": "https://tournaments.tennis.com.au/player-profile/1E57D0C2-F508-44E3-8351-E14191D59BA3",
-        "name": "Aengus Delaney",
-        "rank": "15",
-        "points": "24.00",
-        "source": "TA",
-        "utrSingles": "3",
-        "winLossYTD": "24 / 10 (34)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-19T23:52:09.741Z",
-        "championships": "2026: 2\n2025: 1",
-        "utrProfileUrl": "https://app.utrsports.net/profiles/4542643",
-        "winLossCareer": "58 / 70 (128)"
-      },
-      {
-        "id": "1774852594184",
-        "url": "https://tournaments.tennis.com.au/player-profile/00948A3B-A264-417B-9CF4-18FAEAE5915D",
-        "name": "Edwin Huxue",
-        "rank": "-",
-        "points": "-",
-        "source": "TA",
-        "utrSingles": "3",
-        "winLossYTD": "18 / 10 (28)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-19T23:52:09.741Z",
-        "championships": "2025: 3",
-        "utrProfileUrl": "https://app.utrsports.net/profiles/4804237",
-        "winLossCareer": "51 / 27 (78)"
-      },
-      {
-        "id": "1774852604537",
-        "url": "https://tournaments.tennis.com.au/player-profile/98C08E25-D3E6-440F-BAD4-78332D7671F1",
-        "name": "Andreas Mortel",
-        "rank": "15",
-        "points": "30.00",
-        "source": "TA",
-        "utrSingles": "3.4",
-        "winLossYTD": "30 / 27 (57)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-19T23:52:09.741Z",
-        "championships": "2026: 3\n2025: 8",
-        "utrProfileUrl": "https://app.utrsports.net/profiles/4097505",
-        "winLossCareer": "92 / 128 (220)"
-      },
-      {
-        "id": "1774854770264",
-        "url": "https://tournaments.tennis.com.au/player-profile/F64661E0-4EDB-4CE3-922F-7B8835695268",
-        "name": "Artemy Tenyaev",
-        "rank": "15",
-        "points": "14.00",
-        "source": "TA",
-        "utrSingles": "3.5",
-        "winLossYTD": "40 / 17 (57)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-19T23:52:09.741Z",
-        "championships": "2026: 4\n2025: 5",
-        "utrProfileUrl": "https://app.utrsports.net/profiles/5782455",
-        "winLossCareer": "91 / 60 (151)"
-      },
-      {
-        "id": "1774852617767",
-        "url": "https://tournaments.tennis.com.au/player-profile/3E97A937-D8DD-4DAD-99D3-3758C164F52C",
-        "name": "Felix Protsenko",
-        "rank": "-",
-        "points": "-",
-        "source": "TA",
-        "utrSingles": "2.5",
-        "winLossYTD": "8 / 1 (9)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-19T23:52:09.741Z",
-        "championships": "-",
-        "utrProfileUrl": "https://app.utrsports.net/profiles/4562527",
-        "winLossCareer": "20 / 19 (39)"
-      },
-      {
-        "id": "1774854726185",
-        "url": "https://tournaments.tennis.com.au/player-profile/D4C5B547-8491-4644-B12C-1E682BECE34C",
-        "name": "Owen Li",
-        "rank": "-",
-        "points": "-",
-        "source": "TA",
-        "utrSingles": "3",
-        "winLossYTD": "7 / 4 (11)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-19T23:52:09.741Z",
-        "championships": "-",
-        "utrProfileUrl": "https://app.utrsports.net/profiles/5274822",
-        "winLossCareer": "19 / 9 (28)"
-      },
-      {
-        "id": "1774852625855",
-        "url": "https://tournaments.tennis.com.au/player-profile/7C2D7BDE-3D6D-4EEF-9379-373A6D27F925",
-        "name": "Theo Stathis",
-        "rank": "15",
-        "points": "20.00",
-        "source": "TA",
-        "utrSingles": "2",
-        "winLossYTD": "5 / 9 (14)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-19T23:52:09.741Z",
-        "championships": "2025: 1",
-        "utrProfileUrl": "https://app.utrsports.net/profiles/4559985",
-        "winLossCareer": "28 / 27 (55)"
-      },
-      {
-        "id": "1774852634620",
-        "url": "https://tournaments.tennis.com.au/player-profile/19A26C4A-17EF-4259-976F-F04D375D3853",
-        "name": "Zachary Yen",
-        "rank": "15",
-        "points": "2.00",
-        "source": "TA",
-        "utrSingles": "2.6",
-        "winLossYTD": "12 / 16 (28)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-19T23:52:09.741Z",
-        "championships": "2025: 2",
-        "utrProfileUrl": "https://app.utrsports.net/profiles/3665316",
-        "winLossCareer": "26 / 41 (67)"
-      },
-      {
-        "id": "1774852645556",
-        "url": "https://tournaments.tennis.com.au/player-profile/3637049C-1E32-4E77-8756-5AA79D321995",
-        "name": "James Soetedja",
-        "rank": "-",
-        "points": "-",
-        "source": "TA",
-        "utrSingles": "2",
-        "winLossYTD": "16 / 5 (21)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-19T23:52:09.741Z",
-        "championships": "2026: 4\n2024: 1",
-        "utrProfileUrl": "https://app.utrsports.net/profiles/4236751",
-        "winLossCareer": "46 / 31 (77)"
-      },
-      {
-        "id": "1774852654757",
-        "url": "https://tournaments.tennis.com.au/player-profile/3D864E40-E0C1-4B23-89AD-3AFB63B97B2E",
-        "name": "Steven Saychenko",
-        "rank": "15",
-        "points": "15.00",
-        "source": "TA",
-        "utrSingles": "2.0",
-        "winLossYTD": "13 / 12 (25)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-19T23:52:09.741Z",
-        "championships": "2025: 1",
-        "utrProfileUrl": "https://app.utrsports.net/profiles/5385738",
-        "winLossCareer": "31 / 38 (69)"
-      },
-      {
-        "id": "1774854827035",
-        "url": "https://tournaments.tennis.com.au/player-profile/48D73322-95A1-4609-88E1-4654D99A29BC",
-        "name": "Garrett Wang",
-        "rank": "-",
-        "points": "-",
-        "source": "TA",
-        "utrSingles": "2",
-        "winLossYTD": "10 / 11 (21)",
-        "wtnSingles": ".",
-        "lastUpdated": "2026-04-19T23:52:09.741Z",
-        "champion
+        "url": "https://hkta.tournamentsoftware.com/player-profile/4DBF1092-68D4-4EBF-8

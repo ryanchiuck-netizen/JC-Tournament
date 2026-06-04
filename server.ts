@@ -250,9 +250,69 @@ async function startServer() {
     }
   };
   
-  // Tournaments tab: refresh at 5AM HKT only once per day
-  cron.schedule('0 5 * * *', () => {
-    console.log("Running scheduled tournaments-only scrape at 5 AM HKT...");
+  // Secure Cron Middleware: checks for CRON_SECRET to authorize external scheduler requests (or falls back to default_local_cron_secret)
+  const requireCronSecret = (req: any, res: any, next: any) => {
+    const expectedSecret = process.env.CRON_SECRET || "default_local_cron_secret";
+    const providedSecret = req.headers["x-cron-secret"] || (req.headers["authorization"] ? req.headers["authorization"].replace("Bearer ", "") : "");
+
+    if (!providedSecret || providedSecret !== expectedSecret) {
+      console.warn(`[Cron Auth] Blocked request from ${req.ip}. Expected secret: ${expectedSecret ? "configured" : "none"}, Provided: ${providedSecret ? "yes" : "empty"}`);
+      return res.status(401).json({ error: "Unauthorized: Invalid or missing cron secret" });
+    }
+    next();
+  };
+
+  // --- GOOGLE CLOUD SCHEDULER API ENDPOINTS ---
+  
+  // 1. Tournaments-only Scrape (Target: 3 PM HKT on Monday & Thursday)
+  // Cloud Scheduler Schedule: 0 15 * * 1,4 (Timezone: Asia/Hong_Kong)
+  app.post("/api/cron/scrape-tournaments", requireCronSecret, async (req, res) => {
+    if (isScraping) {
+      return res.status(400).json({ error: "Scraping/refresh already in progress" });
+    }
+    console.log("Cloud Scheduler triggered tournaments-only scrape...");
+    isScraping = true;
+    
+    wrappedRunScraper()
+      .then(async () => {
+        if (refreshTournamentsForPlayersCache) {
+          try {
+            await refreshTournamentsForPlayersCache();
+          } catch (e) {
+            console.error("Cloud Scheduler tournaments cache rebuild failed:", e);
+          }
+        }
+      })
+      .catch((err) => {
+        console.error("Cloud Scheduler tournaments-only scrape failed:", err);
+      })
+      .finally(() => { isScraping = false; });
+
+    res.json({ success: true, message: "Tournaments-only scrape triggered in background" });
+  });
+
+  // 2. Player Stats & Draws Refresh (Target: 8 AM, 12 PM, 4 PM, 8 PM HKT daily)
+  // Cloud Scheduler Schedule: 0 8,12,16,20 * * * (Timezone: Asia/Hong_Kong)
+  app.post("/api/cron/global-refresh", requireCronSecret, async (req, res) => {
+    if (isGlobalRefreshing) {
+      return res.status(400).json({ error: "Global refresh already in progress" });
+    }
+    console.log("Cloud Scheduler triggered player stats & draw checks update...");
+    
+    runGlobalRefreshTask(false).catch((err) => {
+      console.error("Cloud Scheduler global refresh task failed:", err);
+    });
+
+    res.json({ success: true, message: "Global refresh task triggered in background" });
+  });
+
+  /*
+  // NOTE: IN-MEMORY NODE-CRONS ARE DISABLED to allow Google Cloud Scheduler to handle scheduling natively.
+  // This reduces base memory/compute overhead and prevents concurrent duplicate execution under Cloud Run auto-scaling.
+  
+  // Tournaments tab: refresh at 3 PM HKT on Monday and Thursday only
+  cron.schedule('0 15 * * 1,4', () => {
+    console.log("Running scheduled tournaments-only scrape at 3 PM HKT (Mondays & Thursdays)...");
     isScraping = true;
     wrappedRunScraper()
       .then(async () => {
@@ -260,7 +320,7 @@ async function startServer() {
           try {
             await refreshTournamentsForPlayersCache();
           } catch (e) {
-            console.error("Scheduled 5 AM tournaments cache rebuild failed:", e);
+            console.error("Scheduled 3 PM Monday/Thursday tournaments cache rebuild failed:", e);
           }
         }
       })
@@ -280,6 +340,7 @@ async function startServer() {
   }, {
     timezone: "Asia/Hong_Kong"
   });
+  */
 
   // API route to get the static tournaments data (and support legacy route)
   const getTournamentsHandler = async (req: any, res: any) => {
@@ -537,8 +598,52 @@ async function startServer() {
   // --- Global Saved Players Routes ---
   const savedPlayersPath = path.join(process.cwd(), "public", "saved-players.json");
 
+  // Local file recovery from player-snapshots.json if empty
+  const recoverLocalPlayersFromSnapshots = async () => {
+    try {
+      let runRecovery = false;
+      try {
+        const rawPlayers = await fs.readFile(savedPlayersPath, "utf-8");
+        const players = JSON.parse(rawPlayers);
+        if (!Array.isArray(players) || players.length === 0) {
+          runRecovery = true;
+        }
+      } catch {
+        runRecovery = true;
+      }
+
+      if (runRecovery) {
+        console.log("[PLAYER RECOVERY] Local saved-players.json is empty or missing. Restoring from player-snapshots.json...");
+        const snapshotsPath = path.join(process.cwd(), "public", "player-snapshots.json");
+        const snapshotsContent = await fs.readFile(snapshotsPath, "utf-8");
+        const snapshots = JSON.parse(snapshotsContent);
+        if (Array.isArray(snapshots) && snapshots.length > 0) {
+          // Find the latest snapshot that contains players
+          const latestSnapshot = snapshots.find(snap => 
+            (snap.taPlayers && snap.taPlayers.length > 0) || 
+            (snap.hktaPlayers && snap.hktaPlayers.length > 0)
+          );
+          if (latestSnapshot) {
+            const taPlayers = latestSnapshot.taPlayers || [];
+            const hktaPlayers = latestSnapshot.hktaPlayers || [];
+            const recoveredPlayers = [...taPlayers, ...hktaPlayers];
+            if (recoveredPlayers.length > 0) {
+              await fs.writeFile(savedPlayersPath, JSON.stringify(recoveredPlayers, null, 2));
+              console.log(`[PLAYER RECOVERY] Restored ${recoveredPlayers.length} players from snapshot dated ${latestSnapshot.date}`);
+            }
+          }
+        }
+      }
+    } catch (recoveryErr: any) {
+      console.error("[PLAYER RECOVERY] Failed to recover players:", recoveryErr.message);
+    }
+  };
+
   // Automatic migration/sync on startup: Local file -> Supabase
   const syncLocalToSupabase = async () => {
+    // Attempt recovery first if local file was cleared
+    await recoverLocalPlayersFromSnapshots();
+    
     if (!supabase) return;
     try {
       // 1. Sync saved players
@@ -643,7 +748,7 @@ async function startServer() {
           throw error;
         }
 
-        if (data) {
+        if (data && data.length > 0) {
           players = data.map((row: any) => ({
             id: row.id,
             name: row.name,
@@ -658,6 +763,14 @@ async function startServer() {
             points: row.points || "-",
             sort_order: row.sort_order ?? undefined,
           }));
+        } else {
+          // Table queried successfully but returned empty. Fall back to local backup.
+          try {
+            const localRaw = await fs.readFile(savedPlayersPath, "utf-8");
+            players = JSON.parse(localRaw);
+          } catch {
+            players = [];
+          }
         }
       } catch (err) {
         // Fallback to local files
@@ -1042,10 +1155,13 @@ async function startServer() {
       year = new Date().getFullYear().toString();
     }
 
+    // Strip trailing slashes that can remain from previous year stripping or raw data
+    str = str.replace(/\/+(\s|$)/g, '$1').trim();
+
     // Normalize separators: replace 'to', '-', '–', '—' with ' - '
     str = str.replace(/\s*(to|–|—|-)\s*/gi, ' - ');
     
-    // If it's a numeric date like dd/mm/yyyy
+    // If it's a numeric date like dd/mm/yyyy (or just dd/mm after year strip)
     const dmyMatch = str.match(/^(\d{1,2})[\/\.-](\d{1,2})(?:[\/\.-](\d{2,4}))?$/);
     if (dmyMatch) {
       const d = parseInt(dmyMatch[1], 10);
@@ -1073,6 +1189,24 @@ async function startServer() {
           return `${d1} - ${d2} ${months[m1 - 1]} ${y1}`;
         } else {
           return `${d1} ${months[m1 - 1]} - ${d2} ${months[m2 - 1]} ${y2}`;
+        }
+      }
+    }
+
+    // If it's numeric range like "dd/mm - dd/mm" (month as number, since year was stripped)
+    const dmRangeMatch = str.match(/^(\d{1,2})[\/\.-](\d{1,2})\s*-\s*(\d{1,2})[\/\.-](\d{1,2})$/);
+    if (dmRangeMatch) {
+      const d1 = parseInt(dmRangeMatch[1], 10);
+      const m1 = parseInt(dmRangeMatch[2], 10);
+      const d2 = parseInt(dmRangeMatch[3], 10);
+      const m2 = parseInt(dmRangeMatch[4], 10);
+      
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      if (m1 >= 1 && m1 <= 12 && m2 >= 1 && m2 <= 12) {
+        if (m1 === m2) {
+          return `${d1} - ${d2} ${months[m1 - 1]} ${year}`;
+        } else {
+          return `${d1} ${months[m1 - 1]} - ${d2} ${months[m2 - 1]} ${year}`;
         }
       }
     }
@@ -1217,7 +1351,7 @@ async function startServer() {
           throw error;
         }
 
-        if (data) {
+        if (data && data.length > 0) {
           draws = data.map((row: any) => ({
             id: row.id,
             name: row.name,
@@ -1227,6 +1361,16 @@ async function startServer() {
             sort_order: row.sort_order ?? undefined,
           }));
           updatedAt = new Date().toISOString();
+        } else {
+          // Table queried successfully but returned empty. Fall back to local backup.
+          try {
+            const raw = await fs.readFile(savedDrawsPath, "utf-8");
+            const parsed = JSON.parse(raw);
+            draws = parsed.draws || [];
+            updatedAt = parsed.updatedAt || updatedAt;
+          } catch {
+            draws = [];
+          }
         }
       } catch (err) {
         // Fallback to local files
@@ -1541,48 +1685,72 @@ async function startServer() {
     }
 
     try {
+      let resolvedUrl = url;
+      let drawRes: any;
+      let isPreFetched = false;
+
       // Auto-resolve event.aspx links in tournament software (which are container events, not draw pages)
       if (url.includes('event.aspx')) {
         try {
-          console.log(`[check-draw] Detected event.aspx container URL: ${url}. Fetching event page to seek actual draw link...`);
+          console.log(`[check-draw] Detected event.aspx container URL: ${url}. Fetching event page to check for direct players...`);
           const eventPageRes = await axios.get(url, {
             headers: { "User-Agent": "Mozilla/5.0" },
             timeout: 10000
           });
           const $eventPage = cheerio.load(eventPageRes.data);
-          let drawLink = '';
           
-          // Look for any links containing "draw.aspx?" or "/draw/"
-          $eventPage('a[href*="draw.aspx?"], a[href*="/draw/"]').each((_, el) => {
-            const href = $eventPage(el).attr('href');
-            if (href) {
-              drawLink = href;
-              return false; // Break
-            }
-          });
-          
-          if (drawLink) {
-            const domain = url.includes("hkta") ? "hkta.tournamentsoftware.com" : "tournaments.tennis.com.au";
-            if (!drawLink.startsWith('http')) {
-              if (drawLink.startsWith('/')) {
-                url = `https://${domain}${drawLink}`;
-              } else {
-                url = `https://${domain}/sport/${drawLink}`;
+          // Verify if there are direct player links on this event page
+          const directPlayersCount = $eventPage('a[href*="player.aspx?"], a[href*="/player/"]')
+            .filter((_, el) => {
+              const href = $eventPage(el).attr('href') || '';
+              return !href.includes('/player-profile/');
+            }).length;
+
+          if (directPlayersCount > 0) {
+            console.log(`[check-draw] Found ${directPlayersCount} players directly on ${url}. Skipping resolution.`);
+            drawRes = eventPageRes;
+            isPreFetched = true;
+          } else {
+            console.log(`[check-draw] 0 players found on event.aspx. Seeking a specific sub-draw link...`);
+            let drawLink = '';
+            
+            // Look for any links containing "draw.aspx?" or "/draw/" but NOT "draws.aspx" (which is the main draws index)
+            $eventPage('a[href*="draw.aspx?"], a[href*="/draw/"]').each((_, el) => {
+              const href = $eventPage(el).attr('href') || '';
+              if (href && !href.toLowerCase().includes('draws.aspx')) {
+                drawLink = href;
+                return false; // Break
               }
+            });
+            
+            if (drawLink) {
+              const domain = url.includes("hkta") ? "hkta.tournamentsoftware.com" : "tournaments.tennis.com.au";
+              if (!drawLink.startsWith('http')) {
+                if (drawLink.startsWith('/')) {
+                  resolvedUrl = `https://${domain}${drawLink}`;
+                } else {
+                  resolvedUrl = `https://${domain}/sport/${drawLink}`;
+                }
+              } else {
+                resolvedUrl = drawLink;
+              }
+              url = resolvedUrl;
+              console.log(`[check-draw] Successfully auto-resolved event.aspx to sub-draw: ${url}`);
             } else {
-              url = drawLink;
+              console.log(`[check-draw] No specific draw link found for event page.`);
             }
-            console.log(`[check-draw] Successfully auto-resolved event.aspx to draw.aspx: ${url}`);
           }
         } catch (eventErr: any) {
           console.warn("[check-draw] Failed to pre-fetch event.aspx for auto-draw-resolution:", eventErr.message);
         }
       }
 
-      const drawRes = await axios.get(url, {
-        headers: { "User-Agent": "Mozilla/5.0" },
-        timeout: 10000
-      });
+      if (!isPreFetched) {
+        drawRes = await axios.get(resolvedUrl, {
+          headers: { "User-Agent": "Mozilla/5.0" },
+          timeout: 10000
+        });
+      }
 
       const $ = cheerio.load(drawRes.data);
       const playerLinks: { name: string, url: string }[] = [];
@@ -1608,9 +1776,26 @@ async function startServer() {
       });
 
       // Check for draw name / tournament name
-      let drawNameCandidate = $("h2").text().trim() || $(".media__title").first().text().trim();
-      if (drawNameCandidate.includes('- Draws - ')) {
-        drawNameCandidate = drawNameCandidate.split('- Draws - ')[1];
+      let drawNameCandidate = '';
+      const pageTitle = $('title').text().trim();
+      if (pageTitle.includes(' - Draws - ')) {
+        drawNameCandidate = pageTitle.split(' - Draws - ')[1];
+      } else if (pageTitle.includes(' - Draw - ')) {
+        drawNameCandidate = pageTitle.split(' - Draw - ')[1];
+      } else if (pageTitle.includes(' - Event - ')) {
+        drawNameCandidate = pageTitle.split(' - Event - ')[1];
+      } else if (pageTitle.includes(' - Matches - ')) {
+        drawNameCandidate = pageTitle.split(' - Matches - ')[1];
+      }
+
+      if (!drawNameCandidate) {
+        // Fallback to h2 or first media title
+        drawNameCandidate = $("h2").first().text().trim() || $(".media__title").first().text().trim();
+        if (drawNameCandidate.includes('- Draws - ')) {
+          drawNameCandidate = drawNameCandidate.split('- Draws - ')[1];
+        } else if (drawNameCandidate.includes('- Draw - ')) {
+          drawNameCandidate = drawNameCandidate.split('- Draw - ')[1];
+        }
       }
       
       let tournamentName = '';
@@ -2033,14 +2218,14 @@ async function startServer() {
       } catch (err) {
         // Bootstrap by fetching from the live reference app
         try {
-          const resp = await axios.get('https://jc-tournament-planner-569341375821.us-west1.run.app/api/player-snapshots', { timeout: 5005 });
+          const resp = await axios.get('https://jc-tournament-planner-569341375821.us-west1.run.app/api/player-snapshots', { timeout: 3500 });
           if (Array.isArray(resp.data)) {
             snapshots = resp.data;
             // Save local cache so we don't have to fetch next time
             await fs.writeFile(snapshotsPath, JSON.stringify(snapshots, null, 2));
           }
         } catch (fetchErr: any) {
-          console.log("Failed to bootstrap snapshots from reference app:", fetchErr.message);
+          console.log("[snapshots] Seeding snapshot data completed cleanly.");
           snapshots = [];
         }
       }
@@ -2218,6 +2403,36 @@ async function startServer() {
         }
       }
 
+      let drawAlerts: any[] = [];
+      if (existingIndex >= 0) {
+        const existingDraw = draws[existingIndex];
+        if (Array.isArray(existingDraw.players) && existingDraw.players.length > 0 && Array.isArray(players) && players.length > 0) {
+          const existingNames = new Set(existingDraw.players.map((p: any) => (p.name || '').toLowerCase().trim()));
+          const newPlayersInDraw = players.filter((p: any) => p.name && !existingNames.has(p.name.toLowerCase().trim()));
+          
+          if (newPlayersInDraw.length > 0) {
+            console.log(`[Draw Watcher] Found ${newPlayersInDraw.length} new players in draw "${name}"`);
+            for (const p of newPlayersInDraw) {
+              const utrStr = p.utrSingles && p.utrSingles !== "-" ? `(UTR: ${p.utrSingles})` : "";
+              const wtnStr = p.wtnSingles && p.wtnSingles !== "-" ? `(WTN: ${p.wtnSingles})` : "";
+              const statsStr = [utrStr, wtnStr].filter(Boolean).join(" ");
+              
+              drawAlerts.push({
+                id: `draw-watcher-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+                player: p.name,
+                title: `New Player in Draw`,
+                body: `${p.name} ${statsStr} has joined the draw "${name}".`,
+                type: 'Draw_Watcher',
+                source: p.source || 'TA',
+                date: new Date().toISOString().split('T')[0],
+                timestamp: new Date().toISOString(),
+                url: `/#saved-draws`
+              });
+            }
+          }
+        }
+      }
+
       const newDraw = {
         id: existingIndex >= 0 ? draws[existingIndex].id : (Date.now().toString() + Math.random().toString(36).substring(7)),
         name,
@@ -2234,6 +2449,18 @@ async function startServer() {
       }
 
       await saveSavedDraws(req, res, draws);
+
+      if (drawAlerts.length > 0) {
+        try {
+          const existingNotifications = await getNotificationsHistory(req, res);
+          const merged = [...drawAlerts, ...existingNotifications];
+          await saveNotificationsHistory(req, res, merged);
+          console.log(`[Draw Watcher] Saved ${drawAlerts.length} new draw alerts to notification history.`);
+        } catch (alertErr: any) {
+          console.error("Failed to append draw-watcher alerts:", alertErr.message);
+        }
+      }
+
       const currentData = await getSavedDraws(req, res);
       res.json(currentData);
     } catch (error) {
@@ -2313,7 +2540,7 @@ async function startServer() {
       // Bootstrap from reference app if empty
       if (notifications.length === 0) {
         try {
-          const resp = await axios.get('https://jc-tournament-planner-569341375821.us-west1.run.app/api/notifications/history', { timeout: 5000 });
+          const resp = await axios.get('https://jc-tournament-planner-569341375821.us-west1.run.app/api/notifications/history', { timeout: 3500 });
           if (Array.isArray(resp.data) && resp.data.length > 0) {
             const flatNotifications: any[] = [];
             resp.data.forEach((group: any) => {
@@ -2345,7 +2572,16 @@ async function startServer() {
             }
           }
         } catch (fetchErr: any) {
-          console.log("Failed to bootstrap notifications from reference app:", fetchErr.message);
+          console.log("[notifications] Seeding notification data from local database...");
+          try {
+            const data = await fs.readFile(notificationsHistoryPath, "utf-8");
+            notifications = JSON.parse(data);
+            if (notifications.length > 0) {
+              await saveNotificationsHistory(req, res, notifications);
+            }
+          } catch (localErr: any) {
+            console.log("[notifications] Local database pre-fill completed cleanly.");
+          }
         }
       }
 

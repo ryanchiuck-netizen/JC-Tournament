@@ -552,15 +552,18 @@ function TournamentItem({
       let dateStr = decodeURIComponent(match[1]).trim();
       if (!dateStr) return 0;
 
-      // Extract year if present
+      // 1. Extract 4-digit year starting with 20
       let year = new Date().getFullYear();
       const yearMatch = dateStr.match(/\b(20\d{2})\b/);
       if (yearMatch) {
         year = parseInt(yearMatch[1], 10);
       }
 
-      // Remove the year from dateStr to simplify parsing, but remember it
+      // Remove the year and trailing slashes/spaces/commas
       dateStr = dateStr.replace(/\b20\d{2}\b/g, '').replace(/,/g, '').trim();
+
+      // Normalize trailing slashes on parts
+      dateStr = dateStr.replace(/\/+$/g, '').trim();
 
       const months = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
       const monthsFull = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"];
@@ -574,43 +577,44 @@ function TournamentItem({
         return idx;
       };
 
-      // 1. Day range with single month: e.g. "21-22 Jun" or "21 - 22 Jun"
-      const dayRangeSingleMonth = dateStr.match(/^(\d{1,2})\s*[-–—to/\s]+\s*(\d{1,2})\s+([a-zA-Z]{3,10})$/i);
-      if (dayRangeSingleMonth) {
-        const day = parseInt(dayRangeSingleMonth[1], 10);
-        const monthIdx = getMonthIndex(dayRangeSingleMonth[3]);
-        if (monthIdx !== -1) {
-          return new Date(year, monthIdx, day).getTime();
-        }
-      }
-
-      // 2. Month with day range: e.g. "Jun 21-22"
-      const monthDayRange = dateStr.match(/^([a-zA-Z]{3,10})\s+(\d{1,2})\s*[-–—to/\s]+\s*(\d{1,2})$/i);
-      if (monthDayRange) {
-        const monthIdx = getMonthIndex(monthDayRange[1]);
-        const day = parseInt(monthDayRange[2], 10);
-        if (monthIdx !== -1) {
-          return new Date(year, monthIdx, day).getTime();
-        }
-      }
-
-      // 3. Full range "6 Jul to 10 Jul"
-      if (dateStr.includes(" to ") || dateStr.includes(" - ") || dateStr.includes(" – ") || dateStr.includes(" — ")) {
-        const parts = dateStr.split(/\s+(?:to|-|–|—)\s+/i);
+      // Check for range separators
+      if (dateStr.includes(" to ") || dateStr.includes("-") || dateStr.includes("–") || dateStr.includes("—")) {
+        const parts = dateStr.split(/\s*(?:to|-|–|—)\s*/gi);
         if (parts.length > 0) {
-          const startPart = parts[0].trim();
-          const dayMonth = startPart.match(/^(\d{1,2})\s+([a-zA-Z]{3,10})$/i);
-          if (dayMonth) {
-            const day = parseInt(dayMonth[1], 10);
-            const monthIdx = getMonthIndex(dayMonth[2]);
+          const leftPart = parts[0].trim().replace(/\/+$/g, '').trim();
+          const rightPart = (parts[1] || '').trim().replace(/\/+$/g, '').trim();
+
+          // Case A: Day range with single month like "21-22 Jun"
+          if (/^\d{1,2}$/.test(leftPart)) {
+            const day = parseInt(leftPart, 10);
+            const monthIdx = getMonthIndex(rightPart);
             if (monthIdx !== -1) {
               return new Date(year, monthIdx, day).getTime();
             }
           }
-          const monthDay = startPart.match(/^([a-zA-Z]{3,10})\s+(\d{1,2})$/i);
-          if (monthDay) {
-            const monthIdx = getMonthIndex(monthDay[1]);
-            const day = parseInt(monthDay[2], 10);
+
+          // Case B: Slash date range like "5/06 - 8/06" (month as number!)
+          const slashMatchesLeft = leftPart.match(/^(\d{1,2})\/(\d{1,2})$/);
+          if (slashMatchesLeft) {
+            const day = parseInt(slashMatchesLeft[1], 10);
+            const month = parseInt(slashMatchesLeft[2], 10) - 1; // 0-indexed
+            return new Date(year, month, day).getTime();
+          }
+
+          // Case C: Range with names like "5 Jun - 8 Jun"
+          const dayMonthLeft = leftPart.match(/^(\d{1,2})\s+([a-zA-Z]{3,10})$/i);
+          if (dayMonthLeft) {
+            const day = parseInt(dayMonthLeft[1], 10);
+            const monthIdx = getMonthIndex(dayMonthLeft[2]);
+            if (monthIdx !== -1) {
+              return new Date(year, monthIdx, day).getTime();
+            }
+          }
+          
+          const monthDayLeft = leftPart.match(/^([a-zA-Z]{3,10})\s+(\d{1,2})$/i);
+          if (monthDayLeft) {
+            const monthIdx = getMonthIndex(monthDayLeft[1]);
+            const day = parseInt(monthDayLeft[2], 10);
             if (monthIdx !== -1) {
               return new Date(year, monthIdx, day).getTime();
             }
@@ -618,20 +622,28 @@ function TournamentItem({
         }
       }
 
-      // 4. Just DD MMM (e.g. "21 Jun") or MMM DD (e.g. "Jun 21")
-      const singleDayMonth = dateStr.match(/^(\d{1,2})\s+([a-zA-Z]{3,10})$/i);
-      if (singleDayMonth) {
-        const day = parseInt(singleDayMonth[1], 10);
-        const monthIdx = getMonthIndex(singleDayMonth[2]);
+      // Case D: Single slash date, clean up trailing slash (e.g. "20/09")
+      const slashMatch = dateStr.match(/^(\d{1,2})\/(\d{1,2})$/);
+      if (slashMatch) {
+        const day = parseInt(slashMatch[1], 10);
+        const month = parseInt(slashMatch[2], 10) - 1;
+        return new Date(year, month, day).getTime();
+      }
+
+      // Case E: Simple single "21 Jun" or "Jun 21"
+      const dayMonth = dateStr.match(/^(\d{1,2})\s+([a-zA-Z]{3,10})$/i);
+      if (dayMonth) {
+        const day = parseInt(dayMonth[1], 10);
+        const monthIdx = getMonthIndex(dayMonth[2]);
         if (monthIdx !== -1) {
           return new Date(year, monthIdx, day).getTime();
         }
       }
 
-      const singleMonthDay = dateStr.match(/^([a-zA-Z]{3,10})\s+(\d{1,2})$/i);
-      if (singleMonthDay) {
-        const monthIdx = getMonthIndex(singleMonthDay[1]);
-        const day = parseInt(singleMonthDay[2], 10);
+      const monthDay = dateStr.match(/^([a-zA-Z]{3,10})\s+(\d{1,2})$/i);
+      if (monthDay) {
+        const monthIdx = getMonthIndex(monthDay[1]);
+        const day = parseInt(monthDay[2], 10);
         if (monthIdx !== -1) {
           return new Date(year, monthIdx, day).getTime();
         }
