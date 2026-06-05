@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { User, Plus, X, Trophy, GripVertical, ArrowUp, ArrowDown, Clock, ArrowLeft, Calendar, RefreshCw, Search } from 'lucide-react';
+import { User, Plus, X, Trophy, GripVertical, ArrowUp, ArrowDown, Clock, ArrowLeft, Calendar, RefreshCw, Search, ChevronDown } from 'lucide-react';
 import { saveToGoogleSheets } from '../services/googleSheetsService';
 import {
   DndContext,
@@ -292,6 +292,7 @@ function SortablePlayerRow({
 
 function HistoryView({ 
   onClose, 
+  savedPlayers = [],
   initialPlayerName = "" 
 }: { 
   onClose: () => void, 
@@ -301,7 +302,18 @@ function HistoryView({
   const [snapshots, setSnapshots] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedSnapshot, setSelectedSnapshot] = useState<any>(null);
-  const [selectedRegion, setSelectedRegion] = useState<"TA" | "HKTA">("TA");
+  
+  // Auto-detect whether the initial player is from TA or HKTA and select the corresponding region tab.
+  const [selectedRegion, setSelectedRegion] = useState<"TA" | "HKTA">(() => {
+    if (initialPlayerName && savedPlayers.length > 0) {
+      const found = savedPlayers.find(p => p.name.toLowerCase() === initialPlayerName.toLowerCase());
+      if (found && (found.source === "TA" || found.source === "HKTA")) {
+        return found.source;
+      }
+    }
+    return "TA";
+  });
+  
   const [searchPlayer, setSearchPlayer] = useState<string>(initialPlayerName);
 
   const fetchSnapshots = async () => {
@@ -410,11 +422,38 @@ function HistoryView({
           </p>
         </div>
       ) : (
-        <div className="flex flex-col lg:flex-row gap-6 items-start h-[calc(100vh-270px)] overflow-hidden">
-          {/* Sidebar - Select Date */}
-          <div className="w-full lg:w-60 bg-gray-950 border border-gray-800 rounded-2xl p-4 flex flex-col h-full max-h-[250px] lg:max-h-full overflow-hidden">
+        <div className="flex flex-col lg:flex-row gap-6 items-stretch lg:h-[calc(100vh-270px)] lg:overflow-hidden w-full">
+          {/* On Mobile: Date selection dropdown */}
+          <div className="block lg:hidden w-full bg-gray-950 border border-gray-800 rounded-2xl p-4 space-y-2">
+            <label htmlFor="date-snapshot-select" className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              Select Snapshot Date:
+            </label>
+            <div className="relative">
+              <select
+                id="date-snapshot-select"
+                value={selectedSnapshot?.date || ""}
+                onChange={(e) => {
+                  const found = snapshots.find(s => s.date === e.target.value);
+                  if (found) setSelectedSnapshot(found);
+                }}
+                className="block w-full px-3 py-2.5 bg-gray-900 border border-gray-800 rounded-xl text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all appearance-none pr-10"
+              >
+                {snapshots.map((s) => (
+                  <option key={s.date} value={s.date}>
+                    {formatDateHeader(s.date)} ({new Date(s.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})
+                  </option>
+                ))}
+              </select>
+              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
+                <ChevronDown className="w-4 h-4" />
+              </div>
+            </div>
+          </div>
+
+          {/* On Desktop: Sidebar - Select Date */}
+          <div className="hidden lg:flex w-full lg:w-60 bg-gray-950 border border-gray-800 rounded-2xl p-4 flex-col h-full overflow-hidden shrink-0">
             <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Select Date</h3>
-            <div className="flex-1 overflow-y-auto space-y-1.5 pr-1 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto space-y-1.5 pr-1 custom-scrollbar w-full">
               {snapshots.map((s) => (
                 <button
                   key={s.date}
@@ -437,7 +476,7 @@ function HistoryView({
           </div>
 
           {/* Snapshot Table Details Column */}
-          <div className="flex-grow flex-1 w-full bg-gray-950 border border-gray-800 rounded-2xl overflow-hidden flex flex-col h-full">
+          <div className="flex-grow flex-1 w-full bg-gray-950 border border-gray-800 rounded-2xl overflow-hidden flex flex-col min-h-[450px] lg:h-full">
             {/* Snapshot Subheader */}
             <div className="p-4 border-b border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gray-900/10">
               <div className="flex bg-gray-900 p-1 rounded-xl border border-gray-800/80">
@@ -568,8 +607,6 @@ export function PlayerScreen({
             }
           } else {
             if (isRefreshingAll) {
-              // Refresh just finished! Reload players and tournaments cache
-              setIsRefreshingAll(false);
               const resPlayers = await fetch('/api/saved-players');
               if (resPlayers.ok) {
                 const dataPlayers = await resPlayers.json();
@@ -578,6 +615,7 @@ export function PlayerScreen({
               if (reloadTournamentsCache) {
                 reloadTournamentsCache();
               }
+              setIsRefreshingAll(false);
             }
             if (intervalId) {
               clearInterval(intervalId);
@@ -591,6 +629,11 @@ export function PlayerScreen({
     };
 
     checkRefreshStatus();
+
+    // Start background status checks when global refresh is triggered
+    if (isRefreshingAll && !intervalId) {
+      intervalId = setInterval(checkRefreshStatus, 3000);
+    }
 
     return () => {
       if (intervalId) clearInterval(intervalId);
@@ -877,9 +920,9 @@ export function PlayerScreen({
   return (
     <div className="space-y-6">
       <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 shadow-sm">
-        <div className="flex items-center justify-between gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-600/20 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-blue-600/20 rounded-xl flex items-center justify-center shrink-0">
               <User className="w-5 h-5 text-blue-500" />
             </div>
             <div>
@@ -889,7 +932,7 @@ export function PlayerScreen({
           </div>
           <button
             onClick={() => setShowHistory(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white text-sm font-medium rounded-xl transition-all border border-gray-700 shadow-sm"
+            className="flex items-center justify-center gap-2 w-full sm:w-auto px-4 py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white text-sm font-medium rounded-xl transition-all border border-gray-700 shadow-sm shrink-0"
           >
             <Clock className="w-4 h-4" />
             View History
@@ -956,15 +999,10 @@ export function PlayerScreen({
                 setIsRefreshingAll(true);
                 try {
                   await fetch("/api/admin/refresh-all", { method: "POST" });
-                  // Reload players
-                  const res = await fetch('/api/saved-players');
-                  if (res.ok) {
-                    const data = await res.json();
-                    setPlayers(data);
-                  }
+                  // We do NOT fetch players or deactivate loading here.
+                  // The polling useEffect handles status checks and updates the UI when the background scraper completes.
                 } catch (err) {
                   console.error("Failed to trigger refresh", err);
-                } finally {
                   setIsRefreshingAll(false);
                 }
               }

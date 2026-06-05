@@ -51,3 +51,48 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
+
+// Setup Background Web Push Notification listeners
+self.addEventListener('push', (event) => {
+  let data = {};
+  if (event.data) {
+    try {
+      data = event.data.json();
+    } catch (err) {
+      data = { title: "JC Tennis Alert 🎾", body: event.data.text() };
+    }
+  }
+  
+  const title = data.title || "JC Tennis Alert 🎾";
+  const options = {
+    body: data.body || "A tennis player update has been received.",
+    icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTElZ9tTIVQ-qQzRwpEyM5aC2JlP2NbaHA6yR9rObvF7g&s",
+    badge: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTElZ9tTIVQ-qQzRwpEyM5aC2JlP2NbaHA6yR9rObvF7g&s",
+    data: {
+      url: data.url || '/'
+    }
+  };
+  
+  event.waitUntil(
+    self.registration.showNotification(title, options)
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const urlToOpen = event.notification.data ? (event.notification.data.url || '/') : '/';
+  
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+      for (let i = 0; i < windowClients.length; i++) {
+        const client = windowClients[i];
+        if (client.url.includes(self.location.origin) && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow(urlToOpen);
+      }
+    })
+  );
+});

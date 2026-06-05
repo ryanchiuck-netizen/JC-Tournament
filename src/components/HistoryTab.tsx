@@ -98,43 +98,18 @@ export function HistoryTab() {
     try {
       const res = await fetch('/api/notifications/test', { method: 'POST' });
       if (res.ok) {
-        let systemAlertSent = false;
-        if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
-          try {
-            new Notification("Test Tennis Alert 🎾", {
-              body: "Success! Connection test passed! Your phone can receive real-time notifications on JC Tennis.",
-              icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTElZ9tTIVQ-qQzRwpEyM5aC2JlP2NbaHA6yR9rObvF7g&s"
-            });
-            systemAlertSent = true;
-          } catch (notifErr: any) {
-            console.warn("Direct Notification constructor failed. Attempting service worker notification fallback.", notifErr);
-            // Fallback to service worker if registered
-            if ("serviceWorker" in navigator) {
-              try {
-                const registration = await navigator.serviceWorker.ready;
-                await registration.showNotification("Test Tennis Alert 🎾", {
-                  body: "Success! Connection test passed! Your phone can receive real-time notifications on JC Tennis.",
-                  icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTElZ9tTIVQ-qQzRwpEyM5aC2JlP2NbaHA6yR9rObvF7g&s"
-                });
-                systemAlertSent = true;
-              } catch (swErr) {
-                console.error("Service worker notification failed too:", swErr);
-              }
-            }
-          }
-        }
-
         await fetchHistory();
 
-        if (systemAlertSent) {
-          alert("Success! Check your phone's notification bar. A system-level test alert has been fired!");
+        const systemAlertEnabled = (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted");
+        if (systemAlertEnabled) {
+          alert("Success! Check your device's notification bar. A system-level test alert has been fired and broadcasted cross-device!");
         } else {
-          alert("Test event saved on server! If you did not see a system-level popup on your phone:\n\n" +
+          alert("Test event saved on server and broadcasted! If you did not see a system-level popup on your device:\n\n" +
                 "1. Confirm you tapped 'Enable Notifications' in the app header.\n" +
                 "2. On iOS/iPhone: You must 'Add to Home Screen' (via Share button under Safari) first to enable system-level notifications on iOS.");
         }
       } else {
-        alert("Failed to trigger server test notification.");
+        alert("Failed to trigger test notification.");
       }
     } catch (e: any) {
       console.error(e);
@@ -159,6 +134,16 @@ export function HistoryTab() {
   useEffect(() => {
     fetchHistory();
     fetchSavedPlayers();
+
+    const handleNotifReceived = () => {
+      // Re-fetch the history list automatically to append the new message instantly in UI!
+      fetchHistory();
+    };
+
+    window.addEventListener("tennis-notification-received", handleNotifReceived);
+    return () => {
+      window.removeEventListener("tennis-notification-received", handleNotifReceived);
+    };
   }, []);
 
   const getNotificationCategory = (notif: any): string => {
@@ -468,6 +453,12 @@ export function HistoryTab() {
           <p className="text-gray-400 mt-1 text-sm bg-blue-900/10 px-2 py-0.5 rounded border border-blue-500/20 inline-block font-mono">
             Generated from daily player stat changes
           </p>
+          
+          {/* iOS / iPadOS Web Push Guidance Alert Box */}
+          <div className="mt-4 bg-blue-500/10 border border-blue-500/20 rounded-xl p-3.5 text-xs text-blue-300 leading-relaxed max-w-2xl">
+            <span className="font-bold">📱 iPad & Phone users:</span> Apple iOS/iPadOS requires you to add this app to your Home Screen to receive notifications when the app is closed. 
+            To do this, open this app in <strong>Safari</strong>, tap the <strong>Share</strong> icon, choose <strong>"Add to Home Screen"</strong>, and launch it from your home screen as a standalone app.
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <button

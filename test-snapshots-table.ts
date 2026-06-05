@@ -13,38 +13,27 @@ if (!supabaseUrl || !supabaseKey) {
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function run() {
-  console.log("Checking tables in Supabase...");
-  
-  // Try querying 'player_snapshots'
+  console.log("Listing all public tables in Supabase...");
   try {
-    const { data: snapData, error: snapErr } = await supabase
-      .from('player_snapshots')
-      .select('*')
-      .limit(1);
-      
-    if (snapErr) {
-      console.log("player_snapshots table error:", snapErr.message);
+    const { data, error } = await supabase.rpc('get_tables');
+    if (error) {
+      console.log("RPC get_tables failed, trying direct select from information_schema via custom sql or general query...");
+      // In Supabase client, we don't have direct SQL execution, but we can query standard tables.
+      // But we can check if there are any other tables by trying some names, or let's inspect supabase_setup.sql.
+      // Wait! Let's check some common tables. We can query 'tournaments' table to see what other rows there are in tournaments!
     } else {
-      console.log("player_snapshots table exists! Sample data row count:", snapData.length);
-      console.log(JSON.stringify(snapData, null, 2));
+      console.log("Tables list via RPC:", data);
+    }
+    
+    console.log("Querying all IDs in public.tournaments...");
+    const { data: tourData, error: tourErr } = await supabase.from("tournaments").select("id, created_at");
+    if (tourErr) {
+      console.error("Error querying tournaments table:", tourErr);
+    } else {
+      console.log("Tournaments table matching IDs:", tourData);
     }
   } catch (e: any) {
-    console.log("player_snapshots query failed exception:", e.message || e);
-  }
-
-  // Try querying any other possible snapshot table names
-  const possibleNames = ['snapshots', 'saved_players_snapshots', 'saved_players_history', 'daily_snapshots', 'player_history'];
-  for (const name of possibleNames) {
-    try {
-      const { data, error } = await supabase.from(name).select('*').limit(1);
-      if (!error) {
-        console.log(`Table "${name}" EXISTS! Rows:`, data.length);
-      } else {
-        console.log(`Table "${name}" does not exist or error:`, error.message);
-      }
-    } catch (e: any) {
-      console.log(`Table "${name}" error:`, e.message || e);
-    }
+    console.log("Error:", e.message || e);
   }
 }
 

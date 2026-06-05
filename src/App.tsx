@@ -24,7 +24,7 @@ import { HistoryTab } from "./components/HistoryTab";
 import { cacheDb } from "./lib/db";
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<"tournaments" | "player-watch" | "player-screen" | "tournament-screen" | "draw-checker" | "alerts">("tournaments");
+  const [activeTab, setActiveTab] = useState<"tournaments" | "player-watch" | "player-screen" | "tournament-screen" | "draw-checker" | "alerts">("tournament-screen");
   
   // Tournaments-for-players cache states
   const [tournamentsForPlayers, setTournamentsForPlayers] = useState<any[]>(() => {
@@ -64,15 +64,130 @@ export default function App() {
   // Notification Permission State
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>("default");
 
+  const subscribeToWebPush = async () => {
+    if (typeof window === "undefined" || !("serviceWorker" in navigator) || !("PushManager" in window)) {
+      console.warn("[WebPush Client] Service workers or Push notifications are not supported on this device/browser.");
+      return;
+    }
+
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      if (!registration) {
+        console.warn("[WebPush Client] Service worker registration not ready.");
+        return;
+      }
+
+      const keyRes = await fetch("/api/notifications/vapid-public-key");
+      if (!keyRes.ok) {
+        throw new Error("Failed to fetch VAPID public key");
+      }
+      const { publicKey } = await keyRes.json();
+      if (!publicKey) {
+        throw new Error("No VAPID public key returned from server");
+      }
+
+      const padding = '='.repeat((4 - (publicKey.length % 4)) % 4);
+      const base64 = (publicKey + padding).replace(/\-/g, '+').replace(/_/g, '/');
+      const rawData = window.atob(base64);
+      const uint8Array = new Uint8Array(rawData.length);
+      for (let i = 0; i < rawData.length; ++i) {
+        uint8Array[i] = rawData.charCodeAt(i);
+      }
+
+      let existingSubscription = await registration.pushManager.getSubscription();
+      let shouldSubscribe = !existingSubscription;
+
+      if (existingSubscription) {
+        console.log("[WebPush Client] Active pre-existing subscription found.");
+        if (existingSubscription.options && existingSubscription.options.applicationServerKey) {
+          const existingKey = new Uint8Array(existingSubscription.options.applicationServerKey);
+          let keyMatch = existingKey.length === uint8Array.length;
+          if (keyMatch) {
+            for (let i = 0; i < uint8Array.length; i++) {
+              if (existingKey[i] !== uint8Array[i]) {
+                keyMatch = false;
+                break;
+              }
+            }
+          }
+          if (!keyMatch) {
+            console.log("[WebPush Client] Key mismatch detected. Unsubscribing old subscription...");
+            await existingSubscription.unsubscribe();
+            shouldSubscribe = true;
+          }
+        } else {
+          console.log("[WebPush Client] Cannot verify existing key. Forcing unregistration to ensure sync...");
+          await existingSubscription.unsubscribe();
+          shouldSubscribe = true;
+        }
+      }
+
+      let subscription = existingSubscription;
+      if (shouldSubscribe) {
+        console.log("[WebPush Client] Registering fresh device subscription with pushManager...");
+        subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: uint8Array
+        });
+      }
+
+      if (subscription) {
+        console.log("[WebPush Client] Synchronizing active subscription with server backend...");
+        const subscriptionJSON = subscription.toJSON ? subscription.toJSON() : JSON.parse(JSON.stringify(subscription));
+        const subRes = await fetch("/api/notifications/subscribe", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(subscriptionJSON)
+        });
+
+        if (subRes.ok) {
+          console.log("[WebPush Client] Successfully registered active subscription on server database!");
+        } else {
+          const errText = await subRes.text();
+          console.error("[WebPush Client] Backend rejected subscription synchronization:", errText);
+        }
+      }
+    } catch (err: any) {
+      console.warn("[WebPush Client] Failed to register subscription for background notifications:", err.message || err);
+      // Fallback: if we hit a key mismatch error, try direct cleanup and automatic resubscribe retry
+      try {
+        const registration = await navigator.serviceWorker.ready;
+        const sub = await registration.pushManager.getSubscription();
+        if (sub) {
+          await sub.unsubscribe();
+          console.log("[WebPush Client] Stale mismatched subscription successfully removed. Retrying registration in 500ms...");
+          setTimeout(() => {
+            subscribeToWebPush().catch(console.error);
+          }, 500);
+        }
+      } catch (innerErr) {
+        console.error("[WebPush Client] Mismatched subscription recovery attempt failed:", innerErr);
+      }
+    }
+  };
+
   useEffect(() => {
     if (typeof window !== "undefined" && "Notification" in window) {
       setNotificationPermission(Notification.permission);
+      if (Notification.permission === "granted") {
+        subscribeToWebPush();
+      }
     }
   }, []);
 
   const requestNotificationPermission = async () => {
     if (typeof window === "undefined" || !("Notification" in window)) {
       alert("This browser does not support desktop notifications.");
+      return;
+    }
+
+    if (Notification.permission === "granted") {
+      try {
+        await subscribeToWebPush();
+        alert("Alert settings synchronized! We have verified and synchronized your active browser credentials with the server. Safe to test notifications now!");
+      } catch (err) {
+        alert("Verification completed. If notifications fail across devices, try resetting browser permissions.");
+      }
       return;
     }
     
@@ -85,6 +200,8 @@ export default function App() {
           body: "You will now receive notifications on JC Tennis Tournament Planner!",
           icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTElZ9tTIVQ-qQzRwpEyM5aC2JlP2NbaHA6yR9rObvF7g&s"
         });
+        // Subscribe to Web Push background/offline engine
+        subscribeToWebPush();
       }
     } catch (error) {
       console.error("Error requesting notification permission:", error);
@@ -141,7 +258,7 @@ export default function App() {
               seenNotificationIdsRef.current.add(item.id);
               modified = true;
 
-              if (Notification.permission === "granted") {
+              if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
                 try {
                   new Notification(item.title || "Tennis Player Alert", {
                     body: item.body || item.message || "Player statistics updated.",
@@ -209,6 +326,13 @@ export default function App() {
       } catch (err) {
         console.warn("Error monitoring refresh completion:", err);
       }
+
+      // Check for any newly added notifications periodically to sync other devices/containers
+      try {
+        await checkRealTimeNotifications();
+      } catch (err) {
+        console.warn("Error in periodic notifications check:", err);
+      }
     };
 
     // Run initially to see if currently refreshing
@@ -218,6 +342,91 @@ export default function App() {
     intervalId = setInterval(monitorRefreshCompletion, 15000);
 
     return () => clearInterval(intervalId);
+  }, []);
+
+  // Setup real-time cross-device notifications via Server-Sent Events (SSE)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    let eventSource: EventSource | null = null;
+    let reconnectTimeoutId: any = null;
+
+    const connectSSE = () => {
+      console.log("[SSE Client] Connecting to real-time notification stream...");
+      eventSource = new EventSource("/api/notifications/stream");
+
+      eventSource.onmessage = (event) => {
+        try {
+          const notif = JSON.parse(event.data);
+          if (!notif || !notif.id) return;
+
+          // Ensure seen set is hydrated from localStorage first
+          if (seenNotificationIdsRef.current.size === 0) {
+            try {
+              const saved = localStorage.getItem("jc_tennis_seen_notification_ids");
+              if (saved) {
+                seenNotificationIdsRef.current = new Set(JSON.parse(saved));
+              }
+            } catch (e) {}
+          }
+
+          // If we have already seen this particular notification ID, skip it
+          if (seenNotificationIdsRef.current.has(notif.id)) {
+            return;
+          }
+
+          // Mark as seen immediately and persist
+          seenNotificationIdsRef.current.add(notif.id);
+          try {
+            localStorage.setItem("jc_tennis_seen_notification_ids", JSON.stringify(Array.from(seenNotificationIdsRef.current)));
+          } catch (e) {}
+
+          // Show system-level desktop/phone notification
+          if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
+            try {
+              new Notification(notif.title || "Tennis Player Alert", {
+                body: notif.body || notif.message || "Player stats changed.",
+                icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTElZ9tTIVQ-qQzRwpEyM5aC2JlP2NbaHA6yR9rObvF7g&s",
+                tag: notif.id
+              });
+            } catch (notifErr) {
+              console.warn("[SSE Client] Direct Notification constructor failed, trying service worker:", notifErr);
+              if ("serviceWorker" in navigator) {
+                navigator.serviceWorker.ready.then((registration) => {
+                  registration.showNotification(notif.title || "Tennis Player Alert", {
+                    body: notif.body || notif.message || "Player stats changed.",
+                    icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTElZ9tTIVQ-qQzRwpEyM5aC2JlP2NbaHA6yR9rObvF7g&s",
+                    tag: notif.id
+                  });
+                }).catch((e) => console.error("[SSE Client] Service worker notification error:", e));
+              }
+            }
+          }
+
+          // Dispatch unified event so any active screens can update lists instantly
+          window.dispatchEvent(new CustomEvent("tennis-notification-received", { detail: notif }));
+        } catch (err) {
+          console.error("[SSE Client] Failed processing stream message:", err);
+        }
+      };
+
+      eventSource.onerror = (err) => {
+        console.warn("[SSE Client] Stream connection closed or errored. Reconnecting in 5 seconds...", err);
+        if (eventSource) {
+          eventSource.close();
+        }
+        reconnectTimeoutId = setTimeout(connectSSE, 5000);
+      };
+    };
+
+    connectSSE();
+
+    return () => {
+      if (reconnectTimeoutId) clearTimeout(reconnectTimeoutId);
+      if (eventSource) {
+        eventSource.close();
+      }
+    };
   }, []);
 
   const [savedDraws, setSavedDraws] = useState<any[]>(() => {
@@ -859,7 +1068,7 @@ export default function App() {
         </div>
 
         <div className={activeTab === "draw-checker" ? "block" : "hidden"}>
-          <DrawChecker />
+          <DrawChecker savedDraws={savedDraws} onSavedDrawsChanged={fetchSavedDraws} />
         </div>
 
         <div className={activeTab === "alerts" ? "block" : "hidden"}>

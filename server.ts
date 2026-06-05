@@ -9,6 +9,7 @@ import * as cheerio from "cheerio";
 import pLimit from "p-limit";
 import cookieParser from "cookie-parser";
 import { createClient } from "@supabase/supabase-js";
+import webpush from "web-push";
 
 function getQueryParts(playerName: string): string[] {
   if (!playerName) return [];
@@ -82,7 +83,156 @@ async function startServer() {
   
   let isScraping = false;
   let isGlobalRefreshing = false;
+  let sseClients: any[] = [];
+  const sentNotificationIds = new Set<string>();
   let refreshTournamentsForPlayersCache: () => Promise<any>;
+
+  const vapidKeysPath = path.join(process.cwd(), "public", "vapid-keys.json");
+  const subscriptionsPath = path.join(process.cwd(), "public", "notification-subscriptions.json");
+
+  let vapidKeys: { publicKey: string; privateKey: string } = { publicKey: "", privateKey: "" };
+
+  // Phase 1: Retrieve VAPID Keys securely from Supabase table or local file system
+  if (supabase) {
+    try {
+      const { data: dbKeys, error: dbKeysErr } = await supabase.from("tournaments").select("data").eq("id", "vapid_keys");
+      if (!dbKeysErr && dbKeys && dbKeys.length > 0 && dbKeys[0].data) {
+        vapidKeys = dbKeys[0].data as { publicKey: string; privateKey: string };
+        console.log("[WebPush] Persistent VAPID keys successfully loaded from Supabase.");
+      }
+    } catch (dbErr: any) {
+      console.warn("[WebPush] Database load of VAPID keys failed, attempting fallback:", dbErr.message);
+    }
+  }
+
+  if (!vapidKeys.publicKey || !vapidKeys.privateKey) {
+    try {
+      const keysData = await fs.readFile(vapidKeysPath, "utf-8");
+      vapidKeys = JSON.parse(keysData);
+      console.log("[WebPush] VAPID keys loaded from local file storage.");
+      
+      // Upload/Seed to Supabase for multi-replica/persistent safety if available
+      if (supabase) {
+        await supabase.from("tournaments").upsert({ id: "vapid_keys", data: vapidKeys }).catch(err => {
+          console.warn("[WebPush] Could not persist local VAPID keys to Supabase:", err.message);
+        });
+      }
+    } catch (err) {
+      console.log("[WebPush] No persistent keys found. Generating new permanent VAPID keys...");
+      vapidKeys = webpush.generateVAPIDKeys();
+      
+      try {
+        await fs.writeFile(vapidKeysPath, JSON.stringify(vapidKeys, null, 2));
+      } catch (saveErr) {
+        console.error("[WebPush] Failed to write generated keys to scratch storage:", saveErr);
+      }
+      
+      if (supabase) {
+        try {
+          await supabase.from("tournaments").upsert({ id: "vapid_keys", data: vapidKeys });
+          console.log("[WebPush] Saved newly generated VAPID keys to Supabase.");
+        } catch (dbSaveErr: any) {
+          console.error("[WebPush] Could not save generated keys to Supabase:", dbSaveErr.message);
+        }
+      }
+    }
+  }
+
+  try {
+    webpush.setVapidDetails(
+      "mailto:ryan.chiu.ck@gmail.com",
+      vapidKeys.publicKey,
+      vapidKeys.privateKey
+    );
+    console.log("[WebPush] VAPID context defined successfully. Active public key:", vapidKeys.publicKey);
+  } catch (configErr: any) {
+    console.error("[WebPush] Critical Error configuring WebPush context:", configErr.message || configErr);
+  }
+
+  // Phase 2: Create robust subscription sync helpers
+  const loadSubscriptions = async (): Promise<any[]> => {
+    let subs: any[] = [];
+    if (supabase) {
+      try {
+        const { data: dbSubs, error: dbSubsErr } = await supabase.from("tournaments").select("data").eq("id", "notification_subscriptions");
+        if (!dbSubsErr && dbSubs && dbSubs.length > 0 && Array.isArray(dbSubs[0].data)) {
+          subs = dbSubs[0].data;
+          return subs;
+        }
+      } catch (dbErr: any) {
+        console.warn("[WebPush] Database read of subscriptions failed. Falling back to local:", dbErr.message);
+      }
+    }
+    
+    try {
+      const fileContent = await fs.readFile(subscriptionsPath, "utf-8");
+      subs = JSON.parse(fileContent);
+    } catch (err) {
+      subs = [];
+    }
+    return subs;
+  };
+
+  const saveSubscriptions = async (subs: any[]) => {
+    // Write local backup first
+    try {
+      await fs.writeFile(subscriptionsPath, JSON.stringify(subs, null, 2));
+    } catch (err: any) {
+      console.error("[WebPush] Failed saving subscriptions to local file:", err.message);
+    }
+    
+    // Write to Supabase table
+    if (supabase) {
+      try {
+        const { error } = await supabase.from("tournaments").upsert({ id: "notification_subscriptions", data: subs });
+        if (error) {
+          console.error("[WebPush] Error upserting subscriptions to Supabase:", error.message);
+        }
+      } catch (dbErr: any) {
+        console.error("[WebPush] Failed hard synching subscriptions to Supabase:", dbErr.message);
+      }
+    }
+  };
+
+  const sendWebPushNotification = async (notif: any) => {
+    try {
+      const subs = await loadSubscriptions();
+      if (subs.length === 0) return;
+      
+      console.log(`[WebPush] Broadcasting to ${subs.length} push subscriptions...`);
+      const payload = JSON.stringify({
+        id: notif.id,
+        title: notif.title || "JC Tennis Alert 🎾",
+        body: notif.body || "A tennis alert has been received.",
+        url: "/#alerts"
+      });
+
+      const invalidSubs: string[] = [];
+      
+      const pushPromises = subs.map(async (sub) => {
+        try {
+          await webpush.sendNotification(sub, payload);
+        } catch (err: any) {
+          if (err.statusCode === 410 || err.statusCode === 404) {
+            console.log(`[WebPush] Subscription expired or unsubscribed, marking for cleanup: ${sub.endpoint}`);
+            invalidSubs.push(sub.endpoint);
+          } else {
+            console.warn(`[WebPush] Push failed for endpoint: ${sub.endpoint}, error:`, err.message || err);
+          }
+        }
+      });
+
+      await Promise.all(pushPromises);
+
+      if (invalidSubs.length > 0) {
+        const updatedSubs = subs.filter(sub => !invalidSubs.includes(sub.endpoint));
+        await saveSubscriptions(updatedSubs);
+        console.log(`[WebPush] Cleaned up ${invalidSubs.length} dead subscription(s). New count: ${updatedSubs.length}`);
+      }
+    } catch (err: any) {
+      console.error("[WebPush] Broadcast exception:", err.message || err);
+    }
+  };  // End of sendWebPushNotification
 
   const wrappedRunScraper = async () => {
     // 1. Get existing tournament links
@@ -613,10 +763,33 @@ async function startServer() {
       }
 
       if (runRecovery) {
-        console.log("[PLAYER RECOVERY] Local saved-players.json is empty or missing. Restoring from player-snapshots.json...");
-        const snapshotsPath = path.join(process.cwd(), "public", "player-snapshots.json");
-        const snapshotsContent = await fs.readFile(snapshotsPath, "utf-8");
-        const snapshots = JSON.parse(snapshotsContent);
+        console.log("[PLAYER RECOVERY] Local saved-players.json is empty or missing. Restoring players...");
+        let snapshots: any[] = [];
+        
+        // 1. Try to retrieve from Supabase first
+        if (supabase) {
+          try {
+            const { data, error } = await supabase.from("tournaments").select("data").eq("id", "player_snapshots");
+            if (!error && data && data.length > 0 && Array.isArray(data[0].data)) {
+              snapshots = data[0].data;
+              console.log("[PLAYER RECOVERY] Retrieved snapshots from Supabase:", snapshots.length, "entries.");
+            }
+          } catch (sbErr: any) {
+            console.warn("[PLAYER RECOVERY] Failed to load snapshots from Supabase:", sbErr.message);
+          }
+        }
+
+        // 2. Fall back to local file
+        if (snapshots.length === 0) {
+          try {
+            const snapshotsPath = path.join(process.cwd(), "public", "player-snapshots.json");
+            const snapshotsContent = await fs.readFile(snapshotsPath, "utf-8");
+            snapshots = JSON.parse(snapshotsContent);
+          } catch (fsErr: any) {
+            console.warn("[PLAYER RECOVERY] Failed to load snapshots from local file:", fsErr.message);
+          }
+        }
+
         if (Array.isArray(snapshots) && snapshots.length > 0) {
           // Find the latest snapshot that contains players
           const latestSnapshot = snapshots.find(snap => 
@@ -801,6 +974,158 @@ async function startServer() {
     return Array.from(uniquePlayersMap.values());
   };
 
+  const rebuildPlayerSnapshotsFromHistory = async (rawPlayers?: any[]): Promise<any[]> => {
+    if (!supabase) {
+      console.log("[Rebuild] Supabase is not configured. Cannot rebuild snapshot history.");
+      return [];
+    }
+
+    try {
+      console.log("[Rebuild] Reconstructing full snapshot history with pagination...");
+      let finalPlayers = rawPlayers;
+      if (!finalPlayers || finalPlayers.length === 0) {
+        finalPlayers = await getSavedPlayers(null, null);
+      }
+
+      const currentSnapshotPlayers = (finalPlayers || []).map((p: any) => ({
+        id: p.id,
+        url: p.url || '',
+        name: p.name,
+        rank: p.rank || '-',
+        points: p.points || '-',
+        source: p.source || 'TA',
+        utrSingles: p.utr_singles || p.utrSingles || '-',
+        winLossYTD: p.win_loss_ytd || p.winLossYTD || '-',
+        winLossCareer: p.win_loss_career || p.winLossCareer || '-',
+        championships: p.championships || '-',
+      }));
+
+      let dbNotifications: any[] = [];
+      let page = 0;
+      const pageSize = 1000;
+      let hasMore = true;
+
+      const targetTypes = ["Rank", "Points", "WinLoss", "Win:Loss", "UTR"];
+
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from("notifications_history")
+          .select("*")
+          .in("type", targetTypes)
+          .order("timestamp", { ascending: false })
+          .range(page * pageSize, (page + 1) * pageSize - 1);
+
+        if (error) {
+          throw new Error(`Failed to load historical notifications at page ${page}: ${error.message}`);
+        }
+
+        if (!data || data.length === 0) {
+          hasMore = false;
+        } else {
+          dbNotifications = dbNotifications.concat(data);
+          page++;
+          if (data.length < pageSize) {
+            hasMore = false;
+          }
+        }
+      }
+
+      console.log(`[Rebuild] Retrieved ${dbNotifications.length} historical player stat notifications.`);
+
+      const uniqueDates = Array.from(new Set(dbNotifications.map((n: any) => n.date)))
+        .filter((d): d is string => !!d)
+        .sort()
+        .reverse();
+
+      console.log(`[Rebuild] Unique snapshot dates to reconstruct: ${uniqueDates.length}`);
+
+      const snapshots: any[] = [];
+      let state = JSON.parse(JSON.stringify(currentSnapshotPlayers));
+
+      const parseAndNormalizeValue = (val: string, type: string): string => {
+        if (!val) return "-";
+        val = val.trim();
+        if (type === 'WinLoss' || type === 'Win:Loss') {
+          const match = val.match(/^(\d+)\s*[\/\:]\s*(\d+)/);
+          if (match) {
+            return `${match[1]}:${match[2]}`;
+          }
+        }
+        return val;
+      };
+
+      for (let i = 0; i < uniqueDates.length; i++) {
+        const date = uniqueDates[i];
+        const timestamp = new Date(date).toISOString();
+
+        const taPlayers = state.filter((p: any) => p.source === 'TA');
+        const hktaPlayers = state.filter((p: any) => p.source === 'HKTA');
+
+        snapshots.push({
+          date,
+          timestamp,
+          taPlayers,
+          hktaPlayers
+        });
+
+        const dateNotifs = dbNotifications.filter((n: any) => n.date === date);
+        const nextOlderState = JSON.parse(JSON.stringify(state));
+
+        for (const notif of dateNotifs) {
+          let playerName = "";
+          const body = notif.body || "";
+          const type = notif.type;
+
+          if (type === 'Win:Loss' || (notif.player && notif.player.toLowerCase().includes('win:loss'))) {
+            const idx = body.toLowerCase().indexOf("win:loss");
+            if (idx !== -1) {
+              playerName = body.substring(0, idx).trim();
+            } else {
+              playerName = notif.player?.split('\n')[0].trim() || "";
+            }
+          } else {
+            playerName = notif.player?.split('\n')[0].trim() || "";
+          }
+
+          if (!playerName || playerName.toLowerCase() === "new" || playerName.toLowerCase() === "win:loss") {
+            continue;
+          }
+
+          const pIndex = nextOlderState.findIndex((p: any) => p.name.toLowerCase().trim() === playerName.toLowerCase().trim());
+          if (pIndex === -1) continue;
+
+          const match = body.match(/changed from (.*?) to (.*)/i);
+          if (match) {
+            const rawFromValue = match[1].trim();
+            const fromValue = parseAndNormalizeValue(rawFromValue, type);
+
+            if (type === 'Rank') {
+              nextOlderState[pIndex].rank = fromValue;
+            } else if (type === 'Points') {
+              nextOlderState[pIndex].points = fromValue;
+            } else if (type === 'UTR' || body.toLowerCase().includes('utr singles')) {
+              nextOlderState[pIndex].utrSingles = fromValue;
+            } else if (type === 'WinLoss' || type === 'Win:Loss') {
+              if (body.toLowerCase().includes('career')) {
+                nextOlderState[pIndex].winLossCareer = fromValue;
+              } else if (body.toLowerCase().includes('ytd')) {
+                nextOlderState[pIndex].winLossYTD = fromValue;
+              }
+            }
+          }
+        }
+
+        state = nextOlderState;
+      }
+
+      return snapshots;
+
+    } catch (err: any) {
+      console.warn("[Rebuild] Failed to reconstruct player snapshots history:", err.message || err);
+      return [];
+    }
+  };
+
   const takePlayerSnapshot = async (playersList?: any[]) => {
     try {
       const players = playersList || await getSavedPlayers(null, null);
@@ -837,17 +1162,48 @@ async function startServer() {
 
       const snapshotsPath = path.join(process.cwd(), "public", "player-snapshots.json");
       let snapshots: any[] = [];
-      try {
-        const fileContent = await fs.readFile(snapshotsPath, "utf-8");
-        snapshots = JSON.parse(fileContent);
-      } catch (err) {
+
+      // Try to load from Supabase first
+      if (supabase) {
         try {
-          const resp = await axios.get('https://jc-tournament-planner-569341375821.us-west1.run.app/api/player-snapshots', { timeout: 4000 });
-          if (Array.isArray(resp.data)) {
-            snapshots = resp.data;
+          const { data, error } = await supabase.from("tournaments").select("data").eq("id", "player_snapshots");
+          if (!error && data && data.length > 0 && Array.isArray(data[0].data)) {
+            snapshots = data[0].data;
+            console.log("[Snapshot] Loaded snapshots from Supabase:", snapshots.length, "entries.");
           }
-        } catch {
-          snapshots = [];
+        } catch (sbErr: any) {
+          console.warn("[Snapshot] Failed to load snapshots from Supabase:", sbErr.message);
+        }
+      }
+
+      // Fallback/Bootstrap if needed
+      if (snapshots.length === 0) {
+        try {
+          const fileContent = await fs.readFile(snapshotsPath, "utf-8");
+          snapshots = JSON.parse(fileContent);
+        } catch (err) {
+          try {
+            const resp = await axios.get('https://jc-tournament-planner-569341375821.us-west1.run.app/api/player-snapshots', { timeout: 4000 });
+            if (Array.isArray(resp.data)) {
+              snapshots = resp.data;
+            }
+          } catch {
+            snapshots = [];
+          }
+        }
+      }
+
+      // Rebuild / self-heal snapshots from notification logs in Supabase if thin or empty
+      if (snapshots.length <= 1 && supabase) {
+        try {
+          console.log("[Snapshot] Thin or empty snapshot history found. Attempting to rebuild snap entries from notifications_history audits...");
+          const rebuilt = await rebuildPlayerSnapshotsFromHistory(players);
+          if (rebuilt && rebuilt.length > 0) {
+            snapshots = rebuilt;
+            console.log("[Snapshot] Successfully rebuilt historical snapshots! Total dates reconstructed:", snapshots.length);
+          }
+        } catch (healErr: any) {
+          console.warn("[Snapshot] Failed to rebuild snapshot array from notifications_history:", healErr.message);
         }
       }
 
@@ -865,7 +1221,23 @@ async function startServer() {
         snapshots.unshift(newSnapshot);
       }
 
-      await fs.writeFile(snapshotsPath, JSON.stringify(snapshots, null, 2));
+      // Write local backup file
+      try {
+        await fs.writeFile(snapshotsPath, JSON.stringify(snapshots, null, 2));
+      } catch (fsErr: any) {
+        console.error("[Snapshot] Failed to write to local backup:", fsErr.message);
+      }
+
+      // Sync to Supabase
+      if (supabase) {
+        try {
+          await supabase.from("tournaments").upsert({ id: "player_snapshots", data: snapshots });
+          console.log("[Snapshot] Saved snapshots history to Supabase successfully.");
+        } catch (sbErr: any) {
+          console.error("[Snapshot] Failed to save snapshots to Supabase:", sbErr.message);
+        }
+      }
+
       console.log(`[Snapshot] Daily snap taken for ${date}. Counts TA: ${taPlayers.length}, HKTA: ${hktaPlayers.length}`);
     } catch (err: any) {
       console.log("[Snapshot] Failed to take daily snapshot:", err.message || err);
@@ -1700,10 +2072,11 @@ async function startServer() {
           const $eventPage = cheerio.load(eventPageRes.data);
           
           // Verify if there are direct player links on this event page
-          const directPlayersCount = $eventPage('a[href*="player.aspx?"], a[href*="/player/"]')
+          const directPlayersCount = $eventPage('a[href*="player.aspx?"], a[href*="player.aspx"], a[href*="/player/"], a[href*="/player-profile/"]')
             .filter((_, el) => {
               const href = $eventPage(el).attr('href') || '';
-              return !href.includes('/player-profile/');
+              const isGeneric = href.toLowerCase().includes('/player-profile/search') || href.toLowerCase().endsWith('/player-profile/') || href.toLowerCase().endsWith('/player-profile');
+              return !isGeneric;
             }).length;
 
           if (directPlayersCount > 0) {
@@ -1755,22 +2128,25 @@ async function startServer() {
       const $ = cheerio.load(drawRes.data);
       const playerLinks: { name: string, url: string }[] = [];
 
-      $('a[href*="player.aspx?"], a[href*="/player/"]').each((i, el) => {
+      $('a[href*="player.aspx"], a[href*="/player/"], a[href*="/player-profile/"]').each((i, el) => {
         const name = $(el).text().trim();
         const href = $(el).attr('href');
         // Ignore links that don't have a name or are just icons
-        if (name && href && !href.includes('/player-profile/')) {
-          let fullUrl = href;
-          if (!href.startsWith('http')) {
-            if (href.startsWith('/')) {
-              fullUrl = `https://tournaments.tennis.com.au${href}`;
-            } else {
-              fullUrl = `https://tournaments.tennis.com.au/sport/${href}`;
+        if (name && href) {
+          const isGeneric = href.toLowerCase().includes('/player-profile/search') || href.toLowerCase().endsWith('/player-profile/') || href.toLowerCase().endsWith('/player-profile');
+          if (!isGeneric) {
+            let fullUrl = href;
+            if (!href.startsWith('http')) {
+              if (href.startsWith('/')) {
+                fullUrl = `https://tournaments.tennis.com.au${href}`;
+              } else {
+                fullUrl = `https://tournaments.tennis.com.au/sport/${href}`;
+              }
             }
-          }
-          
-          if (!playerLinks.some(pl => pl.url === fullUrl)) {
-            playerLinks.push({ name, url: fullUrl });
+            
+            if (!playerLinks.some(pl => pl.url === fullUrl)) {
+              playerLinks.push({ name, url: fullUrl });
+            }
           }
         }
       });
@@ -2101,6 +2477,36 @@ async function startServer() {
   };
 
   const saveNotificationsHistory = async (req: any, res: any, notifications: any[]) => {
+    // 1. Identify and broadcast any brand-new notifications over Server-Sent Events (SSE)
+    const newNotificationsToBroadcast: any[] = [];
+    if (Array.isArray(notifications)) {
+      for (const n of notifications) {
+        if (n && n.id && !sentNotificationIds.has(n.id)) {
+          sentNotificationIds.add(n.id);
+          newNotificationsToBroadcast.push(n);
+        }
+      }
+    }
+
+    if (newNotificationsToBroadcast.length > 0) {
+      console.log(`[SSE] Broadcasting ${newNotificationsToBroadcast.length} new notification(s) in real-time to ${sseClients.length} connected device(s)...`);
+      newNotificationsToBroadcast.forEach(notif => {
+        const data = JSON.stringify(notif);
+        sseClients.forEach((client, idx) => {
+          try {
+            client.write(`data: ${data}\n\n`);
+          } catch (err: any) {
+            console.log(`[SSE] Failed writing to client ${idx}, possibly disconnected:`, err.message || err);
+          }
+        });
+
+        // Offline / background system-level web push notification
+        sendWebPushNotification(notif).catch(pushErr => {
+          console.error("[WebPush] Background push error:", pushErr.message || pushErr);
+        });
+      });
+    }
+
     try {
       await fs.writeFile(notificationsHistoryPath, JSON.stringify(notifications, null, 2));
     } catch (e: any) {
@@ -2212,23 +2618,63 @@ async function startServer() {
     const snapshotsPath = path.join(process.cwd(), "public", "player-snapshots.json");
     try {
       let snapshots: any[] = [];
-      try {
-        const fileContent = await fs.readFile(snapshotsPath, "utf-8");
-        snapshots = JSON.parse(fileContent);
-      } catch (err) {
-        // Bootstrap by fetching from the live reference app
+      
+      // Try to load from Supabase first
+      if (supabase) {
         try {
-          const resp = await axios.get('https://jc-tournament-planner-569341375821.us-west1.run.app/api/player-snapshots', { timeout: 3500 });
-          if (Array.isArray(resp.data)) {
-            snapshots = resp.data;
-            // Save local cache so we don't have to fetch next time
-            await fs.writeFile(snapshotsPath, JSON.stringify(snapshots, null, 2));
+          const { data, error } = await supabase.from("tournaments").select("data").eq("id", "player_snapshots");
+          if (!error && data && data.length > 0 && Array.isArray(data[0].data)) {
+            snapshots = data[0].data;
           }
-        } catch (fetchErr: any) {
-          console.log("[snapshots] Seeding snapshot data completed cleanly.");
-          snapshots = [];
+        } catch (sbErr: any) {
+          console.warn("Failed to load player-snapshots from Supabase:", sbErr.message);
         }
       }
+
+      // Fallback/Bootstrap if needed
+      if (snapshots.length === 0) {
+        try {
+          const fileContent = await fs.readFile(snapshotsPath, "utf-8");
+          snapshots = JSON.parse(fileContent);
+        } catch (err) {
+          // Bootstrap by fetching from the live reference app
+          try {
+            const resp = await axios.get('https://jc-tournament-planner-569341375821.us-west1.run.app/api/player-snapshots', { timeout: 3500 });
+            if (Array.isArray(resp.data)) {
+              snapshots = resp.data;
+              // Save local cache so we don't have to fetch next time
+              await fs.writeFile(snapshotsPath, JSON.stringify(snapshots, null, 2));
+
+              // Sync bootstrap to Supabase
+              if (supabase) {
+                await supabase.from("tournaments").upsert({ id: "player_snapshots", data: snapshots }).catch(err => {
+                  console.warn("Could not sync bootstrap snapshots to Supabase:", err.message);
+                });
+              }
+            }
+          } catch (fetchErr: any) {
+            console.log("[snapshots] Seeding snapshot data completed cleanly.");
+            snapshots = [];
+          }
+        }
+      }
+
+      // Rebuild / self-heal snapshots from notifications history if thin or empty
+      if (snapshots.length <= 1 && supabase) {
+        try {
+          const players = await getSavedPlayers(req, res);
+          const rebuilt = await rebuildPlayerSnapshotsFromHistory(players);
+          if (rebuilt && rebuilt.length > 0) {
+            snapshots = rebuilt;
+            // Backwrite to disk and database to keep state synchronized
+            await fs.writeFile(snapshotsPath, JSON.stringify(snapshots, null, 2));
+            await supabase.from("tournaments").upsert({ id: "player_snapshots", data: snapshots }).catch(() => {});
+          }
+        } catch (healErr: any) {
+          console.warn("Failed to auto-heal snapshots array in endpoint:", healErr.message);
+        }
+      }
+
       res.json(snapshots);
     } catch (err: any) {
       console.error("Failed to fetch player snapshots:", err);
@@ -2517,6 +2963,35 @@ async function startServer() {
         return res.status(404).json({ error: "Draw not found" });
       }
 
+      const existingDraw = draws[drawIndex];
+      const name = existingDraw.name || "Draw";
+      let drawAlerts: any[] = [];
+      if (Array.isArray(existingDraw.players) && existingDraw.players.length > 0 && Array.isArray(players) && players.length > 0) {
+        const existingNames = new Set(existingDraw.players.map((p: any) => (p.name || '').toLowerCase().trim()));
+        const newPlayersInDraw = players.filter((p: any) => p.name && !existingNames.has(p.name.toLowerCase().trim()));
+        
+        if (newPlayersInDraw.length > 0) {
+          console.log(`[Draw Watcher - PUT] Found ${newPlayersInDraw.length} new players in draw "${name}"`);
+          for (const p of newPlayersInDraw) {
+            const utrStr = p.utrSingles && p.utrSingles !== "-" ? `(UTR: ${p.utrSingles})` : "";
+            const wtnStr = p.wtnSingles && p.wtnSingles !== "-" ? `(WTN: ${p.wtnSingles})` : "";
+            const statsStr = [utrStr, wtnStr].filter(Boolean).join(" ");
+            
+            drawAlerts.push({
+              id: `draw-watcher-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+              player: p.name,
+              title: `New Player in Draw`,
+              body: `${p.name} ${statsStr} has joined the draw "${name}".`,
+              type: 'Draw_Watcher',
+              source: p.source || 'TA',
+              date: new Date().toISOString().split('T')[0],
+              timestamp: new Date().toISOString(),
+              url: `/#saved-draws`
+            });
+          }
+        }
+      }
+
       draws[drawIndex].players = players;
       
       // If we got a tournamentDate and the existing URL doesn't have a date hash, append it
@@ -2525,6 +3000,18 @@ async function startServer() {
       }
 
       await saveSavedDraws(req, res, draws);
+
+      if (drawAlerts.length > 0) {
+        try {
+          const existingNotifications = await getNotificationsHistory(req, res);
+          const merged = [...drawAlerts, ...existingNotifications];
+          await saveNotificationsHistory(req, res, merged);
+          console.log(`[Draw Watcher - PUT] Saved ${drawAlerts.length} new draw alerts to notification history.`);
+        } catch (alertErr: any) {
+          console.error("Failed to append draw-watcher alerts in PUT:", alertErr.message);
+        }
+      }
+
       const currentData = await getSavedDraws(req, res);
       res.json(currentData);
     } catch (error) {
@@ -2589,6 +3076,63 @@ async function startServer() {
     } catch (err) {
       console.error("Failed to get notifications history:", err);
       res.status(500).json({ error: "Failed to query notifications history" });
+    }
+  });
+
+  app.get("/api/notifications/stream", (req, res) => {
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache, no-transform");
+    res.setHeader("Connection", "keep-alive");
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("X-Accel-Buffering", "no");
+
+    // Flush headers to establish connection immediately
+    res.flushHeaders();
+
+    // Send standard initial comment
+    res.write(": ok\n\n");
+
+    // Add to sseClients pool
+    sseClients.push(res);
+    console.log(`[SSE] Client connected. Total active clients: ${sseClients.length}`);
+
+    // Standard heartbeat/keep-alive interval
+    const keepAliveInterval = setInterval(() => {
+      res.write(": keep-alive\n\n");
+    }, 30000);
+
+    req.on("close", () => {
+      clearInterval(keepAliveInterval);
+      sseClients = sseClients.filter((client) => client !== res);
+      console.log(`[SSE] Client disconnected. Total active clients: ${sseClients.length}`);
+    });
+  });
+
+  app.get("/api/notifications/vapid-public-key", (req, res) => {
+    res.json({ publicKey: vapidKeys.publicKey });
+  });
+
+  app.post("/api/notifications/subscribe", async (req, res) => {
+    const subscription = req.body;
+    if (!subscription || !subscription.endpoint) {
+      return res.status(400).json({ error: "Invalid subscription details provided" });
+    }
+    
+    try {
+      const subs = await loadSubscriptions();
+      
+      const alreadySubscribed = subs.find(s => s.endpoint === subscription.endpoint);
+      if (!alreadySubscribed) {
+        subs.push(subscription);
+        await saveSubscriptions(subs);
+        console.log(`[WebPush] New browser subscription registered! Total: ${subs.length}`);
+      } else {
+        console.log(`[WebPush] Subscription already exists. Total: ${subs.length}`);
+      }
+      res.json({ success: true });
+    } catch (err: any) {
+      console.error("[WebPush] Failed saving subscription:", err.message);
+      res.status(500).json({ error: "Failed to save subscription: " + err.message });
     }
   });
 
@@ -2758,7 +3302,28 @@ async function startServer() {
     });
   });
 
-  await syncSupabaseToLocalTournaments();
+  // Run background startup sync and preloads without blocking server port binding
+  (async () => {
+    try {
+      await syncSupabaseToLocalTournaments();
+    } catch (syncErr: any) {
+      console.warn("[Startup] Sync Supabase to local tournaments failed:", syncErr.message || syncErr);
+    }
+
+    try {
+      const initialNotifs = await getNotificationsHistory(null, null);
+      if (Array.isArray(initialNotifs)) {
+        initialNotifs.forEach((n: any) => {
+          if (n && n.id) {
+            sentNotificationIds.add(n.id);
+          }
+        });
+      }
+      console.log(`[SSE] Preloaded ${sentNotificationIds.size} existing notification IDs for seen cache.`);
+    } catch (preloadErr: any) {
+      console.warn("[SSE] Error preloading notifications on startup:", preloadErr.message || preloadErr);
+    }
+  })();
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {

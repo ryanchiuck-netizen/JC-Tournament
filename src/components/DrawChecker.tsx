@@ -498,7 +498,12 @@ function SortablePlayerRow({ player, isDraggable }: SortablePlayerRowProps) {
   );
 }
 
-export function DrawChecker() {
+interface DrawCheckerProps {
+  savedDraws?: SavedDraw[];
+  onSavedDrawsChanged?: () => void;
+}
+
+export function DrawChecker({ savedDraws: propSavedDraws, onSavedDrawsChanged }: DrawCheckerProps = {}) {
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -508,14 +513,37 @@ export function DrawChecker() {
   const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'utrSingles', direction: 'desc' });
 
   // Saved Draws Section
-  const [savedDraws, setSavedDraws] = useState<SavedDraw[]>(() => {
+  const [localSavedDraws, setLocalSavedDraws] = useState<SavedDraw[]>(() => {
     try {
-      const saved = localStorage.getItem("jc_tennis_cached_draw_checker_saved_draws");
+      const saved = localStorage.getItem("jc_tennis_cached_draw_checker_saved_draws") || localStorage.getItem("jc_tennis_cached_saved_draws");
       return saved ? JSON.parse(saved) : [];
     } catch {
       return [];
     }
   });
+
+  const savedDraws = propSavedDraws !== undefined ? propSavedDraws : localSavedDraws;
+
+  const setSavedDraws = (drawsOrFn: SavedDraw[] | ((prev: SavedDraw[]) => SavedDraw[])) => {
+    let nextDraws: SavedDraw[];
+    if (typeof drawsOrFn === 'function') {
+      nextDraws = drawsOrFn(savedDraws);
+    } else {
+      nextDraws = drawsOrFn;
+    }
+    
+    setLocalSavedDraws(nextDraws);
+    try {
+      localStorage.setItem("jc_tennis_cached_draw_checker_saved_draws", JSON.stringify(nextDraws));
+      localStorage.setItem("jc_tennis_cached_saved_draws", JSON.stringify(nextDraws));
+    } catch (e) {
+      console.warn("localStorage write failed:", e);
+    }
+
+    if (onSavedDrawsChanged) {
+      onSavedDrawsChanged();
+    }
+  };
   const [region, setRegion] = useState<'AUS' | 'HKTA'>('AUS');
   const [drawSortOrder, setDrawSortOrder] = useState<'asc' | 'desc'>('asc');
   const [expandedDraws, setExpandedDraws] = useState<Set<string>>(new Set());

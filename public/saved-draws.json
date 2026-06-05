@@ -928,6 +928,99 @@
       "sort_order": 4
     },
     {
+      "id": "1780404535710fwyqs",
+      "name": "U12, U14, U16, &amp; Opens (Combined) - UTR Graded2026 JDS CBC Green Central West RMS - Nepean #2",
+      "url": "https://tournaments.tennis.com.au/sport/event.aspx?id=41BFA2C1-41D5-4893-A3ED-B0D42B4D8BF1&event=3#date=21%20Jun%202026",
+      "region": "AUS",
+      "players": [
+        {
+          "id": "sun4n8d",
+          "name": "Ayaan Ahmad\n\n            (66339601748)",
+          "rank": "-",
+          "points": "-",
+          "profileUrl": "https://tournaments.tennis.com.au/player-profile/F485588A-4968-42F0-A834-350B2826F481",
+          "utrSingles": "-",
+          "winLossYTD": "0:0",
+          "wtnSingles": "-",
+          "championships": "-",
+          "winLossCareer": "0:0"
+        },
+        {
+          "id": "4xnhu",
+          "name": "Cyril Best\n\n            (66333806483)",
+          "rank": "-",
+          "points": "18.00",
+          "profileUrl": "https://tournaments.tennis.com.au/player-profile/44F8AC0F-5F32-4488-8C24-C6A7E7A5F29D",
+          "utrSingles": "4.83",
+          "winLossYTD": "5:22",
+          "wtnSingles": "-",
+          "championships": "2025: 4\n2024: 3",
+          "winLossCareer": "89:94"
+        },
+        {
+          "id": "2td0f",
+          "name": "Wayne Bian\n\n            (66334006512)",
+          "rank": "-",
+          "points": "1.00",
+          "profileUrl": "https://tournaments.tennis.com.au/player-profile/7821D23F-35CF-4CCC-8FF2-4C1ABAF13236",
+          "utrSingles": "2.6",
+          "winLossYTD": "7:14",
+          "wtnSingles": "-",
+          "championships": "-",
+          "winLossCareer": "9:23"
+        },
+        {
+          "id": "5einb5",
+          "name": "Lucius Kanis MacRae\n\n            (66333970100)",
+          "rank": "-",
+          "points": "10.00",
+          "profileUrl": "https://tournaments.tennis.com.au/player-profile/C892A6B9-40A3-48F6-B827-90728D9C1BE5",
+          "utrSingles": "4.57",
+          "winLossYTD": "10:13",
+          "wtnSingles": "-",
+          "championships": "2026: 2\n2025: 4",
+          "winLossCareer": "33:45"
+        },
+        {
+          "id": "7tjw5d",
+          "name": "Tiberius Kanis MacRae\n\n            (66333970098)",
+          "rank": "-",
+          "points": "47.00",
+          "profileUrl": "https://tournaments.tennis.com.au/player-profile/C73F311F-3948-4293-9AE6-30135894B96E",
+          "utrSingles": "4",
+          "winLossYTD": "12:6",
+          "wtnSingles": "-",
+          "championships": "2026: 2\n2025: 9\n2024: 2",
+          "winLossCareer": "79:33"
+        },
+        {
+          "id": "el3b7",
+          "name": "Riley Nicholson\n\n            (66333808220)",
+          "rank": "-",
+          "points": "20.00",
+          "profileUrl": "https://tournaments.tennis.com.au/player-profile/72FDBD33-E38A-482D-A588-7E315E30DD4E",
+          "utrSingles": "3.50",
+          "winLossYTD": "18:12",
+          "wtnSingles": "-",
+          "championships": "2026: 4\n2025: 4",
+          "winLossCareer": "31:41"
+        },
+        {
+          "id": "tw13mj",
+          "name": "Marcus Ponce-De-Leon\n\n            (66333804583)",
+          "rank": "-",
+          "points": "48.00",
+          "profileUrl": "https://tournaments.tennis.com.au/player-profile/72747D02-197E-47FD-85CC-D80CDE2B874B",
+          "utrSingles": "3.71",
+          "winLossYTD": "22:23",
+          "wtnSingles": "-",
+          "championships": "2026: 4\n2025: 7",
+          "winLossCareer": "58:57"
+        }
+      ],
+      "sort_order": 5
+    },
+    {
       "id": "1780583634563l9jhnb",
       "name": "2026 J500 J125 CBC Green Rod Laver QLD Junior State Championships - BS U10 CS",
       "url": "https://tournaments.tennis.com.au/sport/event.aspx?id=0FC420EA-CF53-4599-B7BD-7BC88D8A7424&event=25#date=7%20-%2011%20Jul%202026",
@@ -1481,99 +1574,6 @@
           "wtnSingles": ".",
           "championships": "2025: 1",
           "winLossCareer": "17 / 21 (38)"
-        }
-      ],
-      "sort_order": 5
-    },
-    {
-      "id": "1780404535710fwyqs",
-      "name": "U12, U14, U16, &amp; Opens (Combined) - UTR Graded2026 JDS CBC Green Central West RMS - Nepean #2",
-      "url": "https://tournaments.tennis.com.au/sport/event.aspx?id=41BFA2C1-41D5-4893-A3ED-B0D42B4D8BF1&event=3#date=21%20Jun%202026",
-      "region": "AUS",
-      "players": [
-        {
-          "id": "sun4n8d",
-          "name": "Ayaan Ahmad\n\n            (66339601748)",
-          "rank": "-",
-          "points": "-",
-          "profileUrl": "https://tournaments.tennis.com.au/player-profile/F485588A-4968-42F0-A834-350B2826F481",
-          "utrSingles": "-",
-          "winLossYTD": "0:0",
-          "wtnSingles": "-",
-          "championships": "-",
-          "winLossCareer": "0:0"
-        },
-        {
-          "id": "4xnhu",
-          "name": "Cyril Best\n\n            (66333806483)",
-          "rank": "-",
-          "points": "18.00",
-          "profileUrl": "https://tournaments.tennis.com.au/player-profile/44F8AC0F-5F32-4488-8C24-C6A7E7A5F29D",
-          "utrSingles": "4.83",
-          "winLossYTD": "5:22",
-          "wtnSingles": "-",
-          "championships": "2025: 4\n2024: 3",
-          "winLossCareer": "89:94"
-        },
-        {
-          "id": "2td0f",
-          "name": "Wayne Bian\n\n            (66334006512)",
-          "rank": "-",
-          "points": "1.00",
-          "profileUrl": "https://tournaments.tennis.com.au/player-profile/7821D23F-35CF-4CCC-8FF2-4C1ABAF13236",
-          "utrSingles": "2.6",
-          "winLossYTD": "7:14",
-          "wtnSingles": "-",
-          "championships": "-",
-          "winLossCareer": "9:23"
-        },
-        {
-          "id": "5einb5",
-          "name": "Lucius Kanis MacRae\n\n            (66333970100)",
-          "rank": "-",
-          "points": "10.00",
-          "profileUrl": "https://tournaments.tennis.com.au/player-profile/C892A6B9-40A3-48F6-B827-90728D9C1BE5",
-          "utrSingles": "4.57",
-          "winLossYTD": "10:13",
-          "wtnSingles": "-",
-          "championships": "2026: 2\n2025: 4",
-          "winLossCareer": "33:45"
-        },
-        {
-          "id": "7tjw5d",
-          "name": "Tiberius Kanis MacRae\n\n            (66333970098)",
-          "rank": "-",
-          "points": "47.00",
-          "profileUrl": "https://tournaments.tennis.com.au/player-profile/C73F311F-3948-4293-9AE6-30135894B96E",
-          "utrSingles": "4",
-          "winLossYTD": "12:6",
-          "wtnSingles": "-",
-          "championships": "2026: 2\n2025: 9\n2024: 2",
-          "winLossCareer": "79:33"
-        },
-        {
-          "id": "el3b7",
-          "name": "Riley Nicholson\n\n            (66333808220)",
-          "rank": "-",
-          "points": "20.00",
-          "profileUrl": "https://tournaments.tennis.com.au/player-profile/72FDBD33-E38A-482D-A588-7E315E30DD4E",
-          "utrSingles": "3.50",
-          "winLossYTD": "18:12",
-          "wtnSingles": "-",
-          "championships": "2026: 4\n2025: 4",
-          "winLossCareer": "31:41"
-        },
-        {
-          "id": "tw13mj",
-          "name": "Marcus Ponce-De-Leon\n\n            (66333804583)",
-          "rank": "-",
-          "points": "48.00",
-          "profileUrl": "https://tournaments.tennis.com.au/player-profile/72747D02-197E-47FD-85CC-D80CDE2B874B",
-          "utrSingles": "3.71",
-          "winLossYTD": "22:23",
-          "wtnSingles": "-",
-          "championships": "2026: 4\n2025: 7",
-          "winLossCareer": "58:57"
         }
       ],
       "sort_order": 5
@@ -2198,7 +2198,37 @@
         }
       ],
       "sort_order": 6
+    },
+    {
+      "id": "178062770591385649",
+      "name": "2026 CBC Green Rod Laver State Championship - BS U10 CS",
+      "url": "https://tournaments.tennis.com.au/sport/draw.aspx?id=TRIGGER_TEST_DRAW_1780627705241#date=%20-%2006%20-%2005%202026",
+      "region": "AUS",
+      "players": [
+        {
+          "id": "pf-1",
+          "name": "Roger Federer",
+          "source": "TA",
+          "utrSingles": "16.1",
+          "wtnSingles": "1.0"
+        },
+        {
+          "id": "pn-2",
+          "name": "Rafael Nadal",
+          "source": "TA",
+          "utrSingles": "15.8",
+          "wtnSingles": "1.3"
+        },
+        {
+          "id": "psr-3",
+          "name": "Sam Ritchie",
+          "source": "TA",
+          "utrSingles": "12.3",
+          "wtnSingles": "8.1"
+        }
+      ],
+      "sort_order": 7
     }
   ],
-  "updatedAt": "2026-06-04T15:27:59.755Z"
+  "updatedAt": "2026-06-05T02:49:48.472Z"
 }
