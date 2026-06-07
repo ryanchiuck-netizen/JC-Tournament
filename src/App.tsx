@@ -752,6 +752,28 @@ export default function App() {
     XLSX.writeFile(wb, "Tournaments_2026.xlsx");
   };
 
+  const formatHKT = (dateSource: Date | string | null) => {
+    if (!dateSource) return "Never";
+    const dateObj = typeof dateSource === "string" ? new Date(dateSource) : dateSource;
+    if (isNaN(dateObj.getTime())) return "Never";
+    
+    const dateStr = dateObj.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      timeZone: "Asia/Hong_Kong"
+    }).replace(/ /g, "-");
+
+    const timeStr = dateObj.toLocaleTimeString("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+      timeZone: "Asia/Hong_Kong"
+    });
+
+    return `${dateStr} ${timeStr}`;
+  };
+
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100 font-sans selection:bg-blue-500/30">
       {/* Header */}
@@ -767,9 +789,23 @@ export default function App() {
                     <path d="M18 3.5a9 9 0 0 0 0 17"></path>
                   </svg>
                 </div>
-                <div>
-                  <h1 className="text-[17px] font-semibold tracking-tight leading-tight text-white">JC Tennis</h1>
-                  <p className="text-[11px] text-gray-400 font-medium uppercase tracking-wider">Tournament Planner</p>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4 gap-2">
+                  <div>
+                    <h1 className="text-[17px] font-semibold tracking-tight leading-tight text-white">JC Tennis</h1>
+                    <p className="text-[11px] text-gray-400 font-medium uppercase tracking-wider">Tournament Planner</p>
+                  </div>
+                  
+                  {/* Last Refresh Indicators */}
+                  <div className="flex sm:flex-col gap-x-3 gap-y-0.5 text-[9px] font-mono leading-none border-t sm:border-t-0 sm:border-l border-gray-800 pt-1.5 sm:pt-0 sm:pl-3 text-gray-500">
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0 select-none"></span>
+                      <span>Scrape: <b className="text-gray-300 font-semibold">{formatHKT(lastUpdated)}</b></span>
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0 select-none"></span>
+                      <span>Global: <b className="text-gray-300 font-semibold">{formatHKT(tournamentsForPlayersLastUpdated)}</b></span>
+                    </span>
+                  </div>
                 </div>
               </div>
               

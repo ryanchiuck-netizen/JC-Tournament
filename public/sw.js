@@ -1,4 +1,4 @@
-const CACHE_NAME = 'jc-tennis-v5';
+const CACHE_NAME = 'jc-tennis-v6';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -35,6 +35,7 @@ self.addEventListener('fetch', (event) => {
   
   // Always bypass Service Worker for API endpoints to ensure they reach the backend directly
   if (url.pathname.startsWith('/api')) {
+    event.respondWith(fetch(event.request));
     return;
   }
 

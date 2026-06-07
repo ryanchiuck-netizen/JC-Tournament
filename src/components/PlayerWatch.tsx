@@ -6,6 +6,7 @@ import { PlayerWatchResult } from "../types";
 
 export function PlayerWatch() {
   const [playerName, setPlayerName] = useState("");
+  const deferredPlayerName = React.useDeferredValue(playerName);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<PlayerWatchResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -25,9 +26,11 @@ export function PlayerWatch() {
   }, []);
 
   useEffect(() => {
-    if (playerName.trim().length >= 2) {
+    const query = deferredPlayerName.trim();
+    if (query.length >= 2) {
+      const lowercaseQuery = query.toLowerCase();
       const filtered = allPlayers
-        .filter(p => p.toLowerCase().includes(playerName.toLowerCase()))
+        .filter(p => p.toLowerCase().includes(lowercaseQuery))
         .slice(0, 10);
       setSuggestions(filtered);
       setShowSuggestions(filtered.length > 0);
@@ -35,7 +38,7 @@ export function PlayerWatch() {
       setSuggestions([]);
       setShowSuggestions(false);
     }
-  }, [playerName, allPlayers]);
+  }, [deferredPlayerName, allPlayers]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

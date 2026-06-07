@@ -37,7 +37,12 @@ export function getFullLink(link: string, source: "HK" | "AUS") {
 export async function searchPlayer(name: string): Promise<PlayerWatchResult> {
   const response = await fetch(`/api/player-watch?name=${encodeURIComponent(name)}`);
   if (!response.ok) {
-    throw new Error('Failed to search for player');
+    try {
+      const errData = await response.json();
+      throw new Error(errData.error || 'Failed to search for player');
+    } catch {
+      throw new Error('Failed to search for player');
+    }
   }
   try {
     return await response.json();

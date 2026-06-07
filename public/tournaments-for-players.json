@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-04T14:06:48.119Z",
+  "updatedAt": "2026-06-07T04:49:38.274Z",
   "tournaments": [
     {
       "tournament": {
@@ -40,10 +40,10 @@
             "source": "TA",
             "sort_order": 3,
             "utrSingles": "4.6",
-            "winLossYTD": "23:10",
+            "winLossYTD": "23:12",
             "wtnSingles": "-",
             "championships": "2026: 7\n2025: 10\n2024: 8",
-            "winLossCareer": "143:58"
+            "winLossCareer": "143:60"
           }
         }
       ]
@@ -79,10 +79,10 @@
             "source": "TA",
             "sort_order": 0,
             "utrSingles": "5.7",
-            "winLossYTD": "11:8",
+            "winLossYTD": "11:9",
             "wtnSingles": "-",
             "championships": "2026: 2\n2025: 3\n2024: 2",
-            "winLossCareer": "51:29"
+            "winLossCareer": "51:30"
           }
         },
         {
@@ -140,10 +140,10 @@
             "source": "TA",
             "sort_order": 2,
             "utrSingles": "4.7",
-            "winLossYTD": "24:9",
+            "winLossYTD": "24:10",
             "wtnSingles": "-",
             "championships": "2026: 3\n2025: 1\n2024: 2",
-            "winLossCareer": "55:62"
+            "winLossCareer": "55:63"
           }
         },
         {
@@ -188,10 +188,10 @@
             "source": "TA",
             "sort_order": 6,
             "utrSingles": "4",
-            "winLossYTD": "24:12",
+            "winLossYTD": "25:13",
             "wtnSingles": "-",
             "championships": "2026: 3\n2025: 3",
-            "winLossCareer": "50:31"
+            "winLossCareer": "51:32"
           }
         },
         {
@@ -236,10 +236,10 @@
             "source": "TA",
             "sort_order": 8,
             "utrSingles": "3.8",
-            "winLossYTD": "13:7",
+            "winLossYTD": "14:8",
             "wtnSingles": "-",
             "championships": "2025: 3\n2024: 4",
-            "winLossCareer": "85:46"
+            "winLossCareer": "86:47"
           }
         },
         {
@@ -306,10 +306,10 @@
             "source": "TA",
             "sort_order": 16,
             "utrSingles": "3.7",
-            "winLossYTD": "28:26",
+            "winLossYTD": "31:26",
             "wtnSingles": "-",
             "championships": "2026: 3\n2025: 8",
-            "winLossCareer": "85:111"
+            "winLossCareer": "88:111"
           }
         },
         {
@@ -332,10 +332,10 @@
             "source": "TA",
             "sort_order": 21,
             "utrSingles": "2.9",
-            "winLossYTD": "15:23",
+            "winLossYTD": "17:24",
             "wtnSingles": "-",
             "championships": "2025: 2",
-            "winLossCareer": "29:48"
+            "winLossCareer": "31:49"
           }
         },
         {
@@ -380,10 +380,10 @@
             "source": "TA",
             "sort_order": 23,
             "utrSingles": "2.3",
-            "winLossYTD": "13:12",
+            "winLossYTD": "13:13",
             "wtnSingles": "-",
             "championships": "2025: 1",
-            "winLossCareer": "31:37"
+            "winLossCareer": "31:38"
           }
         },
         {
@@ -516,10 +516,10 @@
             "source": "TA",
             "sort_order": 2,
             "utrSingles": "4.7",
-            "winLossYTD": "24:9",
+            "winLossYTD": "24:10",
             "wtnSingles": "-",
             "championships": "2026: 3\n2025: 1\n2024: 2",
-            "winLossCareer": "55:62"
+            "winLossCareer": "55:63"
           }
         },
         {
@@ -582,10 +582,10 @@
             "source": "TA",
             "sort_order": 8,
             "utrSingles": "3.8",
-            "winLossYTD": "13:7",
+            "winLossYTD": "14:8",
             "wtnSingles": "-",
             "championships": "2025: 3\n2024: 4",
-            "winLossCareer": "85:46"
+            "winLossCareer": "86:47"
           }
         },
         {
@@ -714,10 +714,10 @@
             "source": "TA",
             "sort_order": 16,
             "utrSingles": "3.7",
-            "winLossYTD": "28:26",
+            "winLossYTD": "31:26",
             "wtnSingles": "-",
             "championships": "2026: 3\n2025: 8",
-            "winLossCareer": "85:111"
+            "winLossCareer": "88:111"
           }
         },
         {
@@ -800,7 +800,7 @@
             "rank": "-",
             "points": "-",
             "source": "TA",
-            "sort_order": 48,
+            "sort_order": 28,
             "utrSingles": "2",
             "winLossYTD": "5:24",
             "wtnSingles": "-",
@@ -879,7 +879,7 @@
             "rank": "-",
             "points": "-",
             "source": "TA",
-            "sort_order": 48,
+            "sort_order": 28,
             "utrSingles": "2",
             "winLossYTD": "5:24",
             "wtnSingles": "-",
@@ -971,10 +971,10 @@
             "source": "TA",
             "sort_order": 3,
             "utrSingles": "4.6",
-            "winLossYTD": "23:10",
+            "winLossYTD": "23:12",
             "wtnSingles": "-",
             "championships": "2026: 7\n2025: 10\n2024: 8",
-            "winLossCareer": "143:58"
+            "winLossCareer": "143:60"
           }
         }
       ]

@@ -591,6 +591,8 @@ export function PlayerScreen({
   const [historyPlayerFilter, setHistoryPlayerFilter] = useState<string>("");
   const [yesterdaySnapshot, setYesterdaySnapshot] = useState<any>(null);
 
+  const justTriggeredRef = React.useRef(false);
+
   // Poll for background global refresh status
   useEffect(() => {
     let intervalId: any = null;
@@ -602,24 +604,32 @@ export function PlayerScreen({
           const data = await res.json();
           if (data.inProgress) {
             setIsRefreshingAll(true);
+            justTriggeredRef.current = false; // Registered as running on server, transition out of trigger state
             if (!intervalId) {
               intervalId = setInterval(checkRefreshStatus, 3000);
             }
           } else {
             if (isRefreshingAll) {
-              const resPlayers = await fetch('/api/saved-players');
-              if (resPlayers.ok) {
-                const dataPlayers = await resPlayers.json();
-                setPlayers(dataPlayers);
+              if (!justTriggeredRef.current) {
+                const resPlayers = await fetch('/api/saved-players');
+                if (resPlayers.ok) {
+                  const dataPlayers = await resPlayers.json();
+                  setPlayers(dataPlayers);
+                }
+                if (reloadTournamentsCache) {
+                  reloadTournamentsCache();
+                }
+                setIsRefreshingAll(false);
+                if (intervalId) {
+                  clearInterval(intervalId);
+                  intervalId = null;
+                }
               }
-              if (reloadTournamentsCache) {
-                reloadTournamentsCache();
+            } else {
+              if (intervalId) {
+                clearInterval(intervalId);
+                intervalId = null;
               }
-              setIsRefreshingAll(false);
-            }
-            if (intervalId) {
-              clearInterval(intervalId);
-              intervalId = null;
             }
           }
         }
@@ -997,13 +1007,18 @@ export function PlayerScreen({
             onClick={async () => {
               if (!isRefreshingAll) {
                 setIsRefreshingAll(true);
+                justTriggeredRef.current = true;
+                // Auto-clear guard flag after 5 seconds
+                const timerId = setTimeout(() => {
+                  justTriggeredRef.current = false;
+                }, 5000);
                 try {
                   await fetch("/api/admin/refresh-all", { method: "POST" });
-                  // We do NOT fetch players or deactivate loading here.
-                  // The polling useEffect handles status checks and updates the UI when the background scraper completes.
                 } catch (err) {
                   console.error("Failed to trigger refresh", err);
                   setIsRefreshingAll(false);
+                  justTriggeredRef.current = false;
+                  clearTimeout(timerId);
                 }
               }
             }}
