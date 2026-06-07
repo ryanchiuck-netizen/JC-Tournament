@@ -1638,11 +1638,11 @@ export function PlayerScreen({
           <p className="text-sm text-red-400 mb-4 -mt-4">{error}</p>
         )}
 
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-          <div className="flex flex-wrap gap-2">
+        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 mb-4">
+          <div className="flex overflow-x-auto pb-2 -mb-2 scrollbar-hide gap-2 min-w-0">
             <button
               onClick={() => setActiveTab('TA')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap shrink-0 ${
                 activeTab === 'TA'
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white'
@@ -1652,7 +1652,7 @@ export function PlayerScreen({
             </button>
             <button
               onClick={() => setActiveTab('HKTA')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap shrink-0 ${
                 activeTab === 'HKTA'
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white'
@@ -1662,35 +1662,35 @@ export function PlayerScreen({
             </button>
           </div>
 
-          <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex overflow-x-auto pb-2 -mb-2 scrollbar-hide gap-3 items-center min-w-0">
             <button
               onClick={() => setShowAllPlayers(!showAllPlayers)}
-              className={`text-xs flex items-center gap-2.5 transition-all px-3 py-2 rounded-lg border ${
+              className={`text-xs flex items-center gap-2.5 transition-all px-3 py-2 rounded-lg border shrink-0 ${
                 showAllPlayers
                   ? "bg-blue-500/10 text-blue-400 border-blue-500/40 shadow-sm shadow-blue-500/5"
                   : "bg-gray-800/40 text-gray-400 hover:text-gray-200 border-gray-700/50 hover:bg-gray-800"
               }`}
               title="Show all players without grouping"
             >
-              <div className={`relative w-8 h-4.5 rounded-full transition-colors duration-200 ${showAllPlayers ? 'bg-blue-500' : 'bg-gray-700'}`}>
+              <div className={`relative w-8 h-4.5 rounded-full transition-colors duration-200 shrink-0 ${showAllPlayers ? 'bg-blue-500' : 'bg-gray-700'}`}>
                 <div className={`absolute top-0.5 left-0.5 w-3.5 h-3.5 rounded-full bg-white shadow-sm transition-transform duration-200 ${showAllPlayers ? 'transform translate-x-3.5' : ''}`} />
               </div>
-              <span className="font-semibold select-none">Show All</span>
+              <span className="font-semibold select-none whitespace-nowrap">Show All</span>
             </button>
 
             <button
               onClick={() => setShowOnlyChanges(!showOnlyChanges)}
-              className={`text-xs flex items-center gap-2.5 transition-all px-3 py-2 rounded-lg border ${
+              className={`text-xs flex items-center gap-2.5 transition-all px-3 py-2 rounded-lg border shrink-0 ${
                 showOnlyChanges
                   ? "bg-blue-500/10 text-blue-400 border-blue-500/40 shadow-sm shadow-blue-500/5"
                   : "bg-gray-800/40 text-gray-400 hover:text-gray-200 border-gray-700/50 hover:bg-gray-800"
               }`}
               title="Show only players with state/statistic changes today"
             >
-              <div className={`relative w-8 h-4.5 rounded-full transition-colors duration-200 ${showOnlyChanges ? 'bg-blue-500' : 'bg-gray-700'}`}>
+              <div className={`relative w-8 h-4.5 rounded-full transition-colors duration-200 shrink-0 ${showOnlyChanges ? 'bg-blue-500' : 'bg-gray-700'}`}>
                 <div className={`absolute top-0.5 left-0.5 w-3.5 h-3.5 rounded-full bg-white shadow-sm transition-transform duration-200 ${showOnlyChanges ? 'transform translate-x-3.5' : ''}`} />
               </div>
-              <span className="font-semibold select-none">Only Changes Today</span>
+              <span className="font-semibold select-none whitespace-nowrap">Only Changes Today</span>
             </button>
 
             <button
@@ -1713,7 +1713,7 @@ export function PlayerScreen({
                 }
               }}
               disabled={isRefreshingAll}
-              className={`text-xs flex items-center gap-1.5 transition-colors px-3 py-2 rounded-lg border ${
+              className={`text-xs flex items-center gap-1.5 transition-colors px-3 py-2 rounded-lg border shrink-0 ${
                 isRefreshingAll
                   ? "bg-blue-900/20 text-blue-400 border-blue-800/50 cursor-not-allowed"
                   : "bg-gray-800/50 text-gray-400 hover:text-blue-400 border-gray-700/50"
