@@ -355,18 +355,162 @@ function HistoryView({
     });
   };
 
+  const changedDates = useMemo(() => {
+    const dates = new Set<string>();
+    const query = searchPlayer.trim().toLowerCase();
+    if (!query || snapshots.length < 2) return dates;
+
+    for (let i = 0; i < snapshots.length - 1; i++) {
+      const s = snapshots[i];
+      const sPrev = snapshots[i + 1];
+
+      const players = (selectedRegion === "TA" ? s.taPlayers : s.hktaPlayers) || [];
+      const playersPrev = (selectedRegion === "TA" ? sPrev.taPlayers : sPrev.hktaPlayers) || [];
+
+      // Find players matching search query
+      const matchingPlayers = players.filter((p: any) => p?.name?.toLowerCase().includes(query));
+      if (matchingPlayers.length === 0) continue;
+
+      let snapHasChange = false;
+      for (const p of matchingPlayers) {
+        const pPrev = playersPrev.find((pP: any) => pP?.name?.toLowerCase() === p?.name?.toLowerCase());
+        if (!pPrev) continue;
+
+        const isStatChanged = (current: any, previous: any) => {
+          const safeCurrent = (current === undefined || current === null) ? '-' : String(current).trim();
+          const safePrevious = (previous === undefined || previous === null) ? '-' : String(previous).trim();
+          return (safePrevious && safePrevious !== '-' && safePrevious !== safeCurrent && safePrevious !== '.');
+        };
+
+        const hasChange = selectedRegion === "TA" ? (
+          isStatChanged(p.utrSingles || p.utr_singles, pPrev.utrSingles || pPrev.utr_singles) ||
+          isStatChanged(p.wtnSingles || p.wtn_singles, pPrev.wtnSingles || pPrev.wtn_singles) ||
+          isStatChanged(p.points, pPrev.points) ||
+          isStatChanged(p.winLossYTD || p.win_loss_ytd, pPrev.winLossYTD || pPrev.win_loss_ytd) ||
+          isStatChanged(p.winLossCareer || p.win_loss_career, pPrev.winLossCareer || pPrev.win_loss_career) ||
+          isStatChanged(p.championships, pPrev.championships)
+        ) : (
+          isStatChanged(p.rank, pPrev.rank) ||
+          isStatChanged(p.points, pPrev.points) ||
+          isStatChanged(p.winLossYTD || p.win_loss_ytd, pPrev.winLossYTD || pPrev.win_loss_ytd) ||
+          isStatChanged(p.winLossCareer || p.win_loss_career, pPrev.winLossCareer || pPrev.win_loss_career) ||
+          isStatChanged(p.championships, pPrev.championships)
+        );
+
+        if (hasChange) {
+          snapHasChange = true;
+          break;
+        }
+      }
+
+      if (snapHasChange) {
+        dates.add(s.date);
+      }
+    }
+
+    return dates;
+  }, [snapshots, searchPlayer, selectedRegion]);
+
+  const dayBeforeSnapshot = useMemo(() => {
+    if (!selectedSnapshot || snapshots.length === 0) return null;
+    const currentIndex = snapshots.findIndex(s => s.date === selectedSnapshot.date);
+    if (currentIndex !== -1 && currentIndex + 1 < snapshots.length) {
+      return snapshots[currentIndex + 1];
+    }
+    return null;
+  }, [selectedSnapshot, snapshots]);
+
   const currentPlayers = useMemo(() => {
-    if (!selectedSnapshot) return [];
-    const playersList = selectedRegion === "TA" ? selectedSnapshot.taPlayers : selectedSnapshot.hktaPlayers;
-    if (!playersList) return [];
-    
+    // Filter the saved players from the screen's roster according to region
+    const filteredReg = savedPlayers.filter(p => {
+      if (selectedRegion === "TA") {
+        return p.source === "TA" || p.source === "Tennis Australia" || !p.source;
+      } else {
+        return p.source === "HKTA" || p.source === "HK";
+      }
+    });
+
+    const snapshotPlayersList = selectedSnapshot 
+      ? (selectedRegion === "TA" ? selectedSnapshot.taPlayers : selectedSnapshot.hktaPlayers) || []
+      : [];
+
+    const dayBeforePlayersList = dayBeforeSnapshot
+      ? (selectedRegion === "TA" ? dayBeforeSnapshot.taPlayers : dayBeforeSnapshot.hktaPlayers) || []
+      : [];
+
+    const mapped = filteredReg.map(player => {
+      const snapData = snapshotPlayersList.find((sp: any) => sp.name.toLowerCase() === player.name.toLowerCase());
+      const prevData = dayBeforePlayersList.find((sp: any) => sp.name.toLowerCase() === player.name.toLowerCase());
+
+      return {
+        ...player,
+        utrSingles: snapData ? (snapData.utrSingles || snapData.utr_singles || '-') : '-',
+        wtnSingles: snapData ? (snapData.wtnSingles || snapData.wtn_singles || '-') : '-',
+        rank: snapData ? (snapData.rank || '-') : '-',
+        points: snapData ? (snapData.points || '-') : '-',
+        winLossYTD: snapData ? (snapData.winLossYTD || snapData.win_loss_ytd || '-') : '-',
+        winLossCareer: snapData ? (snapData.winLossCareer || snapData.win_loss_career || '-') : '-',
+        championships: snapData ? (snapData.championships || '-') : '-',
+        dayBeforeData: prevData ? {
+          utrSingles: prevData.utrSingles || prevData.utr_singles || '-',
+          wtnSingles: prevData.wtnSingles || prevData.wtn_singles || '-',
+          rank: prevData.rank || '-',
+          points: prevData.points || '-',
+          winLossYTD: prevData.winLossYTD || prevData.win_loss_ytd || '-',
+          winLossCareer: prevData.winLossCareer || prevData.win_loss_career || '-',
+          championships: prevData.championships || '-'
+        } : null
+      };
+    });
+
+    const sorted = [...mapped].sort((a, b) => {
+      if (selectedRegion === "TA") {
+        const parseUTR = (val: any) => {
+          if (!val || val === '-') return -Infinity;
+          const num = parseFloat(val.toString().replace(/[^\d.-]/g, ''));
+          return isNaN(num) ? -Infinity : num;
+        };
+        const aVal = parseUTR(a.utrSingles);
+        const bVal = parseUTR(b.utrSingles);
+        if (aVal !== bVal) {
+          return bVal - aVal;
+        }
+        return a.name.localeCompare(b.name);
+      } else {
+        const parseRank = (val: any) => {
+          if (!val || val === '-') return Infinity;
+          const num = parseFloat(val.toString().replace(/[^\d.-]/g, ''));
+          return isNaN(num) ? Infinity : num;
+        };
+        const aVal = parseRank(a.rank);
+        const bVal = parseRank(b.rank);
+        if (aVal !== bVal) {
+          return aVal - bVal;
+        }
+        return a.name.localeCompare(b.name);
+      }
+    });
+
     if (searchPlayer.trim() !== "") {
-      return playersList.filter((p: any) => 
+      return sorted.filter((p: any) => 
         p.name.toLowerCase().includes(searchPlayer.toLowerCase())
       );
     }
-    return playersList;
-  }, [selectedSnapshot, selectedRegion, searchPlayer]);
+    return sorted;
+  }, [savedPlayers, selectedSnapshot, dayBeforeSnapshot, selectedRegion, searchPlayer]);
+
+  const renderStat = (current: string | undefined, previous: string | undefined) => {
+    const safeCurrent = current || '-';
+    if (previous && previous !== '-' && previous !== safeCurrent && previous !== '.') {
+      return (
+        <div className="flex flex-col items-center justify-center -gap-0.5 min-h-[3.5rem] py-1">
+          <span className="text-[10px] text-red-500 line-through opacity-70 mb-0.5 whitespace-pre-line leading-tight">{previous}</span>
+          <span className="text-yellow-400 font-bold whitespace-pre-line leading-tight">{safeCurrent}</span>
+        </div>
+      );
+    }
+    return <div className="whitespace-pre-line py-1 min-h-[3.5rem] flex items-center justify-center">{safeCurrent}</div>;
+  };
 
   return (
     <div className="space-y-6">
@@ -436,13 +580,20 @@ function HistoryView({
                   const found = snapshots.find(s => s.date === e.target.value);
                   if (found) setSelectedSnapshot(found);
                 }}
-                className="block w-full px-3 py-2.5 bg-gray-900 border border-gray-800 rounded-xl text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all appearance-none pr-10"
+                className={`block w-full px-3 py-2.5 bg-gray-900 border rounded-xl text-sm font-semibold transition-all appearance-none pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  changedDates.has(selectedSnapshot?.date)
+                    ? "border-yellow-500 text-yellow-400 font-bold"
+                    : "border-gray-800 text-white"
+                }`}
               >
-                {snapshots.map((s) => (
-                  <option key={s.date} value={s.date}>
-                    {formatDateHeader(s.date)} ({new Date(s.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})
-                  </option>
-                ))}
+                {snapshots.map((s) => {
+                  const hasChange = changedDates.has(s.date);
+                  return (
+                    <option key={s.date} value={s.date} className={hasChange ? "text-yellow-400 bg-gray-950 font-bold" : ""}>
+                      {formatDateHeader(s.date)}{hasChange ? " ★" : ""} ({new Date(s.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})
+                    </option>
+                  );
+                })}
               </select>
               <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
                 <ChevronDown className="w-4 h-4" />
@@ -454,24 +605,35 @@ function HistoryView({
           <div className="hidden lg:flex w-full lg:w-60 bg-gray-950 border border-gray-800 rounded-2xl p-4 flex-col h-full overflow-hidden shrink-0">
             <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Select Date</h3>
             <div className="flex-1 overflow-y-auto space-y-1.5 pr-1 custom-scrollbar w-full">
-              {snapshots.map((s) => (
-                <button
-                  key={s.date}
-                  onClick={() => setSelectedSnapshot(s)}
-                  className={`w-full text-left px-3 py-2 rounded-xl text-sm font-medium transition-all ${
-                    selectedSnapshot?.date === s.date
-                      ? "bg-blue-600 text-white shadow-lg shadow-blue-600/10"
-                      : "text-gray-400 hover:bg-gray-900 hover:text-gray-200"
-                  }`}
-                >
-                  <span className="block font-semibold">{formatDateHeader(s.date)}</span>
-                  <span className={`text-[10px] block mt-0.5 font-mono ${
-                    selectedSnapshot?.date === s.date ? "text-blue-200" : "text-gray-500"
-                  }`}>
-                    {new Date(s.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </span>
-                </button>
-              ))}
+              {snapshots.map((s) => {
+                const isSelected = selectedSnapshot?.date === s.date;
+                const hasChange = changedDates.has(s.date);
+                return (
+                  <button
+                    key={s.date}
+                    onClick={() => setSelectedSnapshot(s)}
+                    className={`w-full text-left px-3 py-2 rounded-xl text-sm font-medium transition-all border ${
+                      isSelected
+                        ? "bg-blue-600 text-white shadow-lg shadow-blue-600/10 border-blue-600"
+                        : hasChange
+                        ? "bg-yellow-500/15 text-yellow-400 border-yellow-500/30 font-semibold"
+                        : "text-gray-400 hover:bg-gray-900 hover:text-gray-200 border-transparent"
+                    }`}
+                  >
+                    <span className="block font-semibold flex items-center justify-between">
+                      <span>{formatDateHeader(s.date)}</span>
+                      {hasChange && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-yellow-400"></span>
+                      )}
+                    </span>
+                    <span className={`text-[10px] block mt-0.5 font-mono ${
+                      isSelected ? "text-blue-200" : hasChange ? "text-yellow-500/80" : "text-gray-500"
+                    }`}>
+                      {new Date(s.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -533,15 +695,25 @@ function HistoryView({
                     >
                       <td className="px-6 py-3.5 font-medium text-white">{p.name}</td>
                       {selectedRegion === "TA" ? (
-                        <td className="px-6 py-3.5 text-center font-bold text-blue-400">{p.utrSingles || p.utr_singles || '-'}</td>
+                        <td className="px-6 py-4 text-center text-gray-400">
+                          {renderStat(p.utrSingles, p.dayBeforeData?.utrSingles)}
+                        </td>
                       ) : (
-                        <td className="px-6 py-3.5 text-center font-bold text-amber-500">{p.rank || '-'}</td>
+                        <td className="px-6 py-4 text-center text-gray-400">
+                          {renderStat(p.rank, p.dayBeforeData?.rank)}
+                        </td>
                       )}
-                      <td className="px-6 py-3.5 text-center text-gray-300 font-medium">{p.points || '-'}</td>
-                      <td className="px-6 py-3.5 text-center text-gray-300 font-mono text-xs">{p.winLossYTD || p.win_loss_ytd || '-'}</td>
-                      <td className="px-6 py-3.5 text-center text-gray-300 font-mono text-xs">{p.winLossCareer || p.win_loss_career || '-'}</td>
-                      <td className="px-6 py-3.5 text-center text-xs text-gray-400 font-normal whitespace-pre-line max-w-[170px] truncate-championships hover:whitespace-pre-line hover:overflow-visible hover:max-w-none transition-all">
-                        {p.championships || '-'}
+                      <td className="px-6 py-4 text-center text-gray-400">
+                        {renderStat(p.points, p.dayBeforeData?.points)}
+                      </td>
+                      <td className="px-6 py-4 text-center text-gray-400 font-mono text-xs">
+                        {renderStat(p.winLossYTD, p.dayBeforeData?.winLossYTD)}
+                      </td>
+                      <td className="px-6 py-4 text-center text-gray-400 font-mono text-xs">
+                        {renderStat(p.winLossCareer, p.dayBeforeData?.winLossCareer)}
+                      </td>
+                      <td className="px-6 py-4 text-center text-xs text-gray-400 font-normal whitespace-pre-line max-w-[170px] truncate-championships hover:whitespace-pre-line hover:overflow-visible hover:max-w-none transition-all">
+                        {renderStat(p.championships, p.dayBeforeData?.championships)}
                       </td>
                     </tr>
                   ))}
@@ -590,6 +762,21 @@ export function PlayerScreen({
   const [showHistory, setShowHistory] = useState(false);
   const [historyPlayerFilter, setHistoryPlayerFilter] = useState<string>("");
   const [yesterdaySnapshot, setYesterdaySnapshot] = useState<any>(null);
+  const [showOnlyChanges, setShowOnlyChanges] = useState(false);
+
+  // Listen to exterior navigation requests to swap regional subtab
+  useEffect(() => {
+    const handleSetRegion = (e: any) => {
+      const desiredRegion = e.detail;
+      if (desiredRegion === 'TA' || desiredRegion === 'HKTA') {
+        setActiveTab(desiredRegion);
+      }
+    };
+    window.addEventListener('player-screen-set-region' as any, handleSetRegion);
+    return () => {
+      window.removeEventListener('player-screen-set-region' as any, handleSetRegion);
+    };
+  }, []);
 
   const justTriggeredRef = React.useRef(false);
 
@@ -834,7 +1021,46 @@ export function PlayerScreen({
     }
   };
 
-  const filteredPlayers = players.filter(p => p.source === activeTab);
+  const hasStatChanged = (currentVal: any, previousVal: any) => {
+    const safeCurrent = currentVal === undefined || currentVal === null ? '-' : String(currentVal).trim();
+    const safePrevious = previousVal === undefined || previousVal === null ? '-' : String(previousVal).trim();
+    return (safePrevious && safePrevious !== '-' && safePrevious !== safeCurrent && safePrevious !== '.');
+  };
+
+  const hasPlayerChangesToday = (player: SavedPlayer) => {
+    if (!yesterdaySnapshot) return false;
+    const previousList = activeTab === 'TA' ? yesterdaySnapshot.taPlayers : yesterdaySnapshot.hktaPlayers;
+    if (!previousList) return false;
+    
+    let prev = previousList.find((p: any) => p.name === player.name);
+    if (!prev) {
+      prev = previousList.find((p: any) => p.name.toLowerCase() === player.name.toLowerCase());
+    }
+    if (!prev) return false;
+
+    if (activeTab === 'TA') {
+      return (
+        hasStatChanged(player.utrSingles || (player as any).utr_singles, prev.utrSingles || prev.utr_singles) ||
+        hasStatChanged(player.points, prev.points) ||
+        hasStatChanged(player.winLossYTD || (player as any).win_loss_ytd, prev.winLossYTD || prev.win_loss_ytd) ||
+        hasStatChanged(player.winLossCareer || (player as any).win_loss_career, prev.winLossCareer || prev.win_loss_career) ||
+        hasStatChanged(player.championships, prev.championships)
+      );
+    } else {
+      return (
+        hasStatChanged(player.wtnSingles || (player as any).wtn_singles, prev.wtnSingles || prev.wtn_singles) ||
+        hasStatChanged(player.rank, prev.rank) ||
+        hasStatChanged(player.points, prev.points) ||
+        hasStatChanged(player.winLossYTD || (player as any).win_loss_ytd, prev.winLossYTD || prev.win_loss_ytd) ||
+        hasStatChanged(player.winLossCareer || (player as any).win_loss_career, prev.winLossCareer || prev.win_loss_career) ||
+        hasStatChanged(player.championships, prev.championships)
+      );
+    }
+  };
+
+  const filteredPlayers = players
+    .filter(p => p.source === activeTab)
+    .filter(p => !showOnlyChanges || hasPlayerChangesToday(p));
 
   const sortedPlayers = useMemo(() => {
     if (sortField === 'custom') return filteredPlayers;
@@ -979,7 +1205,7 @@ export function PlayerScreen({
           <p className="text-sm text-red-400 mb-4 -mt-4">{error}</p>
         )}
 
-        <div className="flex items-center justify-between gap-4 mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setActiveTab('TA')}
@@ -1003,35 +1229,52 @@ export function PlayerScreen({
             </button>
           </div>
 
-          <button
-            onClick={async () => {
-              if (!isRefreshingAll) {
-                setIsRefreshingAll(true);
-                justTriggeredRef.current = true;
-                // Auto-clear guard flag after 5 seconds
-                const timerId = setTimeout(() => {
-                  justTriggeredRef.current = false;
-                }, 5000);
-                try {
-                  await fetch("/api/admin/refresh-all", { method: "POST" });
-                } catch (err) {
-                  console.error("Failed to trigger refresh", err);
-                  setIsRefreshingAll(false);
-                  justTriggeredRef.current = false;
-                  clearTimeout(timerId);
+          <div className="flex items-center gap-3 flex-wrap">
+            <button
+              onClick={() => setShowOnlyChanges(!showOnlyChanges)}
+              className={`text-xs flex items-center gap-2.5 transition-all px-3 py-2 rounded-lg border ${
+                showOnlyChanges
+                  ? "bg-blue-500/10 text-blue-400 border-blue-500/40 shadow-sm shadow-blue-500/5"
+                  : "bg-gray-800/40 text-gray-400 hover:text-gray-200 border-gray-700/50 hover:bg-gray-800"
+              }`}
+              title="Show only players with state/statistic changes today"
+            >
+              <div className={`relative w-8 h-4.5 rounded-full transition-colors duration-200 ${showOnlyChanges ? 'bg-blue-500' : 'bg-gray-700'}`}>
+                <div className={`absolute top-0.5 left-0.5 w-3.5 h-3.5 rounded-full bg-white shadow-sm transition-transform duration-200 ${showOnlyChanges ? 'transform translate-x-3.5' : ''}`} />
+              </div>
+              <span className="font-semibold select-none">Only Changes Today</span>
+            </button>
+
+            <button
+              onClick={async () => {
+                if (!isRefreshingAll) {
+                  setIsRefreshingAll(true);
+                  justTriggeredRef.current = true;
+                  // Auto-clear guard flag after 5 seconds
+                  const timerId = setTimeout(() => {
+                    justTriggeredRef.current = false;
+                  }, 5000);
+                  try {
+                    await fetch("/api/admin/refresh-all", { method: "POST" });
+                  } catch (err) {
+                    console.error("Failed to trigger refresh", err);
+                    setIsRefreshingAll(false);
+                    justTriggeredRef.current = false;
+                    clearTimeout(timerId);
+                  }
                 }
-              }
-            }}
-            disabled={isRefreshingAll}
-            className={`text-xs flex items-center gap-1.5 transition-colors px-3 py-2 rounded-lg border ${
-              isRefreshingAll
-                ? "bg-blue-900/20 text-blue-400 border-blue-800/50 cursor-not-allowed"
-                : "bg-gray-800/50 text-gray-400 hover:text-blue-400 border-gray-700/50"
-            }`}
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshingAll ? "animate-spin" : ""}`} />
-            {isRefreshingAll ? "Refreshing..." : "Refresh All"}
-          </button>
+              }}
+              disabled={isRefreshingAll}
+              className={`text-xs flex items-center gap-1.5 transition-colors px-3 py-2 rounded-lg border ${
+                isRefreshingAll
+                  ? "bg-blue-900/20 text-blue-400 border-blue-800/50 cursor-not-allowed"
+                  : "bg-gray-800/50 text-gray-400 hover:text-blue-400 border-gray-700/50"
+              }`}
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshingAll ? "animate-spin" : ""}`} />
+              {isRefreshingAll ? "Refreshing..." : "Refresh All"}
+            </button>
+          </div>
         </div>
 
         <div className="bg-gray-950 border border-gray-800 rounded-xl overflow-hidden shadow-inner">

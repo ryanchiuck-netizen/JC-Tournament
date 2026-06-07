@@ -175,6 +175,66 @@ export default function App() {
     }
   }, []);
 
+  // Synchronize URL hash with active tabs and sub tabs
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const handleHashRouting = () => {
+      const hash = window.location.hash;
+      if (!hash) return;
+
+      if (hash === "#player-screen-hkta") {
+        setActiveTab("player-screen");
+        // Dispatch custom event to let PlayerScreen set subtab
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent("player-screen-set-region", { detail: "HKTA" }));
+        }, 80);
+      } else if (hash === "#player-screen-ta") {
+        setActiveTab("player-screen");
+        // Dispatch custom event to let PlayerScreen set subtab
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent("player-screen-set-region", { detail: "TA" }));
+        }, 80);
+      } else if (hash === "#draw-checker") {
+        setActiveTab("draw-checker");
+      } else if (hash === "#tournament-screen") {
+        setActiveTab("tournament-screen");
+      } else if (hash === "#alerts") {
+        setActiveTab("alerts");
+      }
+    };
+
+    window.addEventListener("hashchange", handleHashRouting);
+    // Trigger on startup (with a slight delay to allow components to mount)
+    const initTimeout = setTimeout(handleHashRouting, 350);
+
+    return () => {
+      window.removeEventListener("hashchange", handleHashRouting);
+      clearTimeout(initTimeout);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const handleNavigateApp = (e: any) => {
+      const { tab, region } = e.detail || {};
+      if (tab) {
+        setActiveTab(tab);
+        if (region) {
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent("player-screen-set-region", { detail: region }));
+          }, 80);
+        }
+      }
+    };
+
+    window.addEventListener("navigate-app" as any, handleNavigateApp);
+    return () => {
+      window.removeEventListener("navigate-app" as any, handleNavigateApp);
+    };
+  }, []);
+
   const requestNotificationPermission = async () => {
     if (typeof window === "undefined" || !("Notification" in window)) {
       alert("This browser does not support desktop notifications.");
@@ -384,19 +444,42 @@ export default function App() {
           // Show system-level desktop/phone notification
           if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
             try {
-              new Notification(notif.title || "Tennis Player Alert", {
+              const systemNotifObj = new Notification(notif.title || "Tennis Player Alert", {
                 body: notif.body || notif.message || "Player stats changed.",
                 icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTElZ9tTIVQ-qQzRwpEyM5aC2JlP2NbaHA6yR9rObvF7g&s",
                 tag: notif.id
               });
+              systemNotifObj.onclick = (e) => {
+                e.preventDefault();
+                window.focus();
+                const isHK = notif.source === 'HK' || notif.source === 'HKTA' || notif.url?.includes('hk') || notif.url?.includes('hkta') || notif.player_source === 'HKTA' || (notif.body && notif.body.toLowerCase().includes('hong kong')) || (notif.title && notif.title.toLowerCase().includes('hong kong'));
+                const isDraw = notif.type === 'Draw_Watcher' || notif.type === 'Draw' || (notif.title && notif.title.includes('Draw'));
+                const isNSW = notif.type === 'NSW_Tournament' || notif.type === 'NSW' || (notif.title && notif.title.includes('NSW'));
+                
+                if (isDraw) {
+                  window.location.hash = "#draw-checker";
+                } else if (isNSW) {
+                  window.location.hash = "#tournament-screen";
+                } else {
+                  window.location.hash = isHK ? "#player-screen-hkta" : "#player-screen-ta";
+                }
+              };
             } catch (notifErr) {
               console.warn("[SSE Client] Direct Notification constructor failed, trying service worker:", notifErr);
               if ("serviceWorker" in navigator) {
                 navigator.serviceWorker.ready.then((registration) => {
+                  const isHK = notif.source === 'HK' || notif.source === 'HKTA' || notif.url?.includes('hk') || notif.url?.includes('hkta') || notif.player_source === 'HKTA' || (notif.body && notif.body.toLowerCase().includes('hong kong')) || (notif.title && notif.title.toLowerCase().includes('hong kong'));
+                  const isDraw = notif.type === 'Draw_Watcher' || notif.type === 'Draw' || (notif.title && notif.title.includes('Draw'));
+                  const isNSW = notif.type === 'NSW_Tournament' || notif.type === 'NSW' || (notif.title && notif.title.includes('NSW'));
+                  const swUrl = isDraw ? "/#draw-checker" : isNSW ? "/#tournament-screen" : isHK ? "/#player-screen-hkta" : "/#player-screen-ta";
+                  
                   registration.showNotification(notif.title || "Tennis Player Alert", {
                     body: notif.body || notif.message || "Player stats changed.",
                     icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTElZ9tTIVQ-qQzRwpEyM5aC2JlP2NbaHA6yR9rObvF7g&s",
-                    tag: notif.id
+                    tag: notif.id,
+                    data: {
+                      url: swUrl
+                    }
                   });
                 }).catch((e) => console.error("[SSE Client] Service worker notification error:", e));
               }

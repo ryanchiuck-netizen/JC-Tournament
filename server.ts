@@ -539,22 +539,22 @@ async function startServer() {
     console.log("Cloud Scheduler triggered tournaments-only scrape...");
     isScraping = true;
     
-    wrappedRunScraper()
-      .then(async () => {
-        if (refreshTournamentsForPlayersCache) {
-          try {
-            await refreshTournamentsForPlayersCache();
-          } catch (e) {
-            console.error("Cloud Scheduler tournaments cache rebuild failed:", e);
-          }
+    try {
+      await wrappedRunScraper();
+      if (refreshTournamentsForPlayersCache) {
+        try {
+          await refreshTournamentsForPlayersCache();
+        } catch (e) {
+          console.error("Cloud Scheduler tournaments cache rebuild failed:", e);
         }
-      })
-      .catch((err) => {
-        console.error("Cloud Scheduler tournaments-only scrape failed:", err);
-      })
-      .finally(() => { isScraping = false; });
-
-    res.json({ success: true, message: "Tournaments-only scrape triggered in background" });
+      }
+      res.json({ success: true, message: "Tournaments-only scrape and players cache rebuild completed successfully." });
+    } catch (err: any) {
+      console.error("Cloud Scheduler tournaments-only scrape failed:", err);
+      res.status(500).json({ error: "Scrape execution failed", details: err.message || String(err) });
+    } finally {
+      isScraping = false;
+    }
   };
 
   app.get("/api/cron/scrape-tournaments", requireCronSecret, handleScrapeTournaments);
@@ -568,11 +568,13 @@ async function startServer() {
     }
     console.log("Cloud Scheduler triggered player stats & draw checks update...");
     
-    runGlobalRefreshTask(false).catch((err) => {
+    try {
+      await runGlobalRefreshTask(false);
+      res.json({ success: true, message: "Global refresh task completed successfully." });
+    } catch (err: any) {
       console.error("Cloud Scheduler global refresh task failed:", err);
-    });
-
-    res.json({ success: true, message: "Global refresh task triggered in background" });
+      res.status(500).json({ error: "Global refresh execution failed", details: err.message || String(err) });
+    }
   };
 
   app.get("/api/cron/global-refresh", requireCronSecret, handleGlobalRefresh);

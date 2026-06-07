@@ -337,6 +337,18 @@ export function HistoryTab() {
     return invalidNames.includes(name);
   }
 
+  const getDestinationHash = (notif: any) => {
+    const cat = getNotificationCategory(notif);
+    if (cat === 'Draw_Watcher') {
+      return "#draw-checker";
+    }
+    if (cat === 'NSW_Tournament') {
+      return "#tournament-screen";
+    }
+    const isHK = notif.source === 'HK' || notif.source === 'HKTA' || notif.url?.includes('hk') || notif.url?.includes('hkta') || notif.player_source === 'HKTA' || (notif.body && notif.body.toLowerCase().includes('hong kong')) || (notif.title && notif.title.toLowerCase().includes('hong kong'));
+    return isHK ? "#player-screen-hkta" : "#player-screen-ta";
+  };
+
   // Reset selected player if it's not in the newly filtered list when region or player list changes
   useEffect(() => {
     if (selectedPlayer !== 'all' && !availablePlayers.includes(selectedPlayer)) {
@@ -768,7 +780,10 @@ export function HistoryTab() {
                           key={notif.id || i}
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
-                          className="bg-gray-900/80 border border-gray-800 p-4 rounded-xl flex sm:items-center flex-col sm:flex-row gap-4 hover:border-gray-700 transition-colors"
+                          onClick={() => {
+                            window.location.hash = getDestinationHash(notif);
+                          }}
+                          className="bg-gray-900/80 border border-gray-800 p-4 rounded-xl flex sm:items-center flex-col sm:flex-row gap-4 hover:border-gray-700 transition-colors cursor-pointer"
                         >
                           <div className="bg-gray-800 p-2.5 rounded-lg shrink-0 w-fit">
                             {typeIcon}
@@ -777,12 +792,12 @@ export function HistoryTab() {
                             <h4 className="font-medium text-gray-200 text-sm">{title}</h4>
                             <p className="text-gray-400 text-sm mt-0.5 whitespace-pre-line leading-relaxed">{notif.body}</p>
                           </div>
-                          <div className="shrink-0 flex items-center justify-between sm:flex-col sm:items-end gap-1">
+                          <div className="shrink-0 flex items-center justify-between sm:flex-col sm:items-end gap-1" onClick={(e) => e.stopPropagation()}>
                             <span className="text-xs text-gray-500 font-mono">
                               {notif.timestamp ? formatDistanceToNow(parseISO(notif.timestamp), { addSuffix: true }) : ''}
                             </span>
                             <a 
-                              href={notif.url || '/#player-screen'} 
+                              href={getDestinationHash(notif)} 
                               className="text-blue-400 hover:text-blue-300 transition-colors bg-blue-500/10 hover:bg-blue-500/20 p-1.5 rounded-md"
                             >
                               <ChevronRight className="w-4 h-4" />
@@ -847,7 +862,10 @@ export function HistoryTab() {
                                 key={notif.id || i}
                                 initial={{ opacity: 0, y: 5 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                className="bg-gray-950/40 border border-gray-800/40 p-4 rounded-xl flex sm:items-center flex-col sm:flex-row gap-4 hover:border-gray-750 transition-colors"
+                                onClick={() => {
+                                  window.location.hash = getDestinationHash(notif);
+                                }}
+                                className="bg-gray-950/40 border border-gray-800/40 p-4 rounded-xl flex sm:items-center flex-col sm:flex-row gap-4 hover:border-gray-750 transition-colors cursor-pointer"
                               >
                                 <div className="bg-gray-900 p-2 text-gray-400 rounded-lg shrink-0 w-fit">
                                   {typeIcon}
@@ -856,12 +874,12 @@ export function HistoryTab() {
                                   <h4 className="font-medium text-gray-300 text-sm">{notifTitle}</h4>
                                   <p className="text-gray-400 text-xs mt-0.5 whitespace-pre-line leading-relaxed">{notif.body}</p>
                                 </div>
-                                <div className="shrink-0 flex items-center justify-between sm:flex-col sm:items-end gap-1">
+                                <div className="shrink-0 flex items-center justify-between sm:flex-col sm:items-end gap-1" onClick={(e) => e.stopPropagation()}>
                                   <span className="text-[10px] text-gray-500 font-mono">
                                     {notif.timestamp ? format(parseISO(notif.timestamp), 'MMM d, yyyy') : ''}
                                   </span>
                                   <a 
-                                    href={notif.url || '/#player-screen'} 
+                                    href={getDestinationHash(notif)} 
                                     className="text-blue-400 hover:text-blue-300 transition-colors bg-blue-500/10 hover:bg-blue-500/20 p-1.5 rounded-md"
                                   >
                                     <ChevronRight className="w-4 h-4" />
