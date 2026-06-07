@@ -798,6 +798,10 @@ export default function App() {
                   {/* Last Refresh Indicators */}
                   <div className="flex sm:flex-col gap-x-3 gap-y-0.5 text-[9px] font-mono leading-none border-t sm:border-t-0 sm:border-l border-gray-800 pt-1.5 sm:pt-0 sm:pl-3 text-gray-500">
                     <span className="flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-purple-500 shrink-0 select-none"></span>
+                      <span>Version: <b className="text-gray-300 font-semibold">{formatHKT((import.meta as any).env?.VITE_PUBLISH_TIME || new Date().toISOString())}</b></span>
+                    </span>
+                    <span className="flex items-center gap-1.5">
                       <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0 select-none"></span>
                       <span>Scrape: <b className="text-gray-300 font-semibold">{formatHKT(lastUpdated)}</b></span>
                     </span>

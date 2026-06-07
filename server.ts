@@ -6,7 +6,8 @@ import { runScraper } from "./scraper.ts";
 import cron from "node-cron";
 import axios from "axios";
 import * as cheerio from "cheerio";
-import pLimit from "p-limit";
+import pLimitOrig from "p-limit";
+const pLimit = (pLimitOrig as any).default || pLimitOrig;
 import cookieParser from "cookie-parser";
 import { createClient } from "@supabase/supabase-js";
 import webpush from "web-push";
@@ -87,7 +88,40 @@ async function startServer() {
       try {
         const { data, error } = await supabase.from("tournaments").select("data").eq("id", "latest");
         if (!error && data && data.length > 0 && data[0].data) {
-          return data[0].data;
+          const dbData = data[0].data;
+          try {
+            const resolvedPath = await getSafeDataPath("tournaments.json", dataPath);
+            const raw = await fs.readFile(resolvedPath, "utf-8");
+            const localParsed = JSON.parse(raw);
+            if (localParsed && Array.isArray(localParsed.tournaments) && Array.isArray(dbData.tournaments)) {
+              let mergedAny = false;
+              const localMap = new Map();
+              for (const lt of localParsed.tournaments) {
+                if (lt.link && Array.isArray(lt.players) && lt.players.length > 0) {
+                  localMap.set(lt.link, lt.players);
+                }
+              }
+              for (const dt of dbData.tournaments) {
+                const hasDbPlayers = Array.isArray(dt.players) && dt.players.length > 0;
+                if (!hasDbPlayers && dt.link && localMap.has(dt.link)) {
+                  dt.players = localMap.get(dt.link);
+                  mergedAny = true;
+                }
+              }
+              if (mergedAny) {
+                console.log("[Tournament Cache Repair] Successfully merged pre-scraped player lists from local tournaments.json into Supabase tournaments list!");
+                supabase.from("tournaments").upsert({ id: "latest", data: dbData }).then(({ error: saveErr }) => {
+                  if (saveErr) console.warn("Failed to save repaired tournaments back to Supabase:", saveErr.message);
+                  else console.log("Successfully saved repaired database back to Supabase!");
+                }).catch(err => {
+                  console.warn("Exception saving repaired tournaments back to Supabase:", err.message);
+                });
+              }
+            }
+          } catch (repairErr: any) {
+            console.warn("[Tournament Cache Repair] Repair skipped:", repairErr.message);
+          }
+          return dbData;
         }
         if (error) {
           if (error.message?.includes("Could not find the table") || error.message?.includes("relation \"public.tournaments\" does not exist")) {

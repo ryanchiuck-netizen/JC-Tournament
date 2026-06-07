@@ -13,6 +13,7 @@ export interface Tournament {
   distance?: string;
   mapsLink?: string;
   closingDeadline?: string;
+  players?: string[];
 }
 
 async function fetchPage(
@@ -22,7 +23,7 @@ async function fetchPage(
   existingLinks: Set<string> = new Set(),
   startDate: string = "2026-01-01",
   endDate: string = "2036-12-31",
-  existingDetails: Record<string, { mapsLink?: string; closingDeadline?: string; location?: string }> = {},
+  existingDetails: Record<string, { mapsLink?: string; closingDeadline?: string; location?: string; players?: string[] }> = {},
   state?: string
 ): Promise<{ tournaments: Tournament[], players: string[] }> {
   const params = new URLSearchParams();
@@ -129,6 +130,7 @@ async function fetchPage(
     // Re-use already populated parameters if they exist in tournaments.json
     let mapsLink = existingDetails[link]?.mapsLink;
     let closingDeadline = existingDetails[link]?.closingDeadline;
+    let players = existingDetails[link]?.players;
 
     if (!mapsLink && locationClean) {
       if (source === "AUS") {
@@ -147,7 +149,8 @@ async function fetchPage(
       location: locationClean,
       distance,
       mapsLink,
-      closingDeadline
+      closingDeadline,
+      players
     });
   }
 
@@ -191,7 +194,7 @@ export async function runScraper() {
   };
 
   // Load existing details to avoid re-scraping and preserve manual edits
-  let existingDetails: Record<string, { mapsLink?: string; closingDeadline?: string; location?: string }> = {};
+  let existingDetails: Record<string, { mapsLink?: string; closingDeadline?: string; location?: string; players?: string[] }> = {};
   try {
     const rawContent = await fs.readFile(dataPath, "utf-8");
     const parsed = JSON.parse(rawContent);
@@ -201,7 +204,8 @@ export async function runScraper() {
           existingDetails[t.link] = {
             mapsLink: t.mapsLink,
             closingDeadline: t.closingDeadline,
-            location: t.location
+            location: t.location,
+            players: t.players
           };
         }
 
