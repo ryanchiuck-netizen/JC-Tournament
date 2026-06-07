@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { User, Plus, X, Trophy, GripVertical, ArrowUp, ArrowDown, Clock, ArrowLeft, Calendar, RefreshCw, Search, ChevronDown } from 'lucide-react';
+import { User, Plus, X, Trophy, GripVertical, ArrowUp, ArrowDown, Clock, ArrowLeft, Calendar, RefreshCw, Search, ChevronDown, Tag } from 'lucide-react';
 import { saveToGoogleSheets } from '../services/googleSheetsService';
 import {
   DndContext,
@@ -19,7 +19,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-interface SavedPlayer {
+export interface SavedPlayer {
   id: string;
   name: string;
   url?: string;
@@ -31,6 +31,7 @@ interface SavedPlayer {
   championships: string;
   rank?: string;
   points?: string;
+  groups?: string[];
 }
 
 function PlayerTournamentsModal({ 
@@ -131,6 +132,31 @@ function PlayerTournamentsModal({
   );
 }
 
+function SortableGroup({ id, groupName, playersList, renderPlayerTable }: { id: string, groupName: string, playersList: SavedPlayer[], renderPlayerTable: any }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    position: 'relative' as const,
+    zIndex: isDragging ? 1 : 0,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      {renderPlayerTable(playersList, groupName === "Others" ? "Others" : `Group: ${groupName}`, true, groupName, { ...attributes, ...listeners })}
+    </div>
+  );
+}
+
 function SortablePlayerRow({ 
   player, 
   removePlayer, 
@@ -139,7 +165,8 @@ function SortablePlayerRow({
   isRefreshing, 
   onViewHistory,
   previousPlayerData,
-  onRefreshPlayer
+  onRefreshPlayer,
+  onTagPlayer
 }: { 
   player: SavedPlayer, 
   removePlayer: (id: string) => void | Promise<void>, 
@@ -149,7 +176,8 @@ function SortablePlayerRow({
   onViewHistory: (playerName: string) => void,
   previousPlayerData?: any,
   key?: any,
-  onRefreshPlayer?: (id: string) => void | Promise<void>
+  onRefreshPlayer?: (id: string) => void | Promise<void>,
+  onTagPlayer?: (player: SavedPlayer) => void
 }) {
   const {
     attributes,
@@ -232,6 +260,15 @@ function SortablePlayerRow({
                 {player.source === 'TA' ? 'Tennis Australia' : 'HKTA'}
               </div>
             )}
+            {player.groups && player.groups.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-1.5 max-w-[200px]">
+                {player.groups.map(g => (
+                  <span key={g} className="text-[10px] font-semibold bg-blue-500/10 text-blue-300 border border-blue-500/30 px-1.5 py-0.5 rounded">
+                    {g}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </td>
@@ -264,6 +301,13 @@ function SortablePlayerRow({
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium animate-fade-in" onClick={(e) => e.stopPropagation()}>
         <button
+          onClick={() => onTagPlayer && onTagPlayer(player)}
+          className="text-gray-500 hover:text-yellow-400 hover:bg-yellow-400/10 p-2 rounded-lg transition-colors mr-1"
+          title="Group / Tag player"
+        >
+          <Tag className="w-4 h-4" />
+        </button>
+        <button
           onClick={() => onRefreshPlayer && onRefreshPlayer(player.id)}
           disabled={isRefreshing}
           className={`text-gray-500 hover:text-green-400 hover:bg-green-400/10 p-2 rounded-lg transition-colors mr-1 ${isRefreshing ? 'cursor-not-allowed opacity-50' : ''}`}
@@ -287,6 +331,123 @@ function SortablePlayerRow({
         </button>
       </td>
     </tr>
+  );
+}
+
+function TagPlayerModal({
+  player,
+  allGroups,
+  onClose,
+  onUpdateGroups
+}: {
+  player: SavedPlayer;
+  allGroups: string[];
+  onClose: () => void;
+  onUpdateGroups: (playerId: string, updatedGroups: string[]) => void | Promise<void>;
+}) {
+  const [selectedGroups, setSelectedGroups] = useState<string[]>(player.groups || []);
+  const [newGroupInput, setNewGroupInput] = useState("");
+
+  const handleToggleGroup = (group: string) => {
+    if (selectedGroups.includes(group)) {
+      setSelectedGroups(selectedGroups.filter(g => g !== group));
+    } else {
+      setSelectedGroups([...selectedGroups, group]);
+    }
+  };
+
+  const handleAddNewGroup = () => {
+    const trimmed = newGroupInput.trim();
+    if (trimmed && !selectedGroups.includes(trimmed)) {
+      setSelectedGroups([...selectedGroups, trimmed]);
+      setNewGroupInput("");
+    }
+  };
+
+  const handleSave = () => {
+    onUpdateGroups(player.id, selectedGroups);
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
+      <div className="bg-gray-900 border border-gray-800 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl flex flex-col" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between p-5 border-b border-gray-800">
+          <div>
+            <h3 className="text-md font-semibold text-white">Manage Groups</h3>
+            <p className="text-xs text-gray-400 mt-1">Assign <span className="text-blue-400 font-semibold">{player.name}</span> to groups</p>
+          </div>
+          <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-gray-800">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        <div className="p-5 space-y-4">
+          <div className="space-y-2">
+            <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider block">Active Groups</label>
+            {allGroups.length === 0 ? (
+              <p className="text-sm text-gray-500 italic">No groups created yet. Create one below.</p>
+            ) : (
+              <div className="grid grid-cols-1 gap-2 max-h-40 overflow-y-auto">
+                {allGroups.map((group) => {
+                  const isChecked = selectedGroups.includes(group);
+                  return (
+                    <label key={group} className="flex items-center gap-3 p-2 rounded-lg border border-gray-800 bg-gray-950/40 hover:bg-gray-800/40 cursor-pointer transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => handleToggleGroup(group)}
+                        className="rounded border-gray-700 bg-gray-800 text-blue-500 focus:ring-blue-500 focus:ring-offset-gray-900"
+                      />
+                      <span className="text-sm font-medium text-gray-300">{group}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <div className="border-t border-gray-800 pt-3 space-y-2">
+            <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider block">Create New Group</label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={newGroupInput}
+                onChange={e => setNewGroupInput(e.target.value)}
+                placeholder="e.g. A Grade, Boys Under 14"
+                className="flex-1 px-3 py-2 border border-gray-700 rounded-lg bg-gray-800 text-sm text-gray-300 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                onKeyDown={e => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleAddNewGroup();
+                  }
+                }}
+              />
+              <button
+                type="button"
+                onClick={handleAddNewGroup}
+                className="px-3 py-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-300 hover:text-white rounded-lg text-sm font-semibold transition-colors"
+              >
+                Add
+              </button>
+            </div>
+          </div>
+        </div>
+        <div className="p-4 bg-gray-950/50 border-t border-gray-800 flex justify-end gap-3">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 border border-gray-700 hover:bg-gray-800 text-gray-400 hover:text-gray-200 rounded-lg text-sm font-semibold transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition-colors shadow-sm"
+          >
+            Save Changes
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -763,6 +924,117 @@ export function PlayerScreen({
   const [historyPlayerFilter, setHistoryPlayerFilter] = useState<string>("");
   const [yesterdaySnapshot, setYesterdaySnapshot] = useState<any>(null);
   const [showOnlyChanges, setShowOnlyChanges] = useState(false);
+  const [taggingPlayer, setTaggingPlayer] = useState<SavedPlayer | null>(null);
+  const [showAllPlayers, setShowAllPlayers] = useState(false);
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
+  const [renamingGroup, setRenamingGroup] = useState<string | null>(null);
+  const [newGroupName, setNewGroupName] = useState("");
+
+  const handleRenameGroup = async (oldName: string, newName: string) => {
+    if (!newName.trim() || newName === oldName) {
+      setRenamingGroup(null);
+      return;
+    }
+    const updatedPlayers = players.map(p => {
+      if (p.groups && p.groups.includes(oldName)) {
+        return {
+          ...p,
+          groups: p.groups.map(g => g === oldName ? newName.trim() : g)
+        };
+      }
+      return p;
+    });
+    setPlayers(updatedPlayers);
+    setRenamingGroup(null);
+    try {
+      await fetch('/api/saved-players/reorder', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ players: updatedPlayers })
+      });
+    } catch (e) {
+      console.error("Failed to rename player group", e);
+    }
+  };
+
+  const toggleGroupCollapse = (groupName: string) => {
+    setCollapsedGroups(prev => ({ ...prev, [groupName]: !prev[groupName] }));
+  };
+
+  const handleUpdateGroups = async (playerId: string, updatedGroups: string[]) => {
+    const updatedPlayers = players.map(p => {
+      if (p.id === playerId) {
+        return { ...p, groups: updatedGroups };
+      }
+      return p;
+    });
+    setPlayers(updatedPlayers);
+    try {
+      await fetch('/api/saved-players/reorder', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ players: updatedPlayers })
+      });
+    } catch (e) {
+      console.error("Failed to save player groups", e);
+    }
+  };
+
+  const allGroups = useMemo(() => {
+    const groupsSet = new Set<string>();
+    players.forEach(p => {
+      if (p.groups && Array.isArray(p.groups)) {
+        p.groups.forEach(g => {
+          if (g.trim().length > 0) {
+            groupsSet.add(g.trim());
+          }
+        });
+      }
+    });
+    return Array.from(groupsSet).sort();
+  }, [players]);
+
+  const activeRegionPlayers = useMemo(() => {
+    return players.filter(p => p.source === activeTab);
+  }, [players, activeTab]);
+
+  const [groupOrderMap, setGroupOrderMap] = useState<Record<string, string[]>>({});
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('playerScreenGroupOrder');
+      if (saved) setGroupOrderMap(JSON.parse(saved));
+    } catch(e) {}
+  }, []);
+
+  const saveGroupOrder = (newOrderMap: Record<string, string[]>) => {
+    setGroupOrderMap(newOrderMap);
+    localStorage.setItem('playerScreenGroupOrder', JSON.stringify(newOrderMap));
+  };
+
+  const activeRegionGroups = useMemo(() => {
+    const groupsSet = new Set<string>();
+    activeRegionPlayers.forEach(p => {
+      if (p.groups && Array.isArray(p.groups)) {
+        p.groups.forEach(g => {
+          if (g.trim().length > 0) {
+            groupsSet.add(g.trim());
+          }
+        });
+      }
+    });
+    
+    // Sort logic
+    const regionOrder = groupOrderMap[activeTab] || [];
+    return Array.from(groupsSet).sort((a, b) => {
+      const idxA = regionOrder.indexOf(a);
+      const idxB = regionOrder.indexOf(b);
+      if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+      if (idxA !== -1) return -1;
+      if (idxB !== -1) return 1;
+      return a.localeCompare(b);
+    });
+  }, [activeRegionPlayers, groupOrderMap, activeTab]);
 
   // Listen to exterior navigation requests to swap regional subtab
   useEffect(() => {
@@ -995,29 +1267,39 @@ export function PlayerScreen({
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
+    if (!over || active.id === over.id) return;
 
-    if (over && active.id !== over.id) {
-      const currentList = sortedPlayers;
-      const oldIndex = currentList.findIndex((p) => p.id === active.id);
-      const newIndex = currentList.findIndex((p) => p.id === over.id);
-      
-      const newFilteredPlayers = arrayMove(currentList, oldIndex, newIndex);
-      const otherPlayers = players.filter(p => p.source !== activeTab);
-      
-      const newPlayers = [...newFilteredPlayers, ...otherPlayers];
-      
-      setPlayers(newPlayers);
-      setSortField('custom');
-      
-      try {
-        await fetch('/api/saved-players/reorder', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ players: newPlayers })
-        });
-      } catch (e) {
-        console.error("Failed to save reordered players", e);
+    if (String(active.id).startsWith('group-')) {
+      const oldIndex = activeRegionGroups.findIndex(g => `group-${g}` === active.id);
+      const newIndex = activeRegionGroups.findIndex(g => `group-${g}` === over.id);
+      if (oldIndex !== -1 && newIndex !== -1) {
+        const newGroups = arrayMove(activeRegionGroups, oldIndex, newIndex);
+        const newOrderMap = { ...groupOrderMap, [activeTab]: newGroups };
+        saveGroupOrder(newOrderMap);
       }
+      return;
+    }
+
+    const currentList = sortedPlayers;
+    const oldIndex = currentList.findIndex((p) => p.id === active.id);
+    const newIndex = currentList.findIndex((p) => p.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+    
+    const newFilteredPlayers = arrayMove(currentList, oldIndex, newIndex);
+    const otherPlayers = players.filter(p => p.source !== activeTab);
+    const newPlayers = [...newFilteredPlayers, ...otherPlayers];
+    
+    setPlayers(newPlayers);
+    setSortField('custom');
+    
+    try {
+      await fetch('/api/saved-players/reorder', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ players: newPlayers })
+      });
+    } catch (e) {
+      console.error("Failed to save reordered players", e);
     }
   };
 
@@ -1110,6 +1392,10 @@ export function PlayerScreen({
     });
   }, [filteredPlayers, sortField, sortDirection]);
 
+  const ungroupedPlayers = useMemo(() => {
+    return sortedPlayers.filter(p => !p.groups || p.groups.length === 0);
+  }, [sortedPlayers]);
+
   useEffect(() => {
     if (players.length > 0) {
       saveToGoogleSheets('Player Screen', players).catch(console.error);
@@ -1137,6 +1423,153 @@ export function PlayerScreen({
           </div>
         </div>
       </th>
+    );
+  };
+
+  const renderPlayerTable = (playersList: SavedPlayer[], title?: string, isGroup: boolean = false, originalGroupName?: string, dragHandleProps?: any) => {
+    const isCollapsed = originalGroupName ? collapsedGroups[originalGroupName] : false;
+
+    return (
+      <div key={title || 'main'} className="bg-gray-950 border border-gray-800 rounded-xl overflow-hidden shadow-inner mb-6">
+        {title && (
+          <div className="bg-gray-900/40 border-b border-gray-800 px-6 py-4 flex items-center justify-between group">
+            <div className="flex items-center gap-3">
+              {isGroup && originalGroupName && (
+                <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing text-gray-500 hover:text-gray-300 p-1">
+                  <GripVertical className="w-4 h-4" />
+                </div>
+              )}
+              {isGroup && originalGroupName && (
+                <button 
+                  onClick={() => toggleGroupCollapse(originalGroupName)}
+                  className="text-gray-400 hover:text-white transition-colors p-1 rounded-md hover:bg-gray-800"
+                >
+                  <ChevronDown className={`w-4 h-4 transition-transform ${isCollapsed ? '-rotate-90' : ''}`} />
+                </button>
+              )}
+              {renamingGroup === originalGroupName && originalGroupName ? (
+                <div className="flex items-center gap-2">
+                  <input 
+                    type="text" 
+                    value={newGroupName} 
+                    onChange={e => setNewGroupName(e.target.value)}
+                    className="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-sm text-white focus:outline-none focus:border-blue-500"
+                    autoFocus
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') handleRenameGroup(originalGroupName, newGroupName);
+                      if (e.key === 'Escape') setRenamingGroup(null);
+                    }}
+                  />
+                  <button 
+                    onClick={() => handleRenameGroup(originalGroupName, newGroupName)}
+                    className="text-blue-400 hover:text-blue-300 text-xs font-medium px-2 py-1 bg-blue-500/10 rounded"
+                  >
+                    Save
+                  </button>
+                  <button 
+                    onClick={() => setRenamingGroup(null)}
+                    className="text-gray-400 hover:text-gray-300 text-xs font-medium px-2 py-1 hover:bg-gray-800 rounded"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <span className="text-sm font-semibold text-gray-200 flex items-center gap-2">
+                  {title}
+                  {isGroup && originalGroupName && (
+                    <button
+                      onClick={() => {
+                        setRenamingGroup(originalGroupName);
+                        setNewGroupName(originalGroupName);
+                      }}
+                      className="text-[10px] text-gray-500 hover:text-blue-400 font-medium opacity-0 group-hover:opacity-100 transition-opacity uppercase tracking-wider bg-gray-800 px-2 py-0.5 rounded"
+                    >
+                      Rename
+                    </button>
+                  )}
+                </span>
+              )}
+            </div>
+            <span className="text-xs text-gray-400 font-medium">{playersList.length} player{playersList.length !== 1 ? 's' : ''}</span>
+          </div>
+        )}
+        {!isCollapsed && (
+          <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-800">
+              <thead className="bg-gray-900/50 flex-col">
+                <tr>
+                  <th scope="col" className="px-2 py-4 w-10"></th>
+                  <SortableHeader field="name" label="Player Name" align="left" />
+                  <SortableHeader field={activeTab === 'TA' ? 'utrSingles' : 'wtnSingles'} label={activeTab === 'TA' ? 'UTR for Singles' : 'WTN Singles'} />
+                  {activeTab === 'TA' && (
+                    <SortableHeader field="points" label="Points" />
+                  )}
+                  {activeTab === 'HKTA' && (
+                    <>
+                      <SortableHeader field="rank" label="Rank" />
+                      <SortableHeader field="points" label="Points" />
+                    </>
+                  )}
+                  <SortableHeader field="winLossYTD" label="Win:Loss YTD" />
+                  <SortableHeader field="winLossCareer" label="Win:Loss Career" />
+                  <SortableHeader field="championships" label="Championships in Total" />
+                  <th scope="col" className="px-6 py-4 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                    Action
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-800 bg-gray-900/20">
+                {loading ? (
+                  <tr>
+                    <td colSpan={activeTab === 'HKTA' ? 9 : 8} className="px-6 py-12 text-center text-sm text-gray-500">
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mb-2" />
+                        <p>Loading players...</p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : playersList.length === 0 ? (
+                  <tr>
+                    <td colSpan={activeTab === 'HKTA' ? 9 : 8} className="px-6 py-12 text-center text-sm text-gray-500">
+                      <div className="flex flex-col items-center justify-center gap-2 py-4">
+                        <Trophy className="w-8 h-8 text-gray-700 mb-2" />
+                        <p>No players in this section.</p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  <SortableContext
+                    items={playersList.map(p => p.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    {playersList.map((player) => (
+                      <SortablePlayerRow 
+                        key={player.id} 
+                        player={player} 
+                        removePlayer={removePlayer} 
+                        onRowClick={setSelectedPlayer} 
+                        activeTab={activeTab} 
+                        isRefreshing={refreshingIds.has(player.id)}
+                        onRefreshPlayer={refreshPlayer}
+                        onTagPlayer={(p) => setTaggingPlayer(p)}
+                        onViewHistory={(name) => {
+                          setHistoryPlayerFilter(name);
+                          setShowHistory(true);
+                        }}
+                        previousPlayerData={
+                          yesterdaySnapshot 
+                            ? (activeTab === 'TA' ? yesterdaySnapshot.taPlayers : yesterdaySnapshot.hktaPlayers)?.find((p: any) => p.name === player.name) 
+                            : null
+                        }
+                      />
+                    ))}
+                  </SortableContext>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     );
   };
 
@@ -1231,6 +1664,21 @@ export function PlayerScreen({
 
           <div className="flex items-center gap-3 flex-wrap">
             <button
+              onClick={() => setShowAllPlayers(!showAllPlayers)}
+              className={`text-xs flex items-center gap-2.5 transition-all px-3 py-2 rounded-lg border ${
+                showAllPlayers
+                  ? "bg-blue-500/10 text-blue-400 border-blue-500/40 shadow-sm shadow-blue-500/5"
+                  : "bg-gray-800/40 text-gray-400 hover:text-gray-200 border-gray-700/50 hover:bg-gray-800"
+              }`}
+              title="Show all players without grouping"
+            >
+              <div className={`relative w-8 h-4.5 rounded-full transition-colors duration-200 ${showAllPlayers ? 'bg-blue-500' : 'bg-gray-700'}`}>
+                <div className={`absolute top-0.5 left-0.5 w-3.5 h-3.5 rounded-full bg-white shadow-sm transition-transform duration-200 ${showAllPlayers ? 'transform translate-x-3.5' : ''}`} />
+              </div>
+              <span className="font-semibold select-none">Show All</span>
+            </button>
+
+            <button
               onClick={() => setShowOnlyChanges(!showOnlyChanges)}
               className={`text-xs flex items-center gap-2.5 transition-all px-3 py-2 rounded-lg border ${
                 showOnlyChanges
@@ -1277,88 +1725,41 @@ export function PlayerScreen({
           </div>
         </div>
 
-        <div className="bg-gray-950 border border-gray-800 rounded-xl overflow-hidden shadow-inner">
-          <div className="overflow-x-auto">
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
-            >
-              <table className="min-w-full divide-y divide-gray-800">
-                <thead className="bg-gray-900/50">
-                <tr>
-                  <th scope="col" className="px-2 py-4 w-10"></th>
-                  <SortableHeader field="name" label="Player Name" align="left" />
-                  <SortableHeader field={activeTab === 'TA' ? 'utrSingles' : 'wtnSingles'} label={activeTab === 'TA' ? 'UTR for Singles' : 'WTN Singles'} />
-                  {activeTab === 'TA' && (
-                    <SortableHeader field="points" label="Points" />
-                  )}
-                  {activeTab === 'HKTA' && (
-                    <>
-                      <SortableHeader field="rank" label="Rank" />
-                      <SortableHeader field="points" label="Points" />
-                    </>
-                  )}
-                  <SortableHeader field="winLossYTD" label="Win:Loss YTD" />
-                  <SortableHeader field="winLossCareer" label="Win:Loss Career" />
-                  <SortableHeader field="championships" label="Championships in Total" />
-                  <th scope="col" className="px-6 py-4 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                    Action
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-800 bg-gray-900/20">
-                {loading ? (
-                  <tr>
-                    <td colSpan={activeTab === 'HKTA' ? 8 : 7} className="px-6 py-12 text-center text-sm text-gray-500">
-                      <div className="flex flex-col items-center justify-center gap-2">
-                        <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mb-2" />
-                        <p>Loading players...</p>
-                      </div>
-                    </td>
-                  </tr>
-                ) : sortedPlayers.length === 0 ? (
-                  <tr>
-                    <td colSpan={activeTab === 'HKTA' ? 9 : 8} className="px-6 py-12 text-center text-sm text-gray-500">
-                      <div className="flex flex-col items-center justify-center gap-2">
-                        <Trophy className="w-8 h-8 text-gray-700 mb-2" />
-                        <p>No players added for {activeTab === 'TA' ? 'Tennis Australia' : 'HKTA'} yet.</p>
-                        <p className="text-xs text-gray-600">Enter a player name above to start tracking.</p>
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  <SortableContext
-                    items={sortedPlayers.map(p => p.id)}
-                    strategy={verticalListSortingStrategy}
-                  >
-                    {sortedPlayers.map((player) => (
-                      <SortablePlayerRow 
-                        key={player.id} 
-                        player={player} 
-                        removePlayer={removePlayer} 
-                        onRowClick={setSelectedPlayer} 
-                        activeTab={activeTab} 
-                        isRefreshing={refreshingIds.has(player.id)}
-                        onRefreshPlayer={refreshPlayer}
-                        onViewHistory={(name) => {
-                          setHistoryPlayerFilter(name);
-                          setShowHistory(true);
-                        }}
-                        previousPlayerData={
-                          yesterdaySnapshot 
-                            ? (activeTab === 'TA' ? yesterdaySnapshot.taPlayers : yesterdaySnapshot.hktaPlayers)?.find((p: any) => p.name === player.name) 
-                            : null
-                        }
-                      />
-                    ))}
-                  </SortableContext>
+        {showAllPlayers || activeRegionGroups.length === 0 ? (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            {renderPlayerTable(sortedPlayers)}
+          </DndContext>
+        ) : (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext items={activeRegionGroups.map(g => `group-${g}`)} strategy={verticalListSortingStrategy}>
+              <div className="space-y-6">
+                {activeRegionGroups.map(group => {
+                  const groupPlayers = sortedPlayers.filter(p => p.groups && p.groups.includes(group));
+                  return (
+                    <SortableGroup 
+                      key={`group-${group}`} 
+                      id={`group-${group}`} 
+                      groupName={group} 
+                      playersList={groupPlayers} 
+                      renderPlayerTable={renderPlayerTable} 
+                    />
+                  );
+                })}
+                {ungroupedPlayers.length > 0 && (
+                  renderPlayerTable(ungroupedPlayers, "Others", true, "Others")
                 )}
-              </tbody>
-            </table>
-            </DndContext>
-          </div>
-        </div>
+              </div>
+            </SortableContext>
+          </DndContext>
+        )}
       </div>
       
       {selectedPlayer && (
@@ -1367,6 +1768,15 @@ export function PlayerScreen({
           onClose={() => setSelectedPlayer(null)} 
           tournamentsCache={tournamentsCache}
           isTournamentsCacheLoading={isTournamentsCacheLoading}
+        />
+      )}
+
+      {taggingPlayer && (
+        <TagPlayerModal
+          player={taggingPlayer}
+          allGroups={allGroups}
+          onClose={() => setTaggingPlayer(null)}
+          onUpdateGroups={handleUpdateGroups}
         />
       )}
     </div>

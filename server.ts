@@ -20,6 +20,14 @@ function getTournamentIdFromLink(link: string): string {
   return pathParts[pathParts.length - 1] || "";
 }
 
+function cleanPlayerName(name: string): string {
+  if (!name) return "";
+  let cleaned = name.trim();
+  // Remove bracketed or parenthesized player numbers at the end (e.g. Chiu Jordan [66419], Jordan Chiu (66333972211))
+  cleaned = cleaned.replace(/\s*[([][^\])]*\d+[^\])]*[)\]]\s*$/g, '');
+  return cleaned.trim();
+}
+
 function getQueryParts(playerName: string): string[] {
   if (!playerName) return [];
   const clean = playerName
@@ -834,7 +842,7 @@ async function startServer() {
             const $ = cheerio.load(response.data);
             const scrapedPlayers: string[] = [];
             $("li.js-alphabet-list-item").each((i, el) => {
-              const name = $(el).find(".media__title").text().trim();
+              const name = cleanPlayerName($(el).find(".media__title").text().trim());
               if (name) scrapedPlayers.push(name);
             });
             tournament.players = scrapedPlayers;
@@ -848,7 +856,7 @@ async function startServer() {
               let playerDetailLink = "";
 
               $("li.js-alphabet-list-item").each((i, el) => {
-                const name = $(el).find(".media__title").text().trim();
+                const name = cleanPlayerName($(el).find(".media__title").text().trim());
                 // Match if all parts of the query are found in the player's name
                 if (isPlayerNameMatch(name, queryParts)) {
                   playerDetailLink = $(el).find(".media__title a").attr("href") || "";
@@ -1107,6 +1115,45 @@ async function startServer() {
 
   syncLocalToSupabase();
 
+  const playerGroupsPath = path.join(process.cwd(), "public", "player-groups.json");
+
+  const getPlayerGroupsMap = async (): Promise<Record<string, string[]>> => {
+    let groupsMap: Record<string, string[]> = {};
+    if (supabase) {
+      try {
+        const { data, error } = await supabase.from("tournaments").select("data").eq("id", "player_groups");
+        if (!error && data && data.length > 0 && data[0].data) {
+          groupsMap = data[0].data;
+          return groupsMap;
+        }
+      } catch (err: any) {
+        console.warn("Failed to load player groups from Supabase:", err.message);
+      }
+    }
+    try {
+      const fileContent = await fs.readFile(playerGroupsPath, "utf-8");
+      groupsMap = JSON.parse(fileContent);
+    } catch {
+      groupsMap = {};
+    }
+    return groupsMap;
+  };
+
+  const savePlayerGroupsMap = async (groupsMap: Record<string, string[]>) => {
+    try {
+      await fs.writeFile(playerGroupsPath, JSON.stringify(groupsMap, null, 2));
+    } catch (e: any) {
+      console.warn("Failed to save local player-groups.json:", e.message);
+    }
+    if (supabase) {
+      try {
+        await supabase.from("tournaments").upsert({ id: "player_groups", data: groupsMap });
+      } catch (err: any) {
+        console.warn("Failed to save player groups to Supabase:", err.message);
+      }
+    }
+  };
+
   const getSavedPlayers = async (req: any, res: any) => {
     let players: any[] = [];
     if (supabase) {
@@ -1168,10 +1215,15 @@ async function startServer() {
     }
 
     // Deduplicate players by URL (or name + source if URL is missing)
+    const groupsMap = await getPlayerGroupsMap();
     const uniquePlayersMap = new Map();
     for (const player of players) {
+      if (player.name) {
+        player.name = cleanPlayerName(player.name);
+      }
       const key = player.url || `${player.name}-${player.source}`;
       if (!uniquePlayersMap.has(key)) {
+        player.groups = groupsMap[player.id] || [];
         uniquePlayersMap.set(key, player);
       }
     }
@@ -1456,6 +1508,19 @@ async function startServer() {
       console.error("Error writing saved-players local backup:", e.message || String(e));
     }
 
+    // Extract player groups and save
+    try {
+      const groupsMap: Record<string, string[]> = {};
+      players.forEach((p: any) => {
+        if (p.id) {
+          groupsMap[p.id] = p.groups || [];
+        }
+      });
+      await savePlayerGroupsMap(groupsMap);
+    } catch (grpErr: any) {
+      console.error("Error saving player-groups map:", grpErr.message || String(grpErr));
+    }
+
     if (supabase) {
       try {
         const rows = players.map((p: any, index: number) => ({
@@ -1579,7 +1644,7 @@ async function startServer() {
                   let playerDetailLink = "";
 
                   $("li.js-alphabet-list-item").each((i, el) => {
-                    const name = $(el).find(".media__title").text().trim();
+                    const name = cleanPlayerName($(el).find(".media__title").text().trim());
                     if (isPlayerNameMatch(name, queryParts)) {
                       playerDetailLink = $(el).find(".media__title a").attr("href") || "";
                       return false; // break
@@ -2102,7 +2167,8 @@ async function startServer() {
     
     const $ = cheerio.load(profileRes.data);
     
-    const playerName = $('.media__title').first().text().trim() || playerNameFallback;
+    const rawPlayerName = $('.media__title').first().text().trim() || playerNameFallback;
+    const playerName = cleanPlayerName(rawPlayerName);
     
     let utrSingles = '-';
     let wtnSingles = '-';
@@ -2335,7 +2401,7 @@ async function startServer() {
       const playerLinks: { name: string, url: string }[] = [];
 
       $('a[href*="player.aspx"], a[href*="/player/"], a[href*="/player-profile/"]').each((i, el) => {
-        const name = $(el).text().trim();
+        const name = cleanPlayerName($(el).text().trim());
         const href = $(el).attr('href');
         // Ignore links that don't have a name or are just icons
         if (name && href) {
@@ -2926,10 +2992,11 @@ async function startServer() {
   });
 
   app.post("/api/saved-players", requireAuth, async (req, res) => {
-    const { name } = req.body;
-    if (!name || typeof name !== 'string') {
+    const rawName = req.body.name;
+    if (!rawName || typeof rawName !== 'string') {
       return res.status(400).json({ error: "Player name is required" });
     }
+    const name = cleanPlayerName(rawName);
     
     try {
       const searchName = encodeURIComponent(name.trim());
