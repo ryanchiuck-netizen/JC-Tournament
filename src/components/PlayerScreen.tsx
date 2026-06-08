@@ -188,6 +188,8 @@ function SortablePlayerRow({
     isDragging,
   } = useSortable({ id: player.id });
 
+  const [isMobileExpanded, setIsMobileExpanded] = useState(false);
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -226,7 +228,151 @@ function SortablePlayerRow({
           <GripVertical className="w-4 h-4" />
         </button>
       </td>
-      <td className="px-6 py-4 whitespace-nowrap">
+      
+      {/* Mobile-only expanded / simplified card cell */}
+      <td className="px-4 py-4 sm:hidden" colSpan={activeTab === 'HKTA' ? 8 : 7}>
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <div className="relative h-8 w-8 rounded-full bg-gray-800 flex items-center justify-center border border-gray-700 mr-2.5 shrink-0">
+                {isRefreshing ? (
+                  <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <span className="text-xs font-medium text-gray-300">
+                    {player.name.charAt(0).toUpperCase()}
+                  </span>
+                )}
+              </div>
+              <div className="flex flex-col min-w-0">
+                <div className="text-sm font-semibold text-gray-200 flex items-center gap-1.5 flex-wrap">
+                  {player.url ? (
+                    <a 
+                      href={player.url} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="hover:text-blue-400 hover:underline transition-colors truncate max-w-[140px]"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {player.name}
+                    </a>
+                  ) : (
+                    <span className="truncate max-w-[140px]">{player.name}</span>
+                  )}
+                  {player.source === 'TA' && <span title="Tennis Australia" className="text-base">🇦🇺</span>}
+                  {player.source === 'HKTA' && <span title="Hong Kong Tennis Association" className="text-base">🇭🇰</span>}
+                </div>
+                {/* Just show name and UTR for Australia, or name and rank for HK */}
+                <div className="text-xs text-gray-400 mt-0.5">
+                  {activeTab === 'TA' ? (
+                    <span className="font-semibold text-blue-400">UTR: {player.utrSingles || '-'}</span>
+                  ) : (
+                    <span className="font-semibold text-blue-400">Rank: {player.rank || '-'}</span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Expand / Collapse Button */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsMobileExpanded(!isMobileExpanded);
+              }}
+              className="p-1.5 hover:bg-gray-800 text-gray-400 hover:text-white rounded-lg transition-colors border border-gray-700/50 bg-gray-900/60 flex items-center gap-1 shrink-0"
+            >
+              <span className="text-[10px] uppercase tracking-wider font-semibold px-0.5">
+                {isMobileExpanded ? 'Less' : 'More'}
+              </span>
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isMobileExpanded ? 'rotate-180' : ''}`} />
+            </button>
+          </div>
+
+          {/* Expanded portion presenting detailed stats and fast action buttons */}
+          {isMobileExpanded && (
+            <div className="mt-3 pt-3 border-t border-gray-800/80 space-y-4 animate-fade-in" onClick={(e) => e.stopPropagation()}>
+              <div className="grid grid-cols-2 gap-3 text-xs bg-gray-900/40 p-3 rounded-xl border border-gray-800/50">
+                {activeTab === 'TA' ? (
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-[10px] text-gray-500 uppercase tracking-wider font-medium">Points</span>
+                    <div className="font-semibold text-gray-300">
+                      {renderStat(player.points || '-', previousPlayerData?.points)}
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-[10px] text-gray-500 uppercase tracking-wider font-medium">WTN Singles</span>
+                      <div className="font-semibold text-gray-300">
+                        {renderStat(player.wtnSingles || '-', previousPlayerData?.wtnSingles)}
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-[10px] text-gray-500 uppercase tracking-wider font-medium">Points</span>
+                      <div className="font-semibold text-gray-300">
+                        {renderStat(player.points || '-', previousPlayerData?.points)}
+                      </div>
+                    </div>
+                  </>
+                )}
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[10px] text-gray-500 uppercase tracking-wider font-medium">Win:Loss YTD</span>
+                  <div className="font-semibold text-gray-300">
+                    {renderStat(player.winLossYTD, previousPlayerData?.winLossYTD)}
+                  </div>
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[10px] text-gray-500 uppercase tracking-wider font-medium">Win:Loss Career</span>
+                  <div className="font-semibold text-gray-300">
+                    {renderStat(player.winLossCareer, previousPlayerData?.winLossCareer)}
+                  </div>
+                </div>
+                <div className="flex flex-col gap-0.5 col-span-2">
+                  <span className="text-[10px] text-gray-500 uppercase tracking-wider font-medium">Championships</span>
+                  <div className="font-semibold text-gray-300 flex items-center">
+                    {renderStat(player.championships, previousPlayerData?.championships)}
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
+                <button
+                  onClick={() => onTagPlayer && onTagPlayer(player)}
+                  className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-yellow-400 hover:bg-yellow-400/10 px-2.5 py-1.5 rounded-lg border border-gray-800 transition-colors"
+                >
+                  <Tag className="w-3.5 h-3.5" />
+                  <span>Tag / Group</span>
+                </button>
+                <button
+                  onClick={() => onRefreshPlayer && onRefreshPlayer(player.id)}
+                  disabled={isRefreshing}
+                  className={`flex items-center gap-1.5 text-xs text-gray-400 hover:text-green-400 hover:bg-green-400/10 px-2.5 py-1.5 rounded-lg border border-gray-800 transition-colors ${isRefreshing ? 'cursor-not-allowed opacity-50' : ''}`}
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-green-400' : ''}`} />
+                  <span>Refresh</span>
+                </button>
+                <button
+                  onClick={() => onViewHistory(player.name)}
+                  className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-blue-400 hover:bg-blue-400/10 px-2.5 py-1.5 rounded-lg border border-gray-800 transition-colors"
+                >
+                  <Clock className="w-3.5 h-3.5" />
+                  <span>History</span>
+                </button>
+                <button
+                  onClick={() => removePlayer(player.id)}
+                  className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-red-400 hover:bg-red-400/10 px-2.5 py-1.5 rounded-lg border border-gray-800 transition-colors"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  <span>Remove</span>
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </td>
+
+      {/* Desktop-only table cells */}
+      <td className="px-6 py-4 whitespace-nowrap hidden sm:table-cell">
         <div className="flex items-center">
           <div className="relative h-8 w-8 rounded-full bg-gray-800 flex items-center justify-center border border-gray-700 mr-3">
             {isRefreshing ? (
@@ -260,46 +406,37 @@ function SortablePlayerRow({
                 {player.source === 'TA' ? 'Tennis Australia' : 'HKTA'}
               </div>
             )}
-            {player.groups && player.groups.length > 0 && (
-              <div className="flex flex-wrap gap-1 mt-1.5 max-w-[200px]">
-                {player.groups.map(g => (
-                  <span key={g} className="text-[10px] font-semibold bg-blue-500/10 text-blue-300 border border-blue-500/30 px-1.5 py-0.5 rounded">
-                    {g}
-                  </span>
-                ))}
-              </div>
-            )}
           </div>
         </div>
       </td>
-      <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-400">
+      <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-400 hidden sm:table-cell">
         {renderStat(activeTab === 'TA' ? player.utrSingles : (player.wtnSingles || '-'), previousPlayerData ? (activeTab === 'TA' ? previousPlayerData.utrSingles : previousPlayerData.wtnSingles) : undefined)}
       </td>
       {activeTab === 'TA' && (
-        <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-400">
+        <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-400 hidden sm:table-cell">
           {renderStat(player.points || '-', previousPlayerData?.points)}
         </td>
       )}
       {activeTab === 'HKTA' && (
         <>
-          <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-400">
+          <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-400 hidden sm:table-cell">
             {renderStat(player.rank || '-', previousPlayerData?.rank)}
           </td>
-          <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-400">
+          <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-400 hidden sm:table-cell">
             {renderStat(player.points || '-', previousPlayerData?.points)}
           </td>
         </>
       )}
-      <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-400">
+      <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-400 hidden sm:table-cell">
         {renderStat(player.winLossYTD, previousPlayerData?.winLossYTD)}
       </td>
-      <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-400">
+      <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-400 hidden sm:table-cell">
         {renderStat(player.winLossCareer, previousPlayerData?.winLossCareer)}
       </td>
-      <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-400">
+      <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-400 hidden sm:table-cell">
         {renderStat(player.championships, previousPlayerData?.championships)}
       </td>
-      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium animate-fade-in" onClick={(e) => e.stopPropagation()}>
+      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium animate-fade-in hidden sm:table-cell" onClick={(e) => e.stopPropagation()}>
         <button
           onClick={() => onTagPlayer && onTagPlayer(player)}
           className="text-gray-500 hover:text-yellow-400 hover:bg-yellow-400/10 p-2 rounded-lg transition-colors mr-1"
@@ -1005,11 +1142,36 @@ export function PlayerScreen({
       const saved = localStorage.getItem('playerScreenGroupOrder');
       if (saved) setGroupOrderMap(JSON.parse(saved));
     } catch(e) {}
+
+    // Synchronize group order with the backend database
+    fetch('/api/player-groups/order')
+      .then(res => {
+        if (!res.ok) throw new Error("HTTP error " + res.status);
+        return res.json();
+      })
+      .then(data => {
+        if (data && typeof data === 'object') {
+          setGroupOrderMap(data);
+          localStorage.setItem('playerScreenGroupOrder', JSON.stringify(data));
+        }
+      })
+      .catch(err => {
+        console.warn("Failed to load player groups order from backend, using local cached version:", err);
+      });
   }, []);
 
-  const saveGroupOrder = (newOrderMap: Record<string, string[]>) => {
+  const saveGroupOrder = async (newOrderMap: Record<string, string[]>) => {
     setGroupOrderMap(newOrderMap);
     localStorage.setItem('playerScreenGroupOrder', JSON.stringify(newOrderMap));
+    try {
+      await fetch('/api/player-groups/order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newOrderMap)
+      });
+    } catch (e) {
+      console.error("Failed to save player group order to server:", e);
+    }
   };
 
   const activeRegionGroups = useMemo(() => {
@@ -1496,7 +1658,7 @@ export function PlayerScreen({
         {!isCollapsed && (
           <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-800">
-              <thead className="bg-gray-900/50 flex-col">
+              <thead className="bg-gray-900/50 flex-col hidden sm:table-header-group">
                 <tr>
                   <th scope="col" className="px-2 py-4 w-10"></th>
                   <SortableHeader field="name" label="Player Name" align="left" />

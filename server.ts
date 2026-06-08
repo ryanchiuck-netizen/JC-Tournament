@@ -1154,6 +1154,45 @@ async function startServer() {
     }
   };
 
+  const playerGroupsOrderPath = path.join(process.cwd(), "public", "player-groups-order.json");
+
+  const getPlayerGroupsOrderMap = async (): Promise<Record<string, string[]>> => {
+    let orderMap: Record<string, string[]> = {};
+    if (supabase) {
+      try {
+        const { data, error } = await supabase.from("tournaments").select("data").eq("id", "player_groups_order");
+        if (!error && data && data.length > 0 && data[0].data) {
+          orderMap = data[0].data;
+          return orderMap;
+        }
+      } catch (err: any) {
+        console.warn("Failed to load player groups order from Supabase:", err.message);
+      }
+    }
+    try {
+      const fileContent = await fs.readFile(playerGroupsOrderPath, "utf-8");
+      orderMap = JSON.parse(fileContent);
+    } catch {
+      orderMap = {};
+    }
+    return orderMap;
+  };
+
+  const savePlayerGroupsOrderMap = async (orderMap: Record<string, string[]>) => {
+    try {
+      await fs.writeFile(playerGroupsOrderPath, JSON.stringify(orderMap, null, 2));
+    } catch (e: any) {
+      console.warn("Failed to save local player-groups-order.json:", e.message);
+    }
+    if (supabase) {
+      try {
+        await supabase.from("tournaments").upsert({ id: "player_groups_order", data: orderMap });
+      } catch (err: any) {
+        console.warn("Failed to save player groups order to Supabase:", err.message);
+      }
+    }
+  };
+
   const getSavedPlayers = async (req: any, res: any) => {
     let players: any[] = [];
     if (supabase) {
@@ -3090,6 +3129,30 @@ async function startServer() {
     }
     await savePlayers(req, res, players);
     res.json({ success: true });
+  });
+
+  app.get("/api/player-groups/order", requireAuth, async (req, res) => {
+    try {
+      const orderMap = await getPlayerGroupsOrderMap();
+      res.json(orderMap);
+    } catch (err: any) {
+      console.error("Failed to fetch player groups order:", err);
+      res.status(500).json({ error: "Failed to fetch player groups order" });
+    }
+  });
+
+  app.post("/api/player-groups/order", requireAuth, async (req, res) => {
+    try {
+      const orderMap = req.body;
+      if (!orderMap || typeof orderMap !== "object") {
+        return res.status(400).json({ error: "Invalid order map" });
+      }
+      await savePlayerGroupsOrderMap(orderMap);
+      res.json({ success: true, order: orderMap });
+    } catch (err: any) {
+      console.error("Failed to save player groups order:", err);
+      res.status(500).json({ error: "Failed to save player groups order" });
+    }
   });
 
   // --- Saved Draws API Endpoints ---
