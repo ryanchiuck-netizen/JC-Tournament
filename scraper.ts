@@ -285,27 +285,25 @@ export async function runScraper() {
       end: `${now.getFullYear() + 2}-12-31`
     });
 
-    const states = ["", "NSW", "VIC", "QLD", "WA", "SA", "TAS", "ACT", "NT"];
-
     for (const range of dateRanges) {
       console.log(`Starting AUS search for range: ${range.start} to ${range.end}...`);
-      for (const state of states) {
-        console.log(`Starting AUS search for state: ${state || "all"}, range: ${range.start} to ${range.end}...`);
-        const seenLinksInCurrentSearch = new Set<string>();
-        let rangePage = 1;
-        let rangeHasMore = true;
-        while (rangeHasMore) {
-          console.log(`Fetching AUS state ${state || "all"}, range ${range.start} to ${range.end}, page ${rangePage}...`);
-          const { tournaments } = await fetchPage(
-            "https://tournaments.tennis.com.au/find/tournament/DoSearch",
-            rangePage,
-            "AUS",
-            new Set(),
-            range.start,
-            range.end,
-            existingDetails,
-            state
-          );
+      const state = "";
+      console.log(`Starting AUS search for state: ${state || "all"}, range: ${range.start} to ${range.end}...`);
+      const seenLinksInCurrentSearch = new Set<string>();
+      let rangePage = 1;
+      let rangeHasMore = true;
+      while (rangeHasMore) {
+        console.log(`Fetching AUS state ${state || "all"}, range ${range.start} to ${range.end}, page ${rangePage}...`);
+        const { tournaments } = await fetchPage(
+          "https://tournaments.tennis.com.au/find/tournament/DoSearch",
+          rangePage,
+          "AUS",
+          new Set(),
+          range.start,
+          range.end,
+          existingDetails,
+          state
+        );
 
           if (tournaments.length === 0) {
             rangeHasMore = false;
@@ -336,7 +334,6 @@ export async function runScraper() {
           if (rangePage > 100) rangeHasMore = false;
           await new Promise(resolve => setTimeout(resolve, 200));
         }
-      }
     }
 
     console.log(`Initial listing scrape complete. Saved ${allTournaments.length} tournaments.`);
@@ -364,88 +361,91 @@ export async function runScraper() {
     console.log(`Background enricher: Found ${upcomingTournaments.length} upcoming tournaments to process.`);
 
     let enrichCount = 0;
-    for (const t of upcomingTournaments) {
-      try {
-        const idMatch = t.link.match(/id=([^&]+)/i);
-        const domain = t.source === "HK" ? "hkta.tournamentsoftware.com" : "tournaments.tennis.com.au";
-        
-        let tournamentUrl = "";
-        if (t.link.startsWith("http")) {
-          tournamentUrl = t.link;
-        } else if (t.link.startsWith("/")) {
-          tournamentUrl = `https://${domain}${t.link}`;
-        } else {
-          tournamentUrl = `https://${domain}/${t.link}`;
-        }
-
-        console.log(`Background enriching (${enrichCount + 1}/${upcomingTournaments.length}): ${t.name}...`);
-        
-        let tRes: any = null;
+    
+    // Process concurrently in chunks of 5 with a small delay between batches
+    const CHUNK_SIZE = 5;
+    for (let i = 0; i < upcomingTournaments.length; i += CHUNK_SIZE) {
+      const chunk = upcomingTournaments.slice(i, i + CHUNK_SIZE);
+      
+      await Promise.all(chunk.map(async (t) => {
         try {
-          tRes = await axios.get(tournamentUrl, {
-            headers: {
-              "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
-            },
-            timeout: 6000
-          });
-        } catch (err: any) {
-          // If the exact crawler URL fails, let's try the pretty URL path /tournament/UUID as fallback if there is an ID
-          if (idMatch) {
-            const tournamentId = idMatch[1];
-            const fallbackUrl = `https://${domain}/tournament/${tournamentId}`;
-            console.log(`Primary URL failed (${err.message}). Trying fallback URL: ${fallbackUrl}`);
-            tRes = await axios.get(fallbackUrl, {
+          const idMatch = t.link.match(/id=([^&]+)/i);
+          const domain = t.source === "HK" ? "hkta.tournamentsoftware.com" : "tournaments.tennis.com.au";
+          
+          let tournamentUrl = "";
+          if (t.link.startsWith("http")) {
+            tournamentUrl = t.link;
+          } else if (t.link.startsWith("/")) {
+            tournamentUrl = `https://${domain}${t.link}`;
+          } else {
+            tournamentUrl = `https://${domain}/${t.link}`;
+          }
+          
+          let tRes: any = null;
+          try {
+            tRes = await axios.get(tournamentUrl, {
               headers: {
                 "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
               },
               timeout: 6000
             });
-          } else {
-            throw err;
+          } catch (err: any) {
+            if (idMatch) {
+              const tournamentId = idMatch[1];
+              const fallbackUrl = `https://${domain}/tournament/${tournamentId}`;
+              tRes = await axios.get(fallbackUrl, {
+                headers: {
+                  "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+                },
+                timeout: 6000
+              });
+            } else {
+              throw err;
+            }
           }
-        }
 
-        if (tRes && tRes.data) {
-          const $t = cheerio.load(tRes.data);
+          if (tRes && tRes.data) {
+            const $t = cheerio.load(tRes.data);
 
-          $t("*").each((_, tEl) => {
-            const text = $t(tEl).clone().children().remove().end().text().trim();
-            if (text === "Closing deadline" || text === "Entry deadline") {
-              const deadlineStr = $t(tEl).next().text().trim();
-              const match = deadlineStr.match(/[A-Za-z]{3}\s+(\d{1,2})\s+([A-Za-z]{3})/);
-              if (match) {
-                const day = parseInt(match[1], 10);
-                const monthStr = match[2];
-                const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-                const month = months.indexOf(monthStr);
-                if (month !== -1) {
-                  let dYear = year;
-                  const yearMatch = t.dates.match(/\d{4}/);
-                  if (yearMatch) {
-                    dYear = parseInt(yearMatch[0], 10);
+            $t("*").each((_, tEl) => {
+              const text = $t(tEl).clone().children().remove().end().text().trim();
+              if (text === "Closing deadline" || text === "Entry deadline") {
+                const deadlineStr = $t(tEl).next().text().trim();
+                const match = deadlineStr.match(/[A-Za-z]{3}\s+(\d{1,2})\s+([A-Za-z]{3})/);
+                if (match) {
+                  const day = parseInt(match[1], 10);
+                  const monthStr = match[2];
+                  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                  const month = months.indexOf(monthStr);
+                  if (month !== -1) {
+                    let dYear = nowLocal.getFullYear();
+                    const yearMatch = t.dates.match(/\d{4}/);
+                    if (yearMatch) {
+                      dYear = parseInt(yearMatch[0], 10);
+                    }
+                    t.closingDeadline = `${day}/${month + 1}/${dYear}`;
                   }
-                  t.closingDeadline = `${day}/${month + 1}/${dYear}`;
                 }
               }
-            }
-          });
+            });
+          }
+        } catch (err: any) {
+          console.log(`Background enricher skipped ${t.name}:`, err.message);
         }
+      }));
 
-        enrichCount++;
-        // Periodically save to tournaments.json
-        if (enrichCount % 5 === 0 || enrichCount === upcomingTournaments.length) {
-          await fs.writeFile(dataPath, JSON.stringify({
-            lastUpdated: new Date().toISOString(),
-            tournaments: allTournaments
-          }, null, 2));
-          console.log(`Background enricher saved progress: ${enrichCount} tournaments updated.`);
-        }
+      enrichCount += chunk.length;
+      console.log(`Background enricher progress: ${enrichCount}/${upcomingTournaments.length} processing complete.`);
 
-        // Politeness delay to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 800));
-      } catch (err: any) {
-        console.log(`Background enricher skipped ${t.name}:`, err.message);
+      if (enrichCount % (CHUNK_SIZE * 4) === 0 || enrichCount === upcomingTournaments.length) {
+        await fs.writeFile(dataPath, JSON.stringify({
+          lastUpdated: new Date().toISOString(),
+          tournaments: allTournaments
+        }, null, 2));
       }
+
+      // Politeness delay to avoid rate limiting
+      await new Promise(resolve => setTimeout(resolve, 500));
     }
 
     console.log("Scraping and background enrichment complete.");
