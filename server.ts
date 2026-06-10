@@ -356,7 +356,7 @@ async function startServer() {
       const rawNew = await fs.readFile(dataPath, "utf-8");
       const parsedNew = JSON.parse(rawNew);
       if (parsedNew && Array.isArray(parsedNew.tournaments)) {
-        const newNSWNotifications: any[] = [];
+        const newTournNotifications: any[] = [];
         for (const t of parsedNew.tournaments) {
           if (t.link && !oldLinks.has(t.link)) {
             // New tournament!
@@ -364,7 +364,7 @@ async function startServer() {
             const locUpper = (t.location || "").toUpperCase();
             if (t.source === "AUS" && (nameUpper.includes("NSW") || locUpper.includes("NSW"))) {
               const dateStr = t.dates || "Unknown Dates";
-              newNSWNotifications.push({
+              newTournNotifications.push({
                 id: `nsw-tournament-${Date.now()}-${Math.random().toString(36).substring(7)}`,
                 player: 'System',
                 title: `New NSW Tournament Created`,
@@ -375,22 +375,35 @@ async function startServer() {
                 timestamp: new Date().toISOString(),
                 url: `/#tournaments`
               });
+            } else if (t.source === "HK") {
+              const dateStr = t.dates || "Unknown Dates";
+              newTournNotifications.push({
+                id: `hk-tournament-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+                player: 'System',
+                title: `New HKTA Tournament Created`,
+                body: `New HKTA Tournament: ${t.name}\nDates: ${dateStr}\nLocation: ${t.location || "Hong Kong"}`,
+                type: 'HK_Tournament',
+                source: 'HK',
+                date: new Date().toISOString().split('T')[0],
+                timestamp: new Date().toISOString(),
+                url: `/#tournaments`
+              });
             }
           }
         }
 
-        if (newNSWNotifications.length > 0) {
-          console.log(`Detected ${newNSWNotifications.length} new NSW tournaments. Saving alerts...`);
+        if (newTournNotifications.length > 0) {
+          console.log(`Detected ${newTournNotifications.length} new tournaments. Saving alerts...`);
           let existingNotifications = [];
           try {
             existingNotifications = await getNotificationsHistory(null, null);
           } catch (e) {}
-          const merged = [...newNSWNotifications, ...existingNotifications];
+          const merged = [...newTournNotifications, ...existingNotifications];
           await saveNotificationsHistory(null, null, merged);
         }
       }
     } catch (e: any) {
-      console.error("Error analyzing new tournaments for NSW alerts:", e.message || e);
+      console.error("Error analyzing new tournaments for alerts:", e.message || e);
     }
   };
 
@@ -3545,6 +3558,268 @@ async function startServer() {
     res.json({ inProgress: isGlobalRefreshing });
   });
 
+  async function refreshSavedDrawsTask() {
+    console.log("[Draw Watcher BACKGROUND] Starting automatic saved draws refresh...");
+    try {
+      const { draws } = await getSavedDraws(null, null);
+      if (!Array.isArray(draws) || draws.length === 0) {
+        console.log("[Draw Watcher BACKGROUND] No saved draws to refresh.");
+        return;
+      }
+
+      let updatedAnyDraw = false;
+      const globalNewAlerts: any[] = [];
+      const updatedDrawsList = [...draws];
+
+      for (let drawIndex = 0; drawIndex < draws.length; drawIndex++) {
+        const draw = draws[drawIndex];
+        if (!draw.url) continue;
+
+        console.log(`[Draw Watcher BACKGROUND] Refreshing draw "${draw.name}" (${draw.url})...`);
+        try {
+          let resolvedUrl = draw.url;
+          let drawRes: any;
+          let isPreFetched = false;
+
+          // 1. Resolve event.aspx container pages
+          if (draw.url.includes('event.aspx')) {
+            try {
+              const eventPageRes = await axios.get(draw.url, {
+                headers: { "User-Agent": "Mozilla/5.0" },
+                timeout: 10000
+              });
+              const $eventPage = cheerio.load(eventPageRes.data);
+              const directPlayersCount = $eventPage('a[href*="player.aspx?"], a[href*="player.aspx"], a[href*="/player/"], a[href*="/player-profile/"]')
+                .filter((_, el) => {
+                  const href = $eventPage(el).attr('href') || '';
+                  const isGeneric = href.toLowerCase().includes('/player-profile/search') || href.toLowerCase().endsWith('/player-profile/') || href.toLowerCase().endsWith('/player-profile');
+                  return !isGeneric;
+                }).length;
+
+              if (directPlayersCount > 0) {
+                drawRes = eventPageRes;
+                isPreFetched = true;
+              } else {
+                let drawLink = '';
+                $eventPage('a[href*="draw.aspx?"], a[href*="/draw/"]').each((_, el) => {
+                  const href = $eventPage(el).attr('href') || '';
+                  if (href && !href.toLowerCase().includes('draws.aspx')) {
+                    drawLink = href;
+                    return false; // Break
+                  }
+                });
+                
+                if (drawLink) {
+                  const domain = draw.url.includes("hkta") ? "hkta.tournamentsoftware.com" : "tournaments.tennis.com.au";
+                  if (!drawLink.startsWith('http')) {
+                    if (drawLink.startsWith('/')) {
+                      resolvedUrl = `https://${domain}${drawLink}`;
+                    } else {
+                      resolvedUrl = `https://${domain}/sport/${drawLink}`;
+                    }
+                  } else {
+                    resolvedUrl = drawLink;
+                  }
+                }
+              }
+            } catch (eventErr: any) {
+              console.warn(`[Draw Watcher BACKGROUND] Failed to pre-fetch event.aspx for auto-draw-resolution for "${draw.name}":`, eventErr.message);
+            }
+          }
+
+          if (!isPreFetched) {
+            drawRes = await axios.get(resolvedUrl, {
+              headers: { "User-Agent": "Mozilla/5.0" },
+              timeout: 10000
+            });
+          }
+
+          const $ = cheerio.load(drawRes.data);
+          const playerLinks: { name: string, url: string }[] = [];
+
+          $('a[href*="player.aspx"], a[href*="/player/"], a[href*="/player-profile/"]').each((i, el) => {
+            const name = cleanPlayerName($(el).text().trim());
+            const href = $(el).attr('href');
+            if (name && href) {
+              const isGeneric = href.toLowerCase().includes('/player-profile/search') || href.toLowerCase().endsWith('/player-profile/') || href.toLowerCase().endsWith('/player-profile');
+              if (!isGeneric) {
+                let fullUrl = href;
+                if (!href.startsWith('http')) {
+                  const tDomain = draw.url.includes("hkta") ? "hkta.tournamentsoftware.com" : "tournaments.tennis.com.au";
+                  if (href.startsWith('/')) {
+                    fullUrl = `https://${tDomain}${href}`;
+                  } else {
+                    fullUrl = `https://${tDomain}/sport/${href}`;
+                  }
+                }
+                if (!playerLinks.some(pl => pl.url === fullUrl)) {
+                  playerLinks.push({ name, url: fullUrl });
+                }
+              }
+            }
+          });
+
+          if (playerLinks.length === 0) {
+            console.log(`[Draw Watcher BACKGROUND] Scraped 0 players for "${draw.name}". Skipping.`);
+            continue;
+          }
+
+          // 2. Identify new players
+          const existingNames = new Set((draw.players || []).map((p: any) => (p.name || '').toLowerCase().trim()));
+          const newPlayersToScrape = playerLinks.filter(pl => pl.name && !existingNames.has(pl.name.toLowerCase().trim()));
+
+          if (newPlayersToScrape.length === 0) {
+            console.log(`[Draw Watcher BACKGROUND] No new players joined the draw "${draw.name}".`);
+            continue;
+          }
+
+          console.log(`[Draw Watcher BACKGROUND] Found ${newPlayersToScrape.length} new players in "${draw.name}". Fetching their details...`);
+          
+          // 3. Fetch detailed profile stats for ONLY the NEW players
+          const limit = pLimit(2);
+          const scrapedNewPlayers = await Promise.all(
+            newPlayersToScrape.map(pl =>
+              limit(async () => {
+                try {
+                  let finalProfileUrl = '';
+                  if (pl.url.includes('/player-profile/')) {
+                    finalProfileUrl = pl.url;
+                  } else {
+                    const playerPageRes = await axios.get(pl.url, {
+                      headers: { "User-Agent": "Mozilla/5.0" },
+                      timeout: 10000
+                    });
+                    const $player = cheerio.load(playerPageRes.data);
+                    const tDomain = draw.url.includes("hkta") ? "hkta.tournamentsoftware.com" : "tournaments.tennis.com.au";
+                    
+                    let profileRedirectUrl = '';
+                    $player(`a[href*="/player-profile/"]`).each((i, el) => {
+                      const text = $player(el).text().trim();
+                      if (text.toLowerCase().includes(pl.name.toLowerCase().split(' ')[0])) {
+                        const href = $player(el).attr('href');
+                        profileRedirectUrl = href?.startsWith('http') ? href : `https://${tDomain}${href}`;
+                        return false;
+                      }
+                    });
+
+                    if (!profileRedirectUrl) {
+                      const firstPlayerLink = $player('a[href*="/player-profile/"]').first().attr('href');
+                      if (firstPlayerLink) {
+                        profileRedirectUrl = firstPlayerLink.startsWith('http') ? firstPlayerLink : `https://${tDomain}${firstPlayerLink}`;
+                      }
+                    }
+
+                    if (!profileRedirectUrl) {
+                      $player('a[href*="/player/"]').each((i, el) => {
+                        const text = $player(el).text().trim();
+                        if (text.toLowerCase().includes(pl.name.toLowerCase().split(' ')[0])) {
+                          const href = $player(el).attr('href');
+                          profileRedirectUrl = href?.startsWith('http') ? href : `https://${tDomain}${href}`;
+                          return false;
+                        }
+                      });
+                    }
+
+                    if (profileRedirectUrl) {
+                      const redirectRes = await axios.get(profileRedirectUrl, {
+                        headers: { "User-Agent": "Mozilla/5.0" },
+                        timeout: 10000,
+                        maxRedirects: 5
+                      });
+                      finalProfileUrl = redirectRes.request.res.responseUrl || profileRedirectUrl;
+                    }
+                  }
+
+                  if (finalProfileUrl) {
+                    const stats = await scrapePlayerProfile(finalProfileUrl, pl.name);
+                    return {
+                      id: Math.random().toString(36).substring(7),
+                      name: pl.name,
+                      profileUrl: finalProfileUrl,
+                      ...stats
+                    };
+                  }
+                  return {
+                    id: Math.random().toString(36).substring(7),
+                    name: pl.name,
+                    rank: '-',
+                    points: '-',
+                    profileUrl: pl.url,
+                    utrSingles: '-',
+                    winLossYTD: '-',
+                    wtnSingles: '-',
+                    championships: '-',
+                    winLossCareer: '-'
+                  };
+                } catch (err: any) {
+                  console.error(`[Draw Watcher BACKGROUND] Error scraping player stats for "${pl.name}" in draw "${draw.name}":`, err.message || err);
+                  return {
+                    id: Math.random().toString(36).substring(7),
+                    name: pl.name,
+                    rank: '-',
+                    points: '-',
+                    profileUrl: pl.url,
+                    utrSingles: '-',
+                    winLossYTD: '-',
+                    wtnSingles: '-',
+                    championships: '-',
+                    winLossCareer: '-'
+                  };
+                }
+              })
+            )
+          );
+
+          // 4. Merge new players into existing draw list
+          const updatedPlayersList = [...(draw.players || []), ...scrapedNewPlayers];
+          updatedDrawsList[drawIndex] = {
+            ...draw,
+            players: updatedPlayersList
+          };
+          updatedAnyDraw = true;
+
+          // 5. Generate and queue alerts
+          for (const p of scrapedNewPlayers) {
+            const utrStr = p.utrSingles && p.utrSingles !== "-" ? `(UTR: ${p.utrSingles})` : "";
+            const wtnStr = p.wtnSingles && p.wtnSingles !== "-" ? `(WTN: ${p.wtnSingles})` : "";
+            const statsStr = [utrStr, wtnStr].filter(Boolean).join(" ");
+
+            globalNewAlerts.push({
+              id: `draw-watcher-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+              player: p.name,
+              title: `New Player in Draw`,
+              body: `${p.name} ${statsStr} has joined the draw "${draw.name}".`,
+              type: 'Draw_Watcher',
+              source: draw.region === 'HK' ? 'HK' : 'TA',
+              date: new Date().toISOString().split('T')[0],
+              timestamp: new Date().toISOString(),
+              url: `/#saved-draws`
+            });
+          }
+        } catch (drawErr: any) {
+          console.error(`[Draw Watcher BACKGROUND] Failed to refresh draw "${draw.name}":`, drawErr.message || drawErr);
+        }
+      }
+
+      if (updatedAnyDraw) {
+        console.log(`[Draw Watcher BACKGROUND] Saving updated draw lists...`);
+        await saveSavedDraws(null, null, updatedDrawsList);
+      }
+
+      if (globalNewAlerts.length > 0) {
+        console.log(`[Draw Watcher BACKGROUND] Detected ${globalNewAlerts.length} new draw watchlist entries. Saving to notification history...`);
+        let existingNotifications = [];
+        try {
+          existingNotifications = await getNotificationsHistory(null, null);
+        } catch (e) {}
+        const merged = [...globalNewAlerts, ...existingNotifications];
+        await saveNotificationsHistory(null, null, merged);
+      }
+    } catch (err: any) {
+      console.error("[Draw Watcher BACKGROUND] Critical error in automatic draws refresh:", err.message || err);
+    }
+  }
+
   async function runGlobalRefreshTask(includeTournamentsScrape: boolean = true) {
     isGlobalRefreshing = true;
     isScraping = true;
@@ -3597,8 +3872,13 @@ async function startServer() {
         });
       }
 
-      // Wait for both tasks to complete
-      await Promise.all([playersPromise, scraperPromise]);
+      // Task C: automatically refresh all saved draws
+      const drawsPromise = refreshSavedDrawsTask().catch((e) => {
+        console.error("Draws refresh task failed during global refresh:", e);
+      });
+
+      // Wait for all three tasks to complete
+      await Promise.all([playersPromise, scraperPromise, drawsPromise]);
 
       // 2. Now trigger tournaments-for-players cache refresh using the newly updated data!
       if (refreshTournamentsForPlayersCache) {

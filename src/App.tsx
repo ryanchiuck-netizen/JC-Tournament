@@ -452,13 +452,14 @@ export default function App() {
               systemNotifObj.onclick = (e) => {
                 e.preventDefault();
                 window.focus();
-                const isHK = notif.source === 'HK' || notif.source === 'HKTA' || notif.url?.includes('hk') || notif.url?.includes('hkta') || notif.player_source === 'HKTA' || (notif.body && notif.body.toLowerCase().includes('hong kong')) || (notif.title && notif.title.toLowerCase().includes('hong kong'));
+               const isHK = notif.source === 'HK' || notif.source === 'HKTA' || notif.url?.includes('hk') || notif.url?.includes('hkta') || notif.player_source === 'HKTA' || (notif.body && notif.body.toLowerCase().includes('hong kong')) || (notif.title && notif.title.toLowerCase().includes('hong kong'));
                 const isDraw = notif.type === 'Draw_Watcher' || notif.type === 'Draw' || (notif.title && notif.title.includes('Draw'));
                 const isNSW = notif.type === 'NSW_Tournament' || notif.type === 'NSW' || (notif.title && notif.title.includes('NSW'));
+                const isHKTournament = notif.type === 'HK_Tournament' || (notif.title && notif.title.includes('HKTA Tournament')) || (notif.title && notif.title.includes('HK Tournament')) || (notif.title && notif.title.includes('New HKTA Tournament'));
                 
                 if (isDraw) {
                   window.location.hash = "#draw-checker";
-                } else if (isNSW) {
+                } else if (isNSW || isHKTournament) {
                   window.location.hash = "#tournament-screen";
                 } else {
                   window.location.hash = isHK ? "#player-screen-hkta" : "#player-screen-ta";
@@ -471,7 +472,8 @@ export default function App() {
                   const isHK = notif.source === 'HK' || notif.source === 'HKTA' || notif.url?.includes('hk') || notif.url?.includes('hkta') || notif.player_source === 'HKTA' || (notif.body && notif.body.toLowerCase().includes('hong kong')) || (notif.title && notif.title.toLowerCase().includes('hong kong'));
                   const isDraw = notif.type === 'Draw_Watcher' || notif.type === 'Draw' || (notif.title && notif.title.includes('Draw'));
                   const isNSW = notif.type === 'NSW_Tournament' || notif.type === 'NSW' || (notif.title && notif.title.includes('NSW'));
-                  const swUrl = isDraw ? "/#draw-checker" : isNSW ? "/#tournament-screen" : isHK ? "/#player-screen-hkta" : "/#player-screen-ta";
+                  const isHKTournament = notif.type === 'HK_Tournament' || (notif.title && notif.title.includes('HKTA Tournament')) || (notif.title && notif.title.includes('HK Tournament')) || (notif.title && notif.title.includes('New HKTA Tournament'));
+                  const swUrl = isDraw ? "/#draw-checker" : (isNSW || isHKTournament) ? "/#tournament-screen" : isHK ? "/#player-screen-hkta" : "/#player-screen-ta";
                   
                   registration.showNotification(notif.title || "Tennis Player Alert", {
                     body: notif.body || notif.message || "Player stats changed.",

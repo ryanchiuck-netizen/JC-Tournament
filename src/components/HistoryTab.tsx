@@ -43,6 +43,7 @@ export function HistoryTab() {
     Championships: true,
     Tournament: true,
     NSW_Tournament: true,
+    HK_Tournament: true,
     Draw_Watcher: true,
   });
 
@@ -51,7 +52,11 @@ export function HistoryTab() {
     const saved = localStorage.getItem('jc_monitoring_filters');
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.HK_Tournament === undefined) {
+          parsed.HK_Tournament = true;
+        }
+        return parsed;
       } catch (e) {
         console.error(e);
       }
@@ -64,6 +69,7 @@ export function HistoryTab() {
       Championships: true,
       Tournament: true,
       NSW_Tournament: true,
+      HK_Tournament: true,
       Draw_Watcher: true,
     };
   });
@@ -160,6 +166,9 @@ export function HistoryTab() {
     if (type === 'NSW_Tournament' || type === 'NSW' || title.includes('NSW_Tournament') || title.includes('NSW Tournament') || title.includes('New NSW Tournament')) {
       return 'NSW_Tournament';
     }
+    if (type === 'HK_Tournament' || type === 'HK' || title.includes('HK_Tournament') || title.includes('HKTA Tournament') || title.includes('New HKTA Tournament') || title.includes('HK Tournament')) {
+      return 'HK_Tournament';
+    }
     if (type === 'UTR' || title.includes('UTR') || title.includes('WTN')) {
       return 'UTR';
     }
@@ -199,6 +208,8 @@ export function HistoryTab() {
         return <Calendar className={`${className} text-teal-400`} />;
       case 'NSW_Tournament':
         return <MapPin className={`${className} text-orange-400`} />;
+      case 'HK_Tournament':
+        return <MapPin className={`${className} text-rose-400`} />;
       case 'Draw_Watcher':
         return <Eye className={`${className} text-indigo-400`} />;
       default:
@@ -214,6 +225,7 @@ export function HistoryTab() {
     { key: 'Championships', label: 'Championships', color: 'text-yellow-400', bg: 'bg-yellow-400/10' },
     { key: 'Tournament', label: 'Player Tournament Watch', color: 'text-teal-400', bg: 'bg-teal-500/10' },
     { key: 'NSW_Tournament', label: 'NSW Tournament', color: 'text-orange-400', bg: 'bg-orange-500/10' },
+    { key: 'HK_Tournament', label: 'HKTA Tournament', color: 'text-rose-400', bg: 'bg-rose-500/10' },
     { key: 'Draw_Watcher', label: 'Draw Watcher', color: 'text-indigo-400', bg: 'bg-indigo-500/10' },
   ];
 
@@ -230,6 +242,7 @@ export function HistoryTab() {
     Championships: 0,
     Tournament: 0,
     NSW_Tournament: 0,
+    HK_Tournament: 0,
     Draw_Watcher: 0,
   });
 
@@ -242,6 +255,7 @@ export function HistoryTab() {
       Championships: enable,
       Tournament: enable,
       NSW_Tournament: enable,
+      HK_Tournament: enable,
       Draw_Watcher: enable,
     });
   };
@@ -255,6 +269,7 @@ export function HistoryTab() {
       Championships: enable,
       Tournament: enable,
       NSW_Tournament: enable,
+      HK_Tournament: enable,
       Draw_Watcher: enable,
     });
   };
@@ -342,7 +357,7 @@ export function HistoryTab() {
     if (cat === 'Draw_Watcher') {
       return "#draw-checker";
     }
-    if (cat === 'NSW_Tournament') {
+    if (cat === 'NSW_Tournament' || cat === 'HK_Tournament') {
       return "#tournament-screen";
     }
     const isHK = notif.source === 'HK' || notif.source === 'HKTA' || notif.url?.includes('hk') || notif.url?.includes('hkta') || notif.player_source === 'HKTA' || (notif.body && notif.body.toLowerCase().includes('hong kong')) || (notif.title && notif.title.toLowerCase().includes('hong kong'));
