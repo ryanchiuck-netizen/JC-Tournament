@@ -25,6 +25,8 @@ function cleanPlayerName(name: string): string {
   let cleaned = name.trim();
   // Remove bracketed or parenthesized player numbers at the end (e.g. Chiu Jordan [66419], Jordan Chiu (66333972211))
   cleaned = cleaned.replace(/\s*[([][^\])]*\d+[^\])]*[)\]]\s*$/g, '');
+  // Also remove any trailing open bracketed/parenthesized digits (even if truncated with ellipses, e.g. "Lucius Kanis MacRae (6...")
+  cleaned = cleaned.replace(/\s*[([][\d\W]*\d+[\d\W]*$/g, '');
   return cleaned.trim();
 }
 
@@ -722,19 +724,60 @@ async function startServer() {
   app.post("/api/save-google-sheet", requireAuth, async (req, res) => {
     try {
       const { sheetName, data } = req.body;
+      
+      // Sanitise input payload so that null/undefined values do not cause Apps Script script execution errors (500)
+      const sanitizedData = Array.isArray(data)
+        ? data.map((item: any) => {
+            const cleaned: any = {};
+            for (const key of Object.keys(item)) {
+              const val = item[key];
+              cleaned[key] = (val === undefined || val === null) ? "" : val;
+            }
+            return cleaned;
+          })
+        : data;
+
+      console.log(`[Google Sheets Proxy] Forwarding ${Array.isArray(sanitizedData) ? sanitizedData.length : 0} items to sheet "${sheetName}"`);
+
       const response = await axios.post("https://script.google.com/macros/s/AKfycbxvoYQvw9S3ctCEuShwtHyZL19IZnu2HeXK7ZQp-HYs5cReS0mvNZL_vid8wifj88vyDg/exec", {
         sheetName,
-        data
+        data: sanitizedData
       }, {
         headers: {
           "Content-Type": "application/json"
         },
-        timeout: 20000
+        timeout: 20000,
+        maxRedirects: 0,
+        validateStatus: (status) => status >= 200 && status < 400
       });
+
+      if (response.status === 301 || response.status === 302 || response.status === 307 || response.status === 308) {
+        const redirectUrl = response.headers.location;
+        if (redirectUrl) {
+          console.log("[Google Sheets Proxy] Following direct redirect to:", redirectUrl);
+          const redirectResponse = await axios.get(redirectUrl, {
+            timeout: 20000,
+            headers: {
+              "User-Agent": "Mozilla/5.0"
+            }
+          });
+          return res.json({ success: true, response: redirectResponse.data });
+        }
+      }
+
       res.json({ success: true, response: response.data });
     } catch (err: any) {
       console.error("Error proxying to Google Sheets:", err.message);
-      res.status(500).json({ error: "Failed to save to Google Sheets via proxy", details: err.message });
+      if (err.response) {
+        console.error("Google Sheets proxy error response status:", err.response.status);
+        console.error("Google Sheets proxy error response headers:", err.response.headers);
+        console.error("Google Sheets proxy error response data:", typeof err.response.data === "object" ? JSON.stringify(err.response.data) : err.response.data);
+      }
+      res.status(500).json({ 
+        error: "Failed to save to Google Sheets via proxy", 
+        details: err.message,
+        googleResponse: err.response ? err.response.data : null 
+      });
     }
   });
 
@@ -2021,6 +2064,22 @@ async function startServer() {
     return urlStr.split('#')[0].toLowerCase().trim();
   }
 
+  function deduplicatePlayers(players: any[]): any[] {
+    if (!Array.isArray(players)) return [];
+    const seen = new Set<string>();
+    const uniqueList: any[] = [];
+    for (const p of players) {
+      if (!p || !p.name) continue;
+      const cleanedName = cleanPlayerName(p.name);
+      const norm = cleanedName.toLowerCase().trim();
+      if (!seen.has(norm)) {
+        seen.add(norm);
+        uniqueList.push({ ...p, name: cleanedName });
+      }
+    }
+    return uniqueList;
+  }
+
   const getSavedDraws = async (req: any, res: any) => {
     let draws: any[] = [];
     let updatedAt: string = new Date().toISOString();
@@ -2098,6 +2157,14 @@ async function startServer() {
       const normalizedName = normalizeDrawName(updatedDraw.name);
       if (normalizedName !== updatedDraw.name) {
         updatedDraw.name = normalizedName;
+        hasChanges = true;
+      }
+
+      // Clean up and deduplicate player entries
+      const originalPlayersStr = JSON.stringify(updatedDraw.players || []);
+      const deduplicatedPlayers = deduplicatePlayers(updatedDraw.players || []);
+      if (JSON.stringify(deduplicatedPlayers) !== originalPlayersStr) {
+        updatedDraw.players = deduplicatedPlayers;
         hasChanges = true;
       }
 
@@ -2468,7 +2535,7 @@ async function startServer() {
               }
             }
             
-            if (!playerLinks.some(pl => pl.url === fullUrl)) {
+            if (!playerLinks.some(pl => pl.url === fullUrl || pl.name.toLowerCase().trim() === name.toLowerCase().trim())) {
               playerLinks.push({ name, url: fullUrl });
             }
           }
@@ -2629,7 +2696,7 @@ async function startServer() {
       );
 
       res.json({ 
-        players: playersStats,
+        players: deduplicatePlayers(playersStats),
         drawName: drawNameCandidate,
         tournamentName,
         tournamentDate
@@ -3211,12 +3278,15 @@ async function startServer() {
               const utrStr = p.utrSingles && p.utrSingles !== "-" ? `(UTR: ${p.utrSingles})` : "";
               const wtnStr = p.wtnSingles && p.wtnSingles !== "-" ? `(WTN: ${p.wtnSingles})` : "";
               const statsStr = [utrStr, wtnStr].filter(Boolean).join(" ");
+              const bodyText = statsStr 
+                ? `${p.name} ${statsStr} has joined the draw "${name}".`
+                : `${p.name} has joined the draw "${name}".`;
               
               drawAlerts.push({
                 id: `draw-watcher-${Date.now()}-${Math.random().toString(36).substring(7)}`,
                 player: p.name,
                 title: `New Player in Draw`,
-                body: `${p.name} ${statsStr} has joined the draw "${name}".`,
+                body: bodyText,
                 type: 'Draw_Watcher',
                 source: p.source || 'TA',
                 date: new Date().toISOString().split('T')[0],
@@ -3233,7 +3303,7 @@ async function startServer() {
         name,
         url: finalUrl,
         region: region || "AUS",
-        players: players || [],
+        players: deduplicatePlayers(players || []),
         sort_order: existingIndex >= 0 ? (draws[existingIndex].sort_order !== undefined ? draws[existingIndex].sort_order : existingIndex) : draws.length
       };
 
@@ -3325,12 +3395,15 @@ async function startServer() {
             const utrStr = p.utrSingles && p.utrSingles !== "-" ? `(UTR: ${p.utrSingles})` : "";
             const wtnStr = p.wtnSingles && p.wtnSingles !== "-" ? `(WTN: ${p.wtnSingles})` : "";
             const statsStr = [utrStr, wtnStr].filter(Boolean).join(" ");
+            const bodyText = statsStr 
+              ? `${p.name} ${statsStr} has joined the draw "${name}".`
+              : `${p.name} has joined the draw "${name}".`;
             
             drawAlerts.push({
               id: `draw-watcher-${Date.now()}-${Math.random().toString(36).substring(7)}`,
               player: p.name,
               title: `New Player in Draw`,
-              body: `${p.name} ${statsStr} has joined the draw "${name}".`,
+              body: bodyText,
               type: 'Draw_Watcher',
               source: p.source || 'TA',
               date: new Date().toISOString().split('T')[0],
@@ -3341,7 +3414,7 @@ async function startServer() {
         }
       }
 
-      draws[drawIndex].players = players;
+      draws[drawIndex].players = deduplicatePlayers(players);
       
       // If we got a tournamentDate and the existing URL doesn't have a date hash, append it
       if (tournamentDate && !draws[drawIndex].url.includes('#date=')) {
@@ -3567,6 +3640,20 @@ async function startServer() {
         return;
       }
 
+      // Fetch currently monitored players to update existing draw player stats
+      let savedPlayersForSync = [];
+      try {
+        savedPlayersForSync = await getSavedPlayers(null, null);
+      } catch (e) {
+        console.warn("[Draw Watcher BACKGROUND] Could not fetch saved players for sync:", e);
+      }
+      const savedPlayersMap = new Map();
+      for (const p of savedPlayersForSync) {
+        if (p.name) {
+          savedPlayersMap.set(p.name.toLowerCase().trim(), p);
+        }
+      }
+
       let updatedAnyDraw = false;
       const globalNewAlerts: any[] = [];
       const updatedDrawsList = [...draws];
@@ -3652,12 +3739,43 @@ async function startServer() {
                     fullUrl = `https://${tDomain}/sport/${href}`;
                   }
                 }
-                if (!playerLinks.some(pl => pl.url === fullUrl)) {
+                if (!playerLinks.some(pl => pl.url === fullUrl || pl.name.toLowerCase().trim() === name.toLowerCase().trim())) {
                   playerLinks.push({ name, url: fullUrl });
                 }
               }
             }
           });
+
+          // Sync any existing player in this draw with their latest stats from the general player list
+          let drawPlayers = draw.players || [];
+          let updatedPlayersInThisDraw = false;
+          drawPlayers = drawPlayers.map((p: any) => {
+            const match = savedPlayersMap.get((p.name || '').toLowerCase().trim());
+            if (match) {
+              const updatedP = {
+                ...p,
+                utrSingles: match.utrSingles && match.utrSingles !== "-" ? match.utrSingles : p.utrSingles,
+                utrDoubles: match.utrDoubles && match.utrDoubles !== "-" ? match.utrDoubles : p.utrDoubles,
+                wtnSingles: match.wtnSingles && match.wtnSingles !== "-" ? match.wtnSingles : p.wtnSingles,
+                wtnDoubles: match.wtnDoubles && match.wtnDoubles !== "-" ? match.wtnDoubles : p.wtnDoubles,
+                winLossSingles: match.winLossSingles && match.winLossSingles !== "-" ? match.winLossSingles : p.winLossSingles,
+                winLossDoubles: match.winLossDoubles && match.winLossDoubles !== "-" ? match.winLossDoubles : p.winLossDoubles,
+                points: match.points && match.points !== "-" ? match.points : p.points,
+                rank: match.rank && match.rank !== "-" ? match.rank : p.rank,
+              };
+              if (JSON.stringify(updatedP) !== JSON.stringify(p)) {
+                updatedPlayersInThisDraw = true;
+              }
+              return updatedP;
+            }
+            return p;
+          });
+
+          if (updatedPlayersInThisDraw) {
+            draw.players = drawPlayers;
+            updatedDrawsList[drawIndex] = draw;
+            updatedAnyDraw = true;
+          }
 
           if (playerLinks.length === 0) {
             console.log(`[Draw Watcher BACKGROUND] Scraped 0 players for "${draw.name}". Skipping.`);
@@ -3770,8 +3888,8 @@ async function startServer() {
             )
           );
 
-          // 4. Merge new players into existing draw list
-          const updatedPlayersList = [...(draw.players || []), ...scrapedNewPlayers];
+          // 4. Merge new players into existing draw list, making sure there are no duplicate names
+          const updatedPlayersList = deduplicatePlayers([...(draw.players || []), ...scrapedNewPlayers]);
           updatedDrawsList[drawIndex] = {
             ...draw,
             players: updatedPlayersList
@@ -3783,12 +3901,15 @@ async function startServer() {
             const utrStr = p.utrSingles && p.utrSingles !== "-" ? `(UTR: ${p.utrSingles})` : "";
             const wtnStr = p.wtnSingles && p.wtnSingles !== "-" ? `(WTN: ${p.wtnSingles})` : "";
             const statsStr = [utrStr, wtnStr].filter(Boolean).join(" ");
+            const bodyText = statsStr 
+              ? `${p.name} ${statsStr} has joined the draw "${draw.name}".`
+              : `${p.name} has joined the draw "${draw.name}".`;
 
             globalNewAlerts.push({
               id: `draw-watcher-${Date.now()}-${Math.random().toString(36).substring(7)}`,
               player: p.name,
               title: `New Player in Draw`,
-              body: `${p.name} ${statsStr} has joined the draw "${draw.name}".`,
+              body: bodyText,
               type: 'Draw_Watcher',
               source: draw.region === 'HK' ? 'HK' : 'TA',
               date: new Date().toISOString().split('T')[0],
@@ -3801,10 +3922,9 @@ async function startServer() {
         }
       }
 
-      if (updatedAnyDraw) {
-        console.log(`[Draw Watcher BACKGROUND] Saving updated draw lists...`);
-        await saveSavedDraws(null, null, updatedDrawsList);
-      }
+      // Always save updatedDrawsList to update timestamp and satisfy UI feedback (Last Updated)
+      console.log(`[Draw Watcher BACKGROUND] Saving draw lists (always saving to refresh timestamp)...`);
+      await saveSavedDraws(null, null, updatedDrawsList);
 
       if (globalNewAlerts.length > 0) {
         console.log(`[Draw Watcher BACKGROUND] Detected ${globalNewAlerts.length} new draw watchlist entries. Saving to notification history...`);
@@ -3827,60 +3947,59 @@ async function startServer() {
       console.log(`Starting background refresh. Include tournaments scrape: ${includeTournamentsScrape}`);
       
       const players = await getSavedPlayers(null, null);
-      let notifications: any[] = [];
-      try {
-        notifications = await getNotificationsHistory(null, null);
-      } catch (e) {
-        // Ignore
-      }
-
+      
       const limit = pLimit(2); // Concurrency limit of 2 to avoid slamming tennis systems and timeouts
       
-      // Task A: update all player stats
-      const playersPromise = Promise.all(
+      // Task A: Update all player stats in a thread-safe manner
+      console.log(`[Global Refresh] Step 1: Updating ${players.length} players' stats...`);
+      const results = await Promise.all(
         players.map((p: any) =>
           limit(async () => {
-            if (!p.url) return p;
+            if (!p.url) return { player: p, changes: [] };
             try {
               const updatedStats = await scrapePlayerProfile(p.url, p.name);
               const updatedPlayer = { ...p, ...updatedStats, name: p.name };
-              
               const newChanges = getPlayerChanges(p, updatedPlayer);
-              if (newChanges.length > 0) {
-                notifications = [...newChanges, ...notifications];
-              }
-
-              return updatedPlayer;
+              return { player: updatedPlayer, changes: newChanges };
             } catch (e) {
               console.error(`Failed to refresh player ${p.name} in global refresh:`, e);
-              return p; // Return unchanged on failure
+              return { player: p, changes: [] };
             }
           })
         )
-      ).then(async (updatedPlayers) => {
-        await savePlayers(null, null, updatedPlayers);
-        if (notifications.length > 0) {
-          await saveNotificationsHistory(null, null, notifications);
-        }
-      });
+      );
 
-      // Task B: run tournaments scraper (only if includeTournamentsScrape is true)
-      let scraperPromise = Promise.resolve();
+      const updatedPlayers = results.map(r => r.player);
+      const allPlayerChanges = results.flatMap(r => r.changes);
+
+      await savePlayers(null, null, updatedPlayers);
+      if (allPlayerChanges.length > 0) {
+        let currentNotifications = [];
+        try {
+          currentNotifications = await getNotificationsHistory(null, null);
+        } catch (e) {
+          // Ignore
+        }
+        const mergedNotifications = [...allPlayerChanges, ...currentNotifications];
+        await saveNotificationsHistory(null, null, mergedNotifications);
+        console.log(`[Global Refresh] Saved ${allPlayerChanges.length} player status notifications.`);
+      }
+
+      // Task B: Run tournaments scraper (sequentially after player updates to avoid concurrent write locks)
       if (includeTournamentsScrape) {
-        scraperPromise = wrappedRunScraper().catch((e) => {
+        console.log("[Global Refresh] Step 2: Running tournaments scraper...");
+        await wrappedRunScraper().catch((e) => {
           console.error("Tournaments scraper failed during global refresh:", e);
         });
       }
 
-      // Task C: automatically refresh all saved draws
-      const drawsPromise = refreshSavedDrawsTask().catch((e) => {
+      // Task C: Run draws refresh (sequentially after to avoid concurrent file write conflict)
+      console.log("[Global Refresh] Step 3: Refreshing saved draws...");
+      await refreshSavedDrawsTask().catch((e) => {
         console.error("Draws refresh task failed during global refresh:", e);
       });
 
-      // Wait for all three tasks to complete
-      await Promise.all([playersPromise, scraperPromise, drawsPromise]);
-
-      // 2. Now trigger tournaments-for-players cache refresh using the newly updated data!
+      // 2. Now trigger tournaments-for-players cache refresh using the newly updated data
       if (refreshTournamentsForPlayersCache) {
         console.log("Rebuilding tournaments-for-players cache...");
         await refreshTournamentsForPlayersCache().catch(console.error);

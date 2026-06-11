@@ -294,27 +294,44 @@ export function HistoryTab() {
       }
     }
 
+    let nameStr = notif.player || '';
+
     // Pattern matching suffixes from standard server logs
-    if (notif.body) {
-      const suffixes = [
-        ' UTR changed ',
-        ' WTN changed ',
-        ' Win:loss YTD changed ',
-        ' win:loss YTD changed ',
-        ' championships changed ',
-        ' joined ',
-        ' points changed ',
-        ' rank changed ',
-        ' WTN singles changed '
-      ];
-      for (const suffix of suffixes) {
-        if (notif.body.includes(suffix)) {
-          return notif.body.split(suffix)[0].trim();
+    if (!nameStr || invalidNames.includes(nameStr)) {
+      if (notif.body) {
+        const suffixes = [
+          ' UTR changed ',
+          ' WTN changed ',
+          ' Win:loss YTD changed ',
+          ' win:loss YTD changed ',
+          ' championships changed ',
+          ' has joined ',
+          ' joined ',
+          ' points changed ',
+          ' rank changed ',
+          ' WTN singles changed '
+        ];
+        for (const suffix of suffixes) {
+          if (notif.body.includes(suffix)) {
+            nameStr = notif.body.split(suffix)[0].trim();
+            break;
+          }
         }
       }
     }
 
-    return notif.player || 'Unknown';
+    if (!nameStr || invalidNames.includes(nameStr)) {
+      nameStr = 'Unknown';
+    }
+
+    // Strip any trailing status metadata, e.g., "Avyukt Kumar (UTR: 8.3) has" -> "Avyukt Kumar"
+    nameStr = nameStr
+      .replace(/\s*\(UTR:[^\)]*\)/gi, "")
+      .replace(/\s*\(WTN:[^\)]*\)/gi, "")
+      .replace(/\s+has$/i, "")
+      .trim();
+
+    return nameStr;
   };
 
   // Dynamically compile regional available players from both saved-players and notifications sensitive to selectedRegion
@@ -401,14 +418,14 @@ export function HistoryTab() {
   // Group notifications into Recent (last 7 days) and Older (grouped by month)
   const [expandedSubgroups, setExpandedSubgroups] = useState<Record<string, boolean>>({});
 
-  const now = new Date();
-
   const getDaysDiff = (dateStr: string) => {
     try {
       const d = parseISO(dateStr);
-      const t = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const itemDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-      const diffTime = t.getTime() - itemDate.getTime();
+      // Compute differences strictly using UTC year/month/date midnights to remain perfectly consistent across all devices' local timezones
+      const t = new Date();
+      const utcToday = Date.UTC(t.getUTCFullYear(), t.getUTCMonth(), t.getUTCDate());
+      const utcItem = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+      const diffTime = utcToday - utcItem;
       return Math.floor(diffTime / (1000 * 60 * 60 * 24));
     } catch {
       return 999; // Fallback to older
