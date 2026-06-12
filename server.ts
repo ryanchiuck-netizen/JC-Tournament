@@ -2679,10 +2679,10 @@ async function startServer() {
                 // 3. Scrape profile stats
                 const stats = await scrapePlayerProfile(finalProfileUrl, pl.name);
                 return {
+                  ...stats,
                   id: Math.random().toString(36).substring(7),
                   name: pl.name,
-                  profileUrl: finalProfileUrl,
-                  ...stats
+                  profileUrl: finalProfileUrl
                 };
               }
 
@@ -2864,14 +2864,40 @@ async function startServer() {
         notifications = [];
       }
     }
-    return notifications;
+
+    // Server-side robust deduplication by player + title + body to guarantee no repeat notifications are returned
+    const seenNew = new Set<string>();
+    const deduplicated: any[] = [];
+    for (const n of notifications) {
+      if (!n) continue;
+      const key = `${(n.player || '').toLowerCase().trim()}|${(n.title || '').toLowerCase().trim()}|${(n.body || '').toLowerCase().trim()}`;
+      if (!seenNew.has(key)) {
+        seenNew.add(key);
+        deduplicated.push(n);
+      }
+    }
+    return deduplicated;
   };
 
   const saveNotificationsHistory = async (req: any, res: any, notifications: any[]) => {
-    // 1. Identify and broadcast any brand-new notifications over Server-Sent Events (SSE)
-    const newNotificationsToBroadcast: any[] = [];
+    // Deduplicate notifications history by player + body + title to keep history perfectly clean and prevent duplicates
+    const seenNotifs = new Set<string>();
+    const deduplicatedNotifications: any[] = [];
     if (Array.isArray(notifications)) {
       for (const n of notifications) {
+        if (!n) continue;
+        const key = `${(n.player || '').toLowerCase().trim()}|${(n.title || '').toLowerCase().trim()}|${(n.body || '').toLowerCase().trim()}`;
+        if (!seenNotifs.has(key)) {
+          seenNotifs.add(key);
+          deduplicatedNotifications.push(n);
+        }
+      }
+    }
+
+    // 1. Identify and broadcast any brand-new notifications over Server-Sent Events (SSE)
+    const newNotificationsToBroadcast: any[] = [];
+    if (Array.isArray(deduplicatedNotifications)) {
+      for (const n of deduplicatedNotifications) {
         if (n && n.id && !sentNotificationIds.has(n.id)) {
           sentNotificationIds.add(n.id);
           newNotificationsToBroadcast.push(n);
@@ -2899,14 +2925,14 @@ async function startServer() {
     }
 
     try {
-      await fs.writeFile(notificationsHistoryPath, JSON.stringify(notifications, null, 2));
+      await fs.writeFile(notificationsHistoryPath, JSON.stringify(deduplicatedNotifications, null, 2));
     } catch (e: any) {
       console.log("Error writing notifications local backup:", e.message || String(e));
     }
 
     if (supabase) {
       try {
-        const rows = notifications.map((n: any) => ({
+        const rows = deduplicatedNotifications.map((n: any) => ({
           id: n.id,
           player: n.player,
           title: n.title,
@@ -3274,6 +3300,11 @@ async function startServer() {
           
           if (newPlayersInDraw.length > 0) {
             console.log(`[Draw Watcher] Found ${newPlayersInDraw.length} new players in draw "${name}"`);
+            const existingNotifications = await getNotificationsHistory(req, res).catch(() => []);
+            const existingNotifKeys = new Set(existingNotifications.map((n: any) => 
+              `${(n.player || '').toLowerCase().trim()}|${(n.body || '').toLowerCase().trim()}`
+            ));
+
             for (const p of newPlayersInDraw) {
               const utrStr = p.utrSingles && p.utrSingles !== "-" ? `(UTR: ${p.utrSingles})` : "";
               const wtnStr = p.wtnSingles && p.wtnSingles !== "-" ? `(WTN: ${p.wtnSingles})` : "";
@@ -3282,17 +3313,21 @@ async function startServer() {
                 ? `${p.name} ${statsStr} has joined the draw "${name}".`
                 : `${p.name} has joined the draw "${name}".`;
               
-              drawAlerts.push({
-                id: `draw-watcher-${Date.now()}-${Math.random().toString(36).substring(7)}`,
-                player: p.name,
-                title: `New Player in Draw`,
-                body: bodyText,
-                type: 'Draw_Watcher',
-                source: p.source || 'TA',
-                date: new Date().toISOString().split('T')[0],
-                timestamp: new Date().toISOString(),
-                url: `/#saved-draws`
-              });
+              const bodyKey = `${p.name.toLowerCase().trim()}|${bodyText.toLowerCase().trim()}`;
+              if (!existingNotifKeys.has(bodyKey)) {
+                drawAlerts.push({
+                  id: `draw-watcher-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+                  player: p.name,
+                  title: `New Player in Draw`,
+                  body: bodyText,
+                  type: 'Draw_Watcher',
+                  source: p.source || 'TA',
+                  date: new Date().toISOString().split('T')[0],
+                  timestamp: new Date().toISOString(),
+                  url: `/#saved-draws`
+                });
+                existingNotifKeys.add(bodyKey);
+              }
             }
           }
         }
@@ -3391,6 +3426,11 @@ async function startServer() {
         
         if (newPlayersInDraw.length > 0) {
           console.log(`[Draw Watcher - PUT] Found ${newPlayersInDraw.length} new players in draw "${name}"`);
+          const existingNotifications = await getNotificationsHistory(req, res).catch(() => []);
+          const existingNotifKeys = new Set(existingNotifications.map((n: any) => 
+            `${(n.player || '').toLowerCase().trim()}|${(n.body || '').toLowerCase().trim()}`
+          ));
+
           for (const p of newPlayersInDraw) {
             const utrStr = p.utrSingles && p.utrSingles !== "-" ? `(UTR: ${p.utrSingles})` : "";
             const wtnStr = p.wtnSingles && p.wtnSingles !== "-" ? `(WTN: ${p.wtnSingles})` : "";
@@ -3399,17 +3439,21 @@ async function startServer() {
               ? `${p.name} ${statsStr} has joined the draw "${name}".`
               : `${p.name} has joined the draw "${name}".`;
             
-            drawAlerts.push({
-              id: `draw-watcher-${Date.now()}-${Math.random().toString(36).substring(7)}`,
-              player: p.name,
-              title: `New Player in Draw`,
-              body: bodyText,
-              type: 'Draw_Watcher',
-              source: p.source || 'TA',
-              date: new Date().toISOString().split('T')[0],
-              timestamp: new Date().toISOString(),
-              url: `/#saved-draws`
-            });
+            const bodyKey = `${p.name.toLowerCase().trim()}|${bodyText.toLowerCase().trim()}`;
+            if (!existingNotifKeys.has(bodyKey)) {
+              drawAlerts.push({
+                id: `draw-watcher-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+                player: p.name,
+                title: `New Player in Draw`,
+                body: bodyText,
+                type: 'Draw_Watcher',
+                source: p.source || 'TA',
+                date: new Date().toISOString().split('T')[0],
+                timestamp: new Date().toISOString(),
+                url: `/#saved-draws`
+              });
+              existingNotifKeys.add(bodyKey);
+            }
           }
         }
       }
@@ -3640,6 +3684,14 @@ async function startServer() {
         return;
       }
 
+      let existingNotifications = [];
+      try {
+        existingNotifications = await getNotificationsHistory(null, null);
+      } catch (e) {}
+      const existingNotifKeys = new Set(existingNotifications.map((n: any) => 
+        `${(n.player || '').toLowerCase().trim()}|${(n.body || '').toLowerCase().trim()}`
+      ));
+
       // Fetch currently monitored players to update existing draw player stats
       let savedPlayersForSync = [];
       try {
@@ -3851,10 +3903,10 @@ async function startServer() {
                   if (finalProfileUrl) {
                     const stats = await scrapePlayerProfile(finalProfileUrl, pl.name);
                     return {
+                      ...stats,
                       id: Math.random().toString(36).substring(7),
                       name: pl.name,
-                      profileUrl: finalProfileUrl,
-                      ...stats
+                      profileUrl: finalProfileUrl
                     };
                   }
                   return {
@@ -3905,17 +3957,21 @@ async function startServer() {
               ? `${p.name} ${statsStr} has joined the draw "${draw.name}".`
               : `${p.name} has joined the draw "${draw.name}".`;
 
-            globalNewAlerts.push({
-              id: `draw-watcher-${Date.now()}-${Math.random().toString(36).substring(7)}`,
-              player: p.name,
-              title: `New Player in Draw`,
-              body: bodyText,
-              type: 'Draw_Watcher',
-              source: draw.region === 'HK' ? 'HK' : 'TA',
-              date: new Date().toISOString().split('T')[0],
-              timestamp: new Date().toISOString(),
-              url: `/#saved-draws`
-            });
+            const bodyKey = `${p.name.toLowerCase().trim()}|${bodyText.toLowerCase().trim()}`;
+            if (!existingNotifKeys.has(bodyKey)) {
+              globalNewAlerts.push({
+                id: `draw-watcher-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+                player: p.name,
+                title: `New Player in Draw`,
+                body: bodyText,
+                type: 'Draw_Watcher',
+                source: draw.region === 'HK' ? 'HK' : 'TA',
+                date: new Date().toISOString().split('T')[0],
+                timestamp: new Date().toISOString(),
+                url: `/#saved-draws`
+              });
+              existingNotifKeys.add(bodyKey);
+            }
           }
         } catch (drawErr: any) {
           console.error(`[Draw Watcher BACKGROUND] Failed to refresh draw "${draw.name}":`, drawErr.message || drawErr);

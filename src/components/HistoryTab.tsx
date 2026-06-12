@@ -90,7 +90,19 @@ export function HistoryTab() {
           const cat = getNotificationCategory(notif);
           return cat !== 'Other' || (notif.id && notif.id.startsWith('test-'));
         });
-        setNotifications(filteredData);
+
+        // Client-side visual deduplication as a failsafe
+        const seenKeys = new Set<string>();
+        const uniqueNotifications: any[] = [];
+        for (const notif of filteredData) {
+          if (!notif) continue;
+          const key = `${(notif.player || '').toLowerCase().trim()}|${(notif.title || '').toLowerCase().trim()}|${(notif.body || '').toLowerCase().trim()}`;
+          if (!seenKeys.has(key)) {
+            seenKeys.add(key);
+            uniqueNotifications.push(notif);
+          }
+        }
+        setNotifications(uniqueNotifications);
       }
     } catch (err) {
       console.error(err);
