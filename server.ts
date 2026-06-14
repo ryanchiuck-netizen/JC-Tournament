@@ -1661,7 +1661,7 @@ async function startServer() {
       const data = await getTournamentsData() || {};
       const tournaments = data.tournaments || [];
 
-      // Filter tournaments to only active ones starting within the next 60 days (or still currently running)
+      // Filter tournaments to only active ones starting within the next 365 days (or still currently running)
       const futureTournaments = tournaments.filter((t: any) => {
         if (!t.dates) return false;
         const parts = t.dates.split(' to ');
@@ -1676,13 +1676,13 @@ async function startServer() {
         
         if (endDate < today) return false;
 
-        // Start date parsing to limit search space to next 60 days
+        // Start date parsing to limit search space to next 365 days
         const startDateParts = parts[0].trim().split('/');
         if (startDateParts.length < 3) return false;
         const startDate = new Date(parseInt(startDateParts[2]), parseInt(startDateParts[1]) - 1, parseInt(startDateParts[0]));
         
         const limitDate = new Date();
-        limitDate.setDate(today.getDate() + 60);
+        limitDate.setDate(today.getDate() + 365);
         
         return startDate <= limitDate;
       });

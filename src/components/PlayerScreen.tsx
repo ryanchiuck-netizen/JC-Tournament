@@ -49,15 +49,18 @@ function PlayerTournamentsModal({
     if (isTournamentsCacheLoading) return [];
     
     const matches: any[] = [];
-    const queryParts = player.name.toLowerCase().split(' ').filter(Boolean);
-    
+    const queryParts = player.name.replace(/\[.*?\]|\(.*?\)/g, '').toLowerCase().split(/[\s,.-]+/).filter(Boolean);
+
     for (const t of (tournamentsCache || [])) {
       if (player.source === "HKTA" && t.tournament.source !== "HK") continue;
       if (player.source === "TA" && t.tournament.source !== "AUS") continue;
       
       const jPlayers = t.joinedPlayers || [];
       for (const jp of jPlayers) {
-        const isMatch = queryParts.every((part: string) => jp.player.name.toLowerCase().includes(part));
+        const candidateWords = jp.player.name.replace(/\[.*?\]|\(.*?\)/g, '').toLowerCase().split(/[\s,.-]+/).filter(Boolean);
+        const isMatch = queryParts.every((part: string) => 
+          candidateWords.some((word: string) => word === part)
+        );
         if (isMatch) {
           for (const draw of jp.draws || []) {
             matches.push({
