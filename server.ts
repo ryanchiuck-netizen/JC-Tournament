@@ -833,21 +833,7 @@ async function startServer() {
             if (tournament.source === "AUS" && playerSource !== "TA") return;
           }
 
-          // If we have pre-scraped players, filter. If empty or absent...
-          const hasScrapedPlayers = Array.isArray(tournament.players) && tournament.players.length > 0;
-          if (hasScrapedPlayers) {
-            const isMatch = tournament.players.some((tPlayerName: string) => 
-               isPlayerNameMatch(tPlayerName, queryParts)
-            );
-            if (!isMatch) return;
-          } else {
-            // Not scraped yet.
-            if (Array.isArray(tournament.players) && tournament.players.length === 0) {
-              // We've verified it's completely empty before, no need to keep checking unless we implement strict TTLs
-              return;
-            }
-
-            let isUpcomingOrRecent = false;
+          let isUpcomingOrRecent = false;
             if (tournament.dates) {
               const parts = tournament.dates.split(' to ');
               const endDateParts = parts[parts.length - 1].trim().split('/');
@@ -877,7 +863,6 @@ async function startServer() {
               tournament.players = [];
               return;
             }
-          }
 
           const domain = tournament.source === "HK" ? "hkta.tournamentsoftware.com" : "tournaments.tennis.com.au";
           const tId = getTournamentIdFromLink(tournament.link);
@@ -1697,13 +1682,6 @@ async function startServer() {
           if (tournament.source === "HK" && player.source !== "HKTA") return false;
           if (tournament.source === "AUS" && player.source !== "TA") return false;
 
-          // If we have pre-scraped players, filter.
-          if (tournament.players && tournament.players.length > 0) {
-            const queryParts = getQueryParts(player.name);
-            return tournament.players.some((tPlayerName: string) => 
-               isPlayerNameMatch(tPlayerName, queryParts)
-            );
-          }
           return true;
         });
 

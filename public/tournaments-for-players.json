@@ -1,469 +1,109 @@
 {
-  "updatedAt": "2026-06-07T04:49:38.274Z",
   "tournaments": [
-    {
-      "tournament": {
-        "link": "/sport/tournament?id=2BDED0E0-F9C3-4F40-B35A-3B1369277AD7",
-        "name": "2026 O3k J125 Twin Towns Open and Junior",
-        "dates": "5/06/2026 to 8/06/2026",
-        "source": "AUS",
-        "ageGroup": "U10, U12",
-        "location": "NSW Country Tennis Association | Tuncurry",
-        "mapsLink": "https://www.google.com/maps/search/?api=1&query=NSW%20Country%20Tennis%20Association%20%7C%20Tuncurry%2C%20Australia"
-      },
-      "joinedPlayers": [
-        {
-          "draws": [
-            {
-              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=2bded0e0-f9c3-4f40-b35a-3b1369277ad7&event=8",
-              "drawName": "12U Boys Doubles (3) with Eduard Radulescu"
-            },
-            {
-              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=2bded0e0-f9c3-4f40-b35a-3b1369277ad7&event=6",
-              "drawName": "12U Boys Singles"
-            },
-            {
-              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=2bded0e0-f9c3-4f40-b35a-3b1369277ad7&event=29",
-              "drawName": "B Grade Mens Doubles Tier 2 with Quinn Sylow"
-            },
-            {
-              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=2bded0e0-f9c3-4f40-b35a-3b1369277ad7&event=27",
-              "drawName": "B Grade Mens Singles Tier 2"
-            }
-          ],
-          "player": {
-            "id": "1774855004722",
-            "url": "https://tournaments.tennis.com.au/player-profile/8443627D-BFF7-4DF1-A5AC-137C4996E788",
-            "name": "Sam Ritchie",
-            "rank": "-",
-            "points": "26.00",
-            "source": "TA",
-            "sort_order": 3,
-            "utrSingles": "4.6",
-            "winLossYTD": "23:12",
-            "wtnSingles": "-",
-            "championships": "2026: 7\n2025: 10\n2024: 8",
-            "winLossCareer": "143:60"
-          }
-        }
-      ]
-    },
-    {
-      "tournament": {
-        "link": "/sport/tournament?id=CF91F814-83D4-4EDD-B29C-08A975E9C976",
-        "name": "2026 J250 Wollongong Junior",
-        "dates": "5/06/2026 to 8/06/2026",
-        "source": "AUS",
-        "ageGroup": "U10, U12",
-        "location": "Tennis New South Wales | Gwynneville",
-        "mapsLink": "https://www.google.com/maps/search/?api=1&query=Tennis%20New%20South%20Wales%20%7C%20Gwynneville%2C%20Australia"
-      },
-      "joinedPlayers": [
-        {
-          "draws": [
-            {
-              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=cf91f814-83d4-4edd-b29c-08a975e9c976&event=3",
-              "drawName": "BD U12 PS with Ryan Chen"
-            },
-            {
-              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=cf91f814-83d4-4edd-b29c-08a975e9c976&event=1",
-              "drawName": "BS U12 PS"
-            }
-          ],
-          "player": {
-            "id": "1774838840325",
-            "url": "https://tournaments.tennis.com.au/player-profile/26B6F59E-714F-4852-9D3E-5022A7EBEC99",
-            "name": "Andy (Yuhao) Liu",
-            "rank": "-",
-            "points": "130.00",
-            "source": "TA",
-            "sort_order": 0,
-            "utrSingles": "5.7",
-            "winLossYTD": "11:9",
-            "wtnSingles": "-",
-            "championships": "2026: 2\n2025: 3\n2024: 2",
-            "winLossCareer": "51:30"
-          }
-        },
-        {
-          "draws": [
-            {
-              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=cf91f814-83d4-4edd-b29c-08a975e9c976&event=1",
-              "drawName": "BS U12 PS"
-            }
-          ],
-          "player": {
-            "id": "1774854827035",
-            "url": "https://tournaments.tennis.com.au/player-profile/48D73322-95A1-4609-88E1-4654D99A29BC",
-            "name": "Garrett Wang",
-            "rank": "-",
-            "points": "6.00",
-            "source": "TA",
-            "sort_order": 24,
-            "utrSingles": "2",
-            "winLossYTD": "11:17",
-            "wtnSingles": "-",
-            "championships": "2026: 2\n2025: 3",
-            "winLossCareer": "31:37"
-          }
-        }
-      ]
-    },
-    {
-      "tournament": {
-        "link": "/sport/tournament?id=BE903BBF-1DFF-475D-A5F5-1A68B8D7C25B",
-        "name": "2026 J125 Springwood Junior",
-        "dates": "5/06/2026 to 8/06/2026",
-        "source": "AUS",
-        "ageGroup": "U10, U12",
-        "location": "Nepean District Tennis Association | Springwood",
-        "mapsLink": "https://www.google.com/maps/search/?api=1&query=Nepean%20District%20Tennis%20Association%20%7C%20Springwood%2C%20Australia"
-      },
-      "joinedPlayers": [
-        {
-          "draws": [
-            {
-              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=be903bbf-1dff-475d-a5f5-1a68b8d7c25b&event=3",
-              "drawName": "BD U12 JS (6) with Arjun Puthraya"
-            },
-            {
-              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=be903bbf-1dff-475d-a5f5-1a68b8d7c25b&event=1",
-              "drawName": "BS U12 JS Tier 1"
-            }
-          ],
-          "player": {
-            "id": "1774852422814",
-            "url": "https://tournaments.tennis.com.au/player-profile/AC4465CE-7AC0-40BA-9E1D-C5A5763C8109",
-            "name": "Henry Wen",
-            "rank": "-",
-            "points": "12.00",
-            "source": "TA",
-            "sort_order": 2,
-            "utrSingles": "4.7",
-            "winLossYTD": "24:10",
-            "wtnSingles": "-",
-            "championships": "2026: 3\n2025: 1\n2024: 2",
-            "winLossCareer": "55:63"
-          }
-        },
-        {
-          "draws": [
-            {
-              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=be903bbf-1dff-475d-a5f5-1a68b8d7c25b&event=13",
-              "drawName": "Under 10 Mixed"
-            }
-          ],
-          "player": {
-            "id": "1774830531032",
-            "url": "https://tournaments.tennis.com.au/player-profile/D8C9AB7B-18A8-4631-B8DE-4EDBF1D543A1",
-            "name": "Jordan Chiu",
-            "rank": "-",
-            "points": "-",
-            "source": "TA",
-            "sort_order": 5,
-            "utrSingles": "4",
-            "winLossYTD": "34:12",
-            "wtnSingles": "-",
-            "championships": "2026: 2\n2025: 6\n2024: 1",
-            "winLossCareer": "90:31"
-          }
-        },
-        {
-          "draws": [
-            {
-              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=be903bbf-1dff-475d-a5f5-1a68b8d7c25b&event=3",
-              "drawName": "BD U12 JS (7) with Henry Wu"
-            },
-            {
-              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=be903bbf-1dff-475d-a5f5-1a68b8d7c25b&event=1",
-              "drawName": "BS U12 JS Tier 1"
-            }
-          ],
-          "player": {
-            "id": "1774852489789",
-            "url": "https://tournaments.tennis.com.au/player-profile/4625D532-A92D-4155-B515-7AF811D329B6",
-            "name": "Aiden Guo",
-            "rank": "-",
-            "points": "-",
-            "source": "TA",
-            "sort_order": 6,
-            "utrSingles": "4",
-            "winLossYTD": "25:13",
-            "wtnSingles": "-",
-            "championships": "2026: 3\n2025: 3",
-            "winLossCareer": "51:32"
-          }
-        },
-        {
-          "draws": [
-            {
-              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=be903bbf-1dff-475d-a5f5-1a68b8d7c25b&event=13",
-              "drawName": "Under 10 Mixed"
-            }
-          ],
-          "player": {
-            "id": "1774852503277",
-            "url": "https://tournaments.tennis.com.au/player-profile/806F94D7-D656-47C7-A99F-321576CC8980",
-            "name": "Henry Wang",
-            "rank": "-",
-            "points": "-",
-            "source": "TA",
-            "sort_order": 7,
-            "utrSingles": "4.1",
-            "winLossYTD": "18:5",
-            "wtnSingles": "-",
-            "championships": "2026: 2\n2025: 1",
-            "winLossCareer": "58:38"
-          }
-        },
-        {
-          "draws": [
-            {
-              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=be903bbf-1dff-475d-a5f5-1a68b8d7c25b&event=3",
-              "drawName": "BD U12 JS with Ryan Xu"
-            },
-            {
-              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=be903bbf-1dff-475d-a5f5-1a68b8d7c25b&event=1",
-              "drawName": "BS U12 JS Tier 1"
-            }
-          ],
-          "player": {
-            "id": "1774853909506",
-            "url": "https://tournaments.tennis.com.au/player-profile/F15291C1-B67A-4EAE-9448-DD6E5BF75953",
-            "name": "Joshua Feng",
-            "rank": "-",
-            "points": "6.00",
-            "source": "TA",
-            "sort_order": 8,
-            "utrSingles": "3.8",
-            "winLossYTD": "14:8",
-            "wtnSingles": "-",
-            "championships": "2025: 3\n2024: 4",
-            "winLossCareer": "86:47"
-          }
-        },
-        {
-          "draws": [
-            {
-              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=be903bbf-1dff-475d-a5f5-1a68b8d7c25b&event=3",
-              "drawName": "BD U12 JS with Joshua Feng"
-            }
-          ],
-          "player": {
-            "id": "1774852542593",
-            "url": "https://tournaments.tennis.com.au/player-profile/E2568F5E-726E-4EF3-A2C7-BC3435B2E04B",
-            "name": "Ryan Xu",
-            "rank": "-",
-            "points": "23.00",
-            "source": "TA",
-            "sort_order": 11,
-            "utrSingles": "3",
-            "winLossYTD": "18:15",
-            "wtnSingles": "-",
-            "championships": "2025: 3\n2024: 1",
-            "winLossCareer": "83:78"
-          }
-        },
-        {
-          "draws": [
-            {
-              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=be903bbf-1dff-475d-a5f5-1a68b8d7c25b&event=13",
-              "drawName": "Under 10 Mixed"
-            }
-          ],
-          "player": {
-            "id": "1774852594184",
-            "url": "https://tournaments.tennis.com.au/player-profile/00948A3B-A264-417B-9CF4-18FAEAE5915D",
-            "name": "Edwin Huxue",
-            "rank": "-",
-            "points": "-",
-            "source": "TA",
-            "sort_order": 15,
-            "utrSingles": "3",
-            "winLossYTD": "23:16",
-            "wtnSingles": "-",
-            "championships": "2025: 3",
-            "winLossCareer": "55:32"
-          }
-        },
-        {
-          "draws": [
-            {
-              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=be903bbf-1dff-475d-a5f5-1a68b8d7c25b&event=3",
-              "drawName": "BD U12 JS with Hugo Beukes"
-            },
-            {
-              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=be903bbf-1dff-475d-a5f5-1a68b8d7c25b&event=14",
-              "drawName": "BS U12 JS Tier 2"
-            }
-          ],
-          "player": {
-            "id": "1774852604537",
-            "url": "https://tournaments.tennis.com.au/player-profile/98C08E25-D3E6-440F-BAD4-78332D7671F1",
-            "name": "Andreas Mortel",
-            "rank": "-",
-            "points": "63.00",
-            "source": "TA",
-            "sort_order": 16,
-            "utrSingles": "3.7",
-            "winLossYTD": "31:26",
-            "wtnSingles": "-",
-            "championships": "2026: 3\n2025: 8",
-            "winLossCareer": "88:111"
-          }
-        },
-        {
-          "draws": [
-            {
-              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=be903bbf-1dff-475d-a5f5-1a68b8d7c25b&event=3",
-              "drawName": "BD U12 JS with Spencer Wang"
-            },
-            {
-              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=be903bbf-1dff-475d-a5f5-1a68b8d7c25b&event=14",
-              "drawName": "BS U12 JS Tier 2"
-            }
-          ],
-          "player": {
-            "id": "1774852634620",
-            "url": "https://tournaments.tennis.com.au/player-profile/19A26C4A-17EF-4259-976F-F04D375D3853",
-            "name": "Zachary Yen",
-            "rank": "-",
-            "points": "19.00",
-            "source": "TA",
-            "sort_order": 21,
-            "utrSingles": "2.9",
-            "winLossYTD": "17:24",
-            "wtnSingles": "-",
-            "championships": "2025: 2",
-            "winLossCareer": "31:49"
-          }
-        },
-        {
-          "draws": [
-            {
-              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=be903bbf-1dff-475d-a5f5-1a68b8d7c25b&event=13",
-              "drawName": "Under 10 Mixed"
-            }
-          ],
-          "player": {
-            "id": "1774852645556",
-            "url": "https://tournaments.tennis.com.au/player-profile/3637049C-1E32-4E77-8756-5AA79D321995",
-            "name": "James Soetedja",
-            "rank": "-",
-            "points": "-",
-            "source": "TA",
-            "sort_order": 22,
-            "utrSingles": "2",
-            "winLossYTD": "37:5",
-            "wtnSingles": "-",
-            "championships": "2026: 8\n2024: 1",
-            "winLossCareer": "67:31"
-          }
-        },
-        {
-          "draws": [
-            {
-              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=be903bbf-1dff-475d-a5f5-1a68b8d7c25b&event=3",
-              "drawName": "BD U12 JS with Loic Lawrence"
-            },
-            {
-              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=be903bbf-1dff-475d-a5f5-1a68b8d7c25b&event=14",
-              "drawName": "BS U12 JS Tier 2"
-            }
-          ],
-          "player": {
-            "id": "1774852654757",
-            "url": "https://tournaments.tennis.com.au/player-profile/3D864E40-E0C1-4B23-89AD-3AFB63B97B2E",
-            "name": "Steven Saychenko",
-            "rank": "-",
-            "points": "15.00",
-            "source": "TA",
-            "sort_order": 23,
-            "utrSingles": "2.3",
-            "winLossYTD": "13:13",
-            "wtnSingles": "-",
-            "championships": "2025: 1",
-            "winLossCareer": "31:38"
-          }
-        },
-        {
-          "draws": [
-            {
-              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=be903bbf-1dff-475d-a5f5-1a68b8d7c25b&event=13",
-              "drawName": "Under 10 Mixed"
-            }
-          ],
-          "player": {
-            "id": "1774853948145",
-            "url": "https://tournaments.tennis.com.au/player-profile/4949A3F0-81BD-4968-85D5-E1E6B3F06D73",
-            "name": "Steven Ye",
-            "rank": "-",
-            "points": "-",
-            "source": "TA",
-            "sort_order": 26,
-            "utrSingles": "2.3",
-            "winLossYTD": "16:14",
-            "wtnSingles": "-",
-            "championships": "2026: 2\n2025: 1",
-            "winLossCareer": "34:34"
-          }
-        }
-      ]
-    },
     {
       "tournament": {
         "link": "/sport/tournament?id=4BD85916-659F-4CD7-99D3-9D20212C1585",
         "name": "2026 JDS CBC Green South East RMS - Kiama #2",
         "dates": "14/06/2026",
         "source": "AUS",
+        "players": [
+          "Amor, Millicent",
+          "Avramoski, Milani",
+          "Barnett, Jake",
+          "Barton, Pippa",
+          "Basiri, Nikan",
+          "Basiri, Nilgun",
+          "Biradar, Vivan",
+          "Calisaya Mcewan, Franco",
+          "Capolino, Iker",
+          "Dando, Kendal",
+          "D'Angola, Lara",
+          "De Main, Nash",
+          "Delaney, Aengus",
+          "Dev, Mahasvin",
+          "Goodliffe, Jaylen",
+          "Hilliar, Sanjay",
+          "Karanfilovski, Aleksandra",
+          "Karthick, Anvith",
+          "Lorber, Jaxn",
+          "Mcdonnell, William",
+          "Nakhate, Nyasa",
+          "Neuschwanger, Liam",
+          "Neuschwanger, Tyler",
+          "Nielsen, Finn",
+          "Perkiss, Calvin",
+          "Probert, Indi",
+          "Probert, Mahala",
+          "Profke, Ella",
+          "Profke, Joshua",
+          "Profke, Mia",
+          "Ritchie, Rosie",
+          "Saeedi, Darya",
+          "Silveri, Orlando",
+          "Soper, Ollie",
+          "Sweeny, Zane",
+          "Uribe, Benjamin",
+          "Yang, Ryan",
+          "Ye, Steven",
+          "Zaman, Nirvana",
+          "Zhou, Miles",
+          "Zieba, Lucian"
+        ],
         "ageGroup": "All Ages",
         "location": "Tennis NSW South East Region | Kiama",
-        "mapsLink": "https://www.google.com/maps/search/?api=1&query=Tennis%20NSW%20South%20East%20Region%20%7C%20Kiama%2C%20Australia"
+        "mapsLink": "https://www.google.com/maps/search/?api=1&query=Tennis%20NSW%20South%20East%20Region%20%7C%20Kiama%2C%20Australia",
+        "closingDeadline": "8/6/2026"
       },
       "joinedPlayers": [
         {
-          "draws": [
-            {
-              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=4bd85916-659f-4cd7-99d3-9d20212c1585&event=3",
-              "drawName": "BS U12 JDS"
-            }
-          ],
           "player": {
             "id": "1774852586564",
-            "url": "https://tournaments.tennis.com.au/player-profile/1E57D0C2-F508-44E3-8351-E14191D59BA3",
             "name": "Aengus Delaney",
+            "url": "https://tournaments.tennis.com.au/player-profile/1E57D0C2-F508-44E3-8351-E14191D59BA3",
+            "source": "TA",
+            "utrSingles": "3.3",
+            "wtnSingles": "-",
+            "winLossYTD": "22:7",
+            "winLossCareer": "53:61",
+            "championships": "2026: 2\n2025: 1",
             "rank": "-",
             "points": "34.00",
-            "source": "TA",
             "sort_order": 14,
-            "utrSingles": "3.3",
-            "winLossYTD": "22:7",
-            "wtnSingles": "-",
-            "championships": "2026: 2\n2025: 1",
-            "winLossCareer": "53:61"
-          }
-        },
-        {
+            "groups": [
+              "2016/2017 Boys"
+            ]
+          },
           "draws": [
             {
-              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=4bd85916-659f-4cd7-99d3-9d20212c1585&event=1",
-              "drawName": "BS U10 JDS (Green Ball)"
+              "drawName": "Boys Tier 3",
+              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=4bd85916-659f-4cd7-99d3-9d20212c1585&event=11"
             }
-          ],
+          ]
+        },
+        {
           "player": {
             "id": "1774853948145",
-            "url": "https://tournaments.tennis.com.au/player-profile/4949A3F0-81BD-4968-85D5-E1E6B3F06D73",
             "name": "Steven Ye",
+            "url": "https://tournaments.tennis.com.au/player-profile/4949A3F0-81BD-4968-85D5-E1E6B3F06D73",
+            "source": "TA",
+            "utrSingles": "2.3",
+            "wtnSingles": "-",
+            "winLossYTD": "16:18",
+            "winLossCareer": "34:38",
+            "championships": "2026: 2\n2025: 1",
             "rank": "-",
             "points": "-",
-            "source": "TA",
             "sort_order": 26,
-            "utrSingles": "2.3",
-            "winLossYTD": "16:14",
-            "wtnSingles": "-",
-            "championships": "2026: 2\n2025: 1",
-            "winLossCareer": "34:34"
-          }
+            "groups": [
+              "2016/2017 Boys"
+            ]
+          },
+          "draws": [
+            {
+              "drawName": "BS U10 JDS (Green Ball)",
+              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=4bd85916-659f-4cd7-99d3-9d20212c1585&event=1"
+            }
+          ]
         }
       ]
     },
@@ -473,340 +113,712 @@
         "name": "2026 JDS Metro Cintra Park Tennis 10u & 14u",
         "dates": "14/06/2026",
         "source": "AUS",
+        "players": [
+          "Aster, Chloe",
+          "Basnet, Nyra",
+          "Best, Cyril",
+          "Bonnafous, Theodore",
+          "Buzzard, Alexis",
+          "Chan, Nicholas",
+          "Chapagain, Bisam",
+          "Chen, Claire",
+          "Chen, Marcus",
+          "Chen, Ryan",
+          "Chen, Toby",
+          "Cheung, Kingsley",
+          "Chiu, Jordan",
+          "Chuang, Jeffery",
+          "Costello, Olivia",
+          "Dang-Chen, Alexis",
+          "Darenzo, Emily",
+          "Davis, Axel",
+          "Du, Dylan",
+          "Dunk, Ira",
+          "Fan, Eric",
+          "Feng, Joshua",
+          "Fu, Luke",
+          "Goodwin, Zoe",
+          "Guo, Zachary",
+          "Harish, Arush",
+          "Haykal, James",
+          "Huang, Avalyn",
+          "Huxue, Edwin",
+          "Jiang, Jeremy",
+          "Josa, Ethan",
+          "Juneja, Vir",
+          "Khouzame, George",
+          "Lee, Singo",
+          "Legrand, Noah",
+          "Leone, Joseph",
+          "Lesniak, Victoria",
+          "Li, Owen",
+          "Li, Ray",
+          "Lin, Felicity",
+          "Liu, Deborah",
+          "Liu, Emmy Xirui",
+          "Liu, Lucas",
+          "Longbow, Vera",
+          "Lu, Ella",
+          "Lu, Jayden",
+          "Lua, Rebecca",
+          "Maher, Thomas",
+          "Mcclements, Emily Vesna",
+          "Mirzazada, Elife",
+          "Mortel, Andreas",
+          "Nadesan, Ashton",
+          "Nadesan, Kieran",
+          "Nagasawa, Mana",
+          "Nawawi, Zaid",
+          "Nguyen Quoc, Jeremy",
+          "Novkovic, Gavrilo",
+          "Novkovic, Luka",
+          "Parshina, Alexandra",
+          "Peng, Charlotte",
+          "Petrovic, Marko",
+          "Praveen, Ridhaan",
+          "Prince, Hana",
+          "Protsenko, Felix",
+          "Rasool, Ibrahim",
+          "Rogers, Yaqub",
+          "Rounds, Layla",
+          "Sebelic, Roger",
+          "Sehovic, Adam",
+          "Senik-Roberts, Rafal",
+          "Sharma, Raghav",
+          "Sogutlu, Luka",
+          "Stanojevic, Oliver",
+          "Stroud, Hunter",
+          "Sun, Oliver",
+          "Suseno, Nico",
+          "Tam, Martin",
+          "Tindall, Beau",
+          "Toko, Isaac",
+          "Urs, Sebastian",
+          "Vargas, Alejandro",
+          "Vujovic, Ilija",
+          "Wang, Alyssa",
+          "Wang, Anna",
+          "Wang, Ethan",
+          "Wang, Garrett",
+          "Wang, Henry",
+          "Warner, Indi",
+          "Weerasinghe, Dylan",
+          "Wen, Henry",
+          "Wheeler, Amelie",
+          "Wong, Jonathan",
+          "Woo, Edison",
+          "Xu, Mia",
+          "Xu, Ryan",
+          "Yadav, Ayaansh",
+          "Yang, Isla",
+          "Yen, Nicole Ruohan",
+          "Zalewski, Tristan",
+          "Zhang, Lucas",
+          "Zheng, Angela",
+          "Zheng, Ryan Rui",
+          "Zhu, Jayden",
+          "Zizovski, Jaden Zizo"
+        ],
         "ageGroup": "U10",
         "location": "Metropolitan CTO | Sydney",
-        "mapsLink": "https://www.google.com/maps/search/?api=1&query=Metropolitan%20CTO%20%7C%20Sydney%2C%20Australia"
+        "mapsLink": "https://www.google.com/maps/search/?api=1&query=Metropolitan%20CTO%20%7C%20Sydney%2C%20Australia",
+        "closingDeadline": "4/6/2026"
       },
       "joinedPlayers": [
         {
-          "draws": [
-            {
-              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=0f4b95e2-1251-4411-8413-185e4c4b502a&event=1",
-              "drawName": "BS U10 JDS"
-            }
-          ],
           "player": {
             "id": "1774838616457",
-            "url": "https://tournaments.tennis.com.au/player-profile/30BB29AE-08E1-4684-8333-74E1FE9D8D81",
             "name": "Gavrilo Novkovic",
+            "url": "https://tournaments.tennis.com.au/player-profile/30BB29AE-08E1-4684-8333-74E1FE9D8D81",
+            "source": "TA",
+            "utrSingles": "4.8",
+            "wtnSingles": "-",
+            "winLossYTD": "25:9",
+            "winLossCareer": "121:62",
+            "championships": "2026: 3\n2025: 5\n2024: 4",
             "rank": "-",
             "points": "31.00",
-            "source": "TA",
             "sort_order": 1,
-            "utrSingles": "4.8",
-            "winLossYTD": "25:9",
-            "wtnSingles": "-",
-            "championships": "2026: 3\n2025: 5\n2024: 4",
-            "winLossCareer": "121:62"
-          }
-        },
-        {
+            "groups": [
+              "2016/2017 Boys",
+              "2015/2016 Boys"
+            ]
+          },
           "draws": [
             {
-              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=0f4b95e2-1251-4411-8413-185e4c4b502a&event=1",
-              "drawName": "BS U10 JDS"
+              "drawName": "BS U10 JDS",
+              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=0f4b95e2-1251-4411-8413-185e4c4b502a&event=1"
             }
-          ],
+          ]
+        },
+        {
           "player": {
             "id": "1774852422814",
-            "url": "https://tournaments.tennis.com.au/player-profile/AC4465CE-7AC0-40BA-9E1D-C5A5763C8109",
             "name": "Henry Wen",
+            "url": "https://tournaments.tennis.com.au/player-profile/AC4465CE-7AC0-40BA-9E1D-C5A5763C8109",
+            "source": "TA",
+            "utrSingles": "4.7",
+            "wtnSingles": "-",
+            "winLossYTD": "26:10",
+            "winLossCareer": "57:63",
+            "championships": "2026: 3\n2025: 1\n2024: 2",
             "rank": "-",
             "points": "12.00",
-            "source": "TA",
             "sort_order": 2,
-            "utrSingles": "4.7",
-            "winLossYTD": "24:10",
-            "wtnSingles": "-",
-            "championships": "2026: 3\n2025: 1\n2024: 2",
-            "winLossCareer": "55:63"
-          }
-        },
-        {
+            "groups": [
+              "2016/2017 Boys",
+              "2015/2016 Boys"
+            ]
+          },
           "draws": [
             {
-              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=0f4b95e2-1251-4411-8413-185e4c4b502a&event=1",
-              "drawName": "BS U10 JDS"
+              "drawName": "BS U10 JDS",
+              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=0f4b95e2-1251-4411-8413-185e4c4b502a&event=1"
             }
-          ],
+          ]
+        },
+        {
           "player": {
             "id": "1774830531032",
-            "url": "https://tournaments.tennis.com.au/player-profile/D8C9AB7B-18A8-4631-B8DE-4EDBF1D543A1",
             "name": "Jordan Chiu",
+            "url": "https://tournaments.tennis.com.au/player-profile/D8C9AB7B-18A8-4631-B8DE-4EDBF1D543A1",
+            "source": "TA",
+            "utrSingles": "4",
+            "wtnSingles": "-",
+            "winLossYTD": "34:12",
+            "winLossCareer": "90:31",
+            "championships": "2026: 2\n2025: 6\n2024: 1",
             "rank": "-",
             "points": "-",
-            "source": "TA",
             "sort_order": 5,
-            "utrSingles": "4",
-            "winLossYTD": "34:12",
-            "wtnSingles": "-",
-            "championships": "2026: 2\n2025: 6\n2024: 1",
-            "winLossCareer": "90:31"
-          }
-        },
-        {
+            "groups": [
+              "2016/2017 Boys",
+              "2015/2016 Boys"
+            ]
+          },
           "draws": [
             {
-              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=0f4b95e2-1251-4411-8413-185e4c4b502a&event=1",
-              "drawName": "BS U10 JDS"
+              "drawName": "BS U10 JDS",
+              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=0f4b95e2-1251-4411-8413-185e4c4b502a&event=1"
             }
-          ],
+          ]
+        },
+        {
           "player": {
             "id": "1774852503277",
-            "url": "https://tournaments.tennis.com.au/player-profile/806F94D7-D656-47C7-A99F-321576CC8980",
             "name": "Henry Wang",
+            "url": "https://tournaments.tennis.com.au/player-profile/806F94D7-D656-47C7-A99F-321576CC8980",
+            "source": "TA",
+            "utrSingles": "4.1",
+            "wtnSingles": "-",
+            "winLossYTD": "22:5",
+            "winLossCareer": "62:38",
+            "championships": "2026: 3\n2025: 1",
             "rank": "-",
             "points": "-",
-            "source": "TA",
             "sort_order": 7,
-            "utrSingles": "4.1",
-            "winLossYTD": "18:5",
-            "wtnSingles": "-",
-            "championships": "2026: 2\n2025: 1",
-            "winLossCareer": "58:38"
-          }
-        },
-        {
+            "groups": [
+              "2016/2017 Boys",
+              "2015/2016 Boys"
+            ]
+          },
           "draws": [
             {
-              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=0f4b95e2-1251-4411-8413-185e4c4b502a&event=1",
-              "drawName": "BS U10 JDS"
+              "drawName": "BS U10 JDS",
+              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=0f4b95e2-1251-4411-8413-185e4c4b502a&event=1"
             }
-          ],
+          ]
+        },
+        {
           "player": {
             "id": "1774853909506",
-            "url": "https://tournaments.tennis.com.au/player-profile/F15291C1-B67A-4EAE-9448-DD6E5BF75953",
             "name": "Joshua Feng",
+            "url": "https://tournaments.tennis.com.au/player-profile/F15291C1-B67A-4EAE-9448-DD6E5BF75953",
+            "source": "TA",
+            "utrSingles": "3.9",
+            "wtnSingles": "-",
+            "winLossYTD": "14:9",
+            "winLossCareer": "86:48",
+            "championships": "2025: 3\n2024: 4",
             "rank": "-",
             "points": "6.00",
-            "source": "TA",
             "sort_order": 8,
-            "utrSingles": "3.8",
-            "winLossYTD": "14:8",
-            "wtnSingles": "-",
-            "championships": "2025: 3\n2024: 4",
-            "winLossCareer": "86:47"
-          }
-        },
-        {
+            "groups": [
+              "2016/2017 Boys"
+            ]
+          },
           "draws": [
             {
-              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=0f4b95e2-1251-4411-8413-185e4c4b502a&event=1",
-              "drawName": "BS U10 JDS"
+              "drawName": "BS U10 JDS",
+              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=0f4b95e2-1251-4411-8413-185e4c4b502a&event=1"
             }
-          ],
+          ]
+        },
+        {
           "player": {
             "id": "1774852531343",
-            "url": "https://tournaments.tennis.com.au/player-profile/1D203E27-3EE6-4F02-A3B1-421A308AD58F",
             "name": "Beau Tindall",
+            "url": "https://tournaments.tennis.com.au/player-profile/1D203E27-3EE6-4F02-A3B1-421A308AD58F",
+            "source": "TA",
+            "utrSingles": "4",
+            "wtnSingles": "-",
+            "winLossYTD": "31:13",
+            "winLossCareer": "71:50",
+            "championships": "2026: 2\n2025: 3\n2024: 1",
             "rank": "-",
             "points": "-",
-            "source": "TA",
             "sort_order": 10,
-            "utrSingles": "4",
-            "winLossYTD": "31:13",
-            "wtnSingles": "-",
-            "championships": "2026: 2\n2025: 3\n2024: 1",
-            "winLossCareer": "71:50"
-          }
-        },
-        {
+            "groups": [
+              "2016/2017 Boys"
+            ]
+          },
           "draws": [
             {
-              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=0f4b95e2-1251-4411-8413-185e4c4b502a&event=1",
-              "drawName": "BS U10 JDS"
+              "drawName": "BS U10 JDS",
+              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=0f4b95e2-1251-4411-8413-185e4c4b502a&event=1"
             }
-          ],
+          ]
+        },
+        {
           "player": {
             "id": "1774852542593",
-            "url": "https://tournaments.tennis.com.au/player-profile/E2568F5E-726E-4EF3-A2C7-BC3435B2E04B",
             "name": "Ryan Xu",
+            "url": "https://tournaments.tennis.com.au/player-profile/E2568F5E-726E-4EF3-A2C7-BC3435B2E04B",
+            "source": "TA",
+            "utrSingles": "4",
+            "wtnSingles": "-",
+            "winLossYTD": "18:15",
+            "winLossCareer": "83:78",
+            "championships": "2025: 3\n2024: 1",
             "rank": "-",
             "points": "23.00",
-            "source": "TA",
             "sort_order": 11,
-            "utrSingles": "3",
-            "winLossYTD": "18:15",
-            "wtnSingles": "-",
-            "championships": "2025: 3\n2024: 1",
-            "winLossCareer": "83:78"
-          }
-        },
-        {
+            "groups": [
+              "2016/2017 Boys"
+            ]
+          },
           "draws": [
             {
-              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=0f4b95e2-1251-4411-8413-185e4c4b502a&event=1",
-              "drawName": "BS U10 JDS"
+              "drawName": "BS U10 JDS",
+              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=0f4b95e2-1251-4411-8413-185e4c4b502a&event=1"
             }
-          ],
+          ]
+        },
+        {
           "player": {
             "id": "1774852553484",
-            "url": "https://tournaments.tennis.com.au/player-profile/5B29E9F4-E77E-453E-B5E8-868A92A7A57C",
             "name": "Bisam Chapagain",
+            "url": "https://tournaments.tennis.com.au/player-profile/5B29E9F4-E77E-453E-B5E8-868A92A7A57C",
+            "source": "TA",
+            "utrSingles": "4",
+            "wtnSingles": "-",
+            "winLossYTD": "13:6",
+            "winLossCareer": "46:41",
+            "championships": "2025: 4",
             "rank": "-",
             "points": "-",
-            "source": "TA",
             "sort_order": 12,
-            "utrSingles": "4",
-            "winLossYTD": "13:6",
-            "wtnSingles": "-",
-            "championships": "2025: 4",
-            "winLossCareer": "46:41"
-          }
-        },
-        {
+            "groups": [
+              "2016/2017 Boys"
+            ]
+          },
           "draws": [
             {
-              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=0f4b95e2-1251-4411-8413-185e4c4b502a&event=1",
-              "drawName": "BS U10 JDS"
+              "drawName": "BS U10 JDS",
+              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=0f4b95e2-1251-4411-8413-185e4c4b502a&event=1"
             }
-          ],
+          ]
+        },
+        {
           "player": {
             "id": "1774852571511",
-            "url": "https://tournaments.tennis.com.au/player-profile/EE11357E-B2BA-486B-A896-CDF311D09F90",
             "name": "Marko Petrovic",
+            "url": "https://tournaments.tennis.com.au/player-profile/EE11357E-B2BA-486B-A896-CDF311D09F90",
+            "source": "TA",
+            "utrSingles": "3",
+            "wtnSingles": "-",
+            "winLossYTD": "35:12",
+            "winLossCareer": "49:33",
+            "championships": "2026: 1\n2025: 1",
             "rank": "-",
             "points": "2.00",
-            "source": "TA",
             "sort_order": 13,
-            "utrSingles": "3",
-            "winLossYTD": "35:12",
-            "wtnSingles": "-",
-            "championships": "2026: 1\n2025: 1",
-            "winLossCareer": "49:33"
-          }
-        },
-        {
+            "groups": [
+              "2016/2017 Boys"
+            ]
+          },
           "draws": [
             {
-              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=0f4b95e2-1251-4411-8413-185e4c4b502a&event=1",
-              "drawName": "BS U10 JDS"
+              "drawName": "BS U10 JDS",
+              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=0f4b95e2-1251-4411-8413-185e4c4b502a&event=1"
             }
-          ],
+          ]
+        },
+        {
           "player": {
             "id": "1774852594184",
-            "url": "https://tournaments.tennis.com.au/player-profile/00948A3B-A264-417B-9CF4-18FAEAE5915D",
             "name": "Edwin Huxue",
+            "url": "https://tournaments.tennis.com.au/player-profile/00948A3B-A264-417B-9CF4-18FAEAE5915D",
+            "source": "TA",
+            "utrSingles": "3",
+            "wtnSingles": "-",
+            "winLossYTD": "26:17",
+            "winLossCareer": "58:33",
+            "championships": "2026: 1\n2025: 3",
             "rank": "-",
             "points": "-",
-            "source": "TA",
             "sort_order": 15,
-            "utrSingles": "3",
-            "winLossYTD": "23:16",
-            "wtnSingles": "-",
-            "championships": "2025: 3",
-            "winLossCareer": "55:32"
-          }
-        },
-        {
+            "groups": [
+              "2016/2017 Boys"
+            ]
+          },
           "draws": [
             {
-              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=0f4b95e2-1251-4411-8413-185e4c4b502a&event=1",
-              "drawName": "BS U10 JDS"
+              "drawName": "BS U10 JDS",
+              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=0f4b95e2-1251-4411-8413-185e4c4b502a&event=1"
             }
-          ],
+          ]
+        },
+        {
           "player": {
             "id": "1774852604537",
-            "url": "https://tournaments.tennis.com.au/player-profile/98C08E25-D3E6-440F-BAD4-78332D7671F1",
             "name": "Andreas Mortel",
+            "url": "https://tournaments.tennis.com.au/player-profile/98C08E25-D3E6-440F-BAD4-78332D7671F1",
+            "source": "TA",
+            "utrSingles": "3.7",
+            "wtnSingles": "-",
+            "winLossYTD": "31:27",
+            "winLossCareer": "88:112",
+            "championships": "2026: 3\n2025: 8",
             "rank": "-",
             "points": "63.00",
-            "source": "TA",
             "sort_order": 16,
-            "utrSingles": "3.7",
-            "winLossYTD": "31:26",
-            "wtnSingles": "-",
-            "championships": "2026: 3\n2025: 8",
-            "winLossCareer": "88:111"
-          }
-        },
-        {
+            "groups": [
+              "2016/2017 Boys"
+            ]
+          },
           "draws": [
             {
-              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=0f4b95e2-1251-4411-8413-185e4c4b502a&event=1",
-              "drawName": "BS U10 JDS"
+              "drawName": "BS U10 JDS",
+              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=0f4b95e2-1251-4411-8413-185e4c4b502a&event=1"
             }
-          ],
+          ]
+        },
+        {
           "player": {
             "id": "1774852617767",
-            "url": "https://tournaments.tennis.com.au/player-profile/3E97A937-D8DD-4DAD-99D3-3758C164F52C",
             "name": "Felix Protsenko",
+            "url": "https://tournaments.tennis.com.au/player-profile/3E97A937-D8DD-4DAD-99D3-3758C164F52C",
+            "source": "TA",
+            "utrSingles": "2.7",
+            "wtnSingles": "-",
+            "winLossYTD": "20:1",
+            "winLossCareer": "32:18",
+            "championships": "2026: 2",
             "rank": "-",
             "points": "-",
-            "source": "TA",
             "sort_order": 18,
-            "utrSingles": "2.6",
-            "winLossYTD": "20:1",
-            "wtnSingles": "-",
-            "championships": "2026: 2",
-            "winLossCareer": "32:18"
-          }
-        },
-        {
+            "groups": [
+              "2016/2017 Boys"
+            ]
+          },
           "draws": [
             {
-              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=0f4b95e2-1251-4411-8413-185e4c4b502a&event=1",
-              "drawName": "BS U10 JDS"
+              "drawName": "BS U10 JDS",
+              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=0f4b95e2-1251-4411-8413-185e4c4b502a&event=1"
             }
-          ],
+          ]
+        },
+        {
           "player": {
             "id": "1774854726185",
-            "url": "https://tournaments.tennis.com.au/player-profile/D4C5B547-8491-4644-B12C-1E682BECE34C",
             "name": "Owen Li",
+            "url": "https://tournaments.tennis.com.au/player-profile/D4C5B547-8491-4644-B12C-1E682BECE34C",
+            "source": "TA",
+            "utrSingles": "3",
+            "wtnSingles": "-",
+            "winLossYTD": "8:14",
+            "winLossCareer": "20:19",
+            "championships": "-",
             "rank": "-",
             "points": "-",
-            "source": "TA",
             "sort_order": 19,
-            "utrSingles": "3",
-            "winLossYTD": "8:14",
-            "wtnSingles": "-",
-            "championships": "-",
-            "winLossCareer": "20:19"
-          }
-        },
-        {
+            "groups": [
+              "2016/2017 Boys"
+            ]
+          },
           "draws": [
             {
-              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=0f4b95e2-1251-4411-8413-185e4c4b502a&event=3",
-              "drawName": "BS U14 JDS"
+              "drawName": "BS U10 JDS",
+              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=0f4b95e2-1251-4411-8413-185e4c4b502a&event=1"
             }
-          ],
+          ]
+        },
+        {
           "player": {
             "id": "1774854827035",
-            "url": "https://tournaments.tennis.com.au/player-profile/48D73322-95A1-4609-88E1-4654D99A29BC",
             "name": "Garrett Wang",
+            "url": "https://tournaments.tennis.com.au/player-profile/48D73322-95A1-4609-88E1-4654D99A29BC",
+            "source": "TA",
+            "utrSingles": "2",
+            "wtnSingles": "-",
+            "winLossYTD": "11:17",
+            "winLossCareer": "31:37",
+            "championships": "2026: 2\n2025: 3",
             "rank": "-",
             "points": "6.00",
-            "source": "TA",
             "sort_order": 24,
-            "utrSingles": "2",
-            "winLossYTD": "11:17",
-            "wtnSingles": "-",
-            "championships": "2026: 2\n2025: 3",
-            "winLossCareer": "31:37"
-          }
-        },
-        {
+            "groups": [
+              "2016/2017 Boys"
+            ]
+          },
           "draws": [
             {
-              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=0f4b95e2-1251-4411-8413-185e4c4b502a&event=1",
-              "drawName": "BS U10 JDS"
+              "drawName": "BS U10 JDS",
+              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=0f4b95e2-1251-4411-8413-185e4c4b502a&event=1"
             }
-          ],
+          ]
+        },
+        {
           "player": {
             "id": "1774884959036",
-            "url": "https://tournaments.tennis.com.au/player-profile/9369488B-34D9-4DA1-91F9-487A7D12A317",
             "name": "Dylan Du",
+            "url": "https://tournaments.tennis.com.au/player-profile/9369488B-34D9-4DA1-91F9-487A7D12A317",
+            "source": "TA",
+            "utrSingles": "2",
+            "wtnSingles": "-",
+            "winLossYTD": "5:24",
+            "winLossCareer": "5:24",
+            "championships": "-",
             "rank": "-",
             "points": "-",
-            "source": "TA",
             "sort_order": 28,
-            "utrSingles": "2",
-            "winLossYTD": "5:24",
+            "groups": [
+              "2016/2017 Boys"
+            ]
+          },
+          "draws": [
+            {
+              "drawName": "BS U10 JDS Tier 2",
+              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=0f4b95e2-1251-4411-8413-185e4c4b502a&event=5"
+            }
+          ]
+        },
+        {
+          "player": {
+            "id": "1780829337864zd8ht",
+            "name": "Vera Longbow",
+            "url": "https://tournaments.tennis.com.au/player-profile/D374FEF2-1936-42CD-9407-5F2D813E7073",
+            "source": "TA",
+            "utrSingles": "3.7",
             "wtnSingles": "-",
-            "championships": "-",
-            "winLossCareer": "5:24"
-          }
+            "winLossYTD": "41:11",
+            "winLossCareer": "257:120",
+            "championships": "2026: 9\n2025: 18\n2024: 10\n2023: 6\n2022: 5",
+            "rank": "-",
+            "points": "201.00",
+            "sort_order": 66,
+            "groups": []
+          },
+          "draws": [
+            {
+              "drawName": "GS U10 JDS",
+              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=0f4b95e2-1251-4411-8413-185e4c4b502a&event=2"
+            }
+          ]
+        },
+        {
+          "player": {
+            "id": "1780829359967iebeta",
+            "name": "Nicole Ruohan Yen",
+            "url": "https://tournaments.tennis.com.au/player-profile/1D7CD8E0-377B-4007-91B8-18AADB746066",
+            "source": "TA",
+            "utrSingles": "-",
+            "wtnSingles": "-",
+            "winLossYTD": "6:1",
+            "winLossCareer": "6:1",
+            "championships": "2026: 1",
+            "rank": "-",
+            "points": "-",
+            "sort_order": 67,
+            "groups": [
+              "Voyager"
+            ]
+          },
+          "draws": [
+            {
+              "drawName": "GS U10 JDS",
+              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=0f4b95e2-1251-4411-8413-185e4c4b502a&event=2"
+            }
+          ]
+        },
+        {
+          "player": {
+            "id": "1780829376851pv8cfl",
+            "name": "Zoe Goodwin",
+            "url": "https://tournaments.tennis.com.au/player-profile/5B11290C-FD8A-44F2-8F7E-F47BA52D5BB3",
+            "source": "TA",
+            "utrSingles": "4",
+            "wtnSingles": "-",
+            "winLossYTD": "13:2",
+            "winLossCareer": "63:13",
+            "championships": "2026: 2\n2025: 7\n2024: 3",
+            "rank": "-",
+            "points": "-",
+            "sort_order": 69,
+            "groups": []
+          },
+          "draws": [
+            {
+              "drawName": "GS U10 JDS",
+              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=0f4b95e2-1251-4411-8413-185e4c4b502a&event=2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "tournament": {
+        "link": "/sport/tournament?id=01037EB0-7F4E-42DF-B897-80017FE2A1E0",
+        "name": "2026 JC VIC Bruce Cup Trials",
+        "dates": "18/06/2026 to 31/12/2026",
+        "source": "AUS",
+        "players": [
+          "Balazsy, Annika",
+          "Ballantine, James",
+          "Barabanov, Egor",
+          "Bartling, Harli",
+          "Beckett, Lily",
+          "Bergin, William",
+          "Bharath, Teekshna",
+          "Broecker, Harrison",
+          "Brophy, Phillip",
+          "Caia, Eva",
+          "Camara, George",
+          "Cataram, Saanvi",
+          "Cellante, Luca",
+          "Cerra, Xavier",
+          "Chandrasekaran, Ishta",
+          "Chong, Carson",
+          "Chow, Sebastian",
+          "Chowdhary, Nivaan",
+          "Coralluzzo, Adrian",
+          "Currea Cardozo, Mateo Andres",
+          "Delmenico, Henry",
+          "Dennis, Sophie",
+          "Di, Ada",
+          "Di Stefano, Leo",
+          "Dinavahi, Praneel",
+          "Dixon, Flynn",
+          "Dyer, Arki",
+          "Fernando, Ethan",
+          "Foreman, Ethan",
+          "Gent, Matilda",
+          "Greenhough, Billie",
+          "Gunawardana, Tahlia",
+          "Hampson, Annabel",
+          "Hebden, Emily",
+          "Hrechyna, Lira",
+          "Ivochkina, Masha",
+          "Iyer, Sajeev",
+          "Jarnyk, Harvey",
+          "Jin, Lucas",
+          "Joshi, Ameyaa",
+          "Koopmans, Amber",
+          "Kunwar, Samiha",
+          "Li, Taylor",
+          "Liberalli, Lorenzo",
+          "Liu, Grace Yuxi",
+          "Lyu, Shawn",
+          "Ma, Phelix",
+          "Mcgrane, Samson",
+          "Middlemiss, Leo",
+          "Mintzas, Ioanna",
+          "Morani, Aybram",
+          "Murat, Siarra",
+          "Naujalyte, Adele",
+          "Oosthuizen, James",
+          "O'Reilly, Marcus",
+          "Padda, Mansirat Kaur",
+          "Pearson, Jake",
+          "Prakash, Ansh",
+          "Rajch, Emilia",
+          "Rajeeb, Nidal",
+          "Ramos, Reuben",
+          "Rastogi, Yash",
+          "Rodriguez, Simon Andrew",
+          "Ruda, Mia",
+          "Ryan, Will",
+          "Samuel, Brooklyn",
+          "Sandri, Matilda",
+          "Sata, Minato",
+          "Shahab, Noah",
+          "Shrestha, Ashton",
+          "Shu, Ryan",
+          "Sinclair-Parmenov, Sebastian",
+          "Singh, Uday",
+          "Siriphromphan, Patrick",
+          "Snell, Eric",
+          "Sodha, Naaz",
+          "Sweeney, Jack",
+          "Travers, Ruben",
+          "Venturini, Cruz",
+          "Wilford, Harry",
+          "Womersley, Finn",
+          "Wu, Raymond",
+          "Yang, Ryan"
+        ],
+        "ageGroup": "All Ages",
+        "location": "Tennis Victoria | Frankston",
+        "mapsLink": "https://www.google.com/maps/search/?api=1&query=Tennis%20Victoria%20%7C%20Frankston%2C%20Australia",
+        "closingDeadline": "7/6/2026"
+      },
+      "joinedPlayers": [
+        {
+          "player": {
+            "id": "1780829522888cv3n2",
+            "name": "Raymond Wu",
+            "url": "https://tournaments.tennis.com.au/player-profile/9FBBB54A-1D56-423B-8010-EA51077C55F8",
+            "source": "TA",
+            "utrSingles": "6.4",
+            "wtnSingles": "-",
+            "winLossYTD": "26:8",
+            "winLossCareer": "159:66",
+            "championships": "2026: 6\n2025: 15\n2024: 1\n2023: 4\n2022: 6",
+            "rank": "-",
+            "points": "706.00",
+            "sort_order": 75,
+            "groups": []
+          },
+          "draws": [
+            {
+              "drawName": "BS U12 CS",
+              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=01037eb0-7f4e-42df-b897-80017fe2a1e0&event=1"
+            }
+          ]
+        },
+        {
+          "player": {
+            "id": "1780829547926161x3",
+            "name": "SHAWN LYU",
+            "url": "https://tournaments.tennis.com.au/player-profile/DB4CA150-6453-4732-B689-C904238E8FA9",
+            "source": "TA",
+            "utrSingles": "7.1",
+            "wtnSingles": "-",
+            "winLossYTD": "40:5",
+            "winLossCareer": "183:39",
+            "championships": "2026: 13\n2025: 24\n2024: 9\n2023: 3",
+            "rank": "-",
+            "points": "1434.00",
+            "sort_order": 76,
+            "groups": []
+          },
+          "draws": [
+            {
+              "drawName": "BS U12 CS",
+              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=01037eb0-7f4e-42df-b897-80017fe2a1e0&event=1"
+            }
+          ]
         }
       ]
     },
@@ -816,76 +828,358 @@
         "name": "2026 JDS CBC Green Central West RMS - Nepean #2",
         "dates": "21/06/2026",
         "source": "AUS",
+        "players": [
+          "Ahmad, Ayaan",
+          "Basnet, Nyra",
+          "Best, Cyril",
+          "Bian, Wayne",
+          "Capolino, Iker",
+          "Carey, Felix",
+          "Chan, Nicholas",
+          "Costello, Olivia",
+          "Du, Dylan",
+          "Howard, Liam",
+          "Kanis Macrae, Lucius",
+          "Kanis Macrae, Tiberius",
+          "Karthick, Anvith",
+          "Liu, Justin",
+          "Nawawi, Zaid",
+          "Nicholson, Jax",
+          "Nicholson, Riley",
+          "Pandya, Avir",
+          "Parshina, Alexandra",
+          "Ponce-De-Leon, Marcus",
+          "Shivaji, Tanish",
+          "Sogutlu, Luka",
+          "Sun, Oliver",
+          "Tan, Alston",
+          "Vargas, Alejandro",
+          "Vujovic, Ilija",
+          "Wang, Garrett",
+          "Weerasinghe, Dylan",
+          "Ye, Steven",
+          "Zaman, Nirvana",
+          "Zheng, Ryan Rui",
+          "Zizovski, Jaden Zizo"
+        ],
         "ageGroup": "U10, All Ages",
         "location": "Tennis NSW Central West Region | Penrith",
-        "mapsLink": "https://www.google.com/maps/search/?api=1&query=Tennis%20NSW%20Central%20West%20Region%20%7C%20Penrith%2C%20Australia"
+        "mapsLink": "https://www.google.com/maps/search/?api=1&query=Tennis%20NSW%20Central%20West%20Region%20%7C%20Penrith%2C%20Australia",
+        "closingDeadline": "15/6/2026"
       },
       "joinedPlayers": [
         {
-          "draws": [
-            {
-              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=41bfa2c1-41d5-4893-a3ed-b0d42b4d8bf1&event=1",
-              "drawName": "BS U10 JDS (Green Ball)"
-            }
-          ],
           "player": {
             "id": "1774854827035",
-            "url": "https://tournaments.tennis.com.au/player-profile/48D73322-95A1-4609-88E1-4654D99A29BC",
             "name": "Garrett Wang",
+            "url": "https://tournaments.tennis.com.au/player-profile/48D73322-95A1-4609-88E1-4654D99A29BC",
+            "source": "TA",
+            "utrSingles": "2",
+            "wtnSingles": "-",
+            "winLossYTD": "11:17",
+            "winLossCareer": "31:37",
+            "championships": "2026: 2\n2025: 3",
             "rank": "-",
             "points": "6.00",
-            "source": "TA",
             "sort_order": 24,
-            "utrSingles": "2",
-            "winLossYTD": "11:17",
-            "wtnSingles": "-",
-            "championships": "2026: 2\n2025: 3",
-            "winLossCareer": "31:37"
-          }
-        },
-        {
+            "groups": [
+              "2016/2017 Boys"
+            ]
+          },
           "draws": [
             {
-              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=41bfa2c1-41d5-4893-a3ed-b0d42b4d8bf1&event=1",
-              "drawName": "BS U10 JDS (Green Ball)"
+              "drawName": "BS U10 JDS (Green Ball)",
+              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=41bfa2c1-41d5-4893-a3ed-b0d42b4d8bf1&event=1"
             }
-          ],
+          ]
+        },
+        {
           "player": {
             "id": "1774853948145",
-            "url": "https://tournaments.tennis.com.au/player-profile/4949A3F0-81BD-4968-85D5-E1E6B3F06D73",
             "name": "Steven Ye",
+            "url": "https://tournaments.tennis.com.au/player-profile/4949A3F0-81BD-4968-85D5-E1E6B3F06D73",
+            "source": "TA",
+            "utrSingles": "2.3",
+            "wtnSingles": "-",
+            "winLossYTD": "16:18",
+            "winLossCareer": "34:38",
+            "championships": "2026: 2\n2025: 1",
             "rank": "-",
             "points": "-",
-            "source": "TA",
             "sort_order": 26,
-            "utrSingles": "2.3",
-            "winLossYTD": "16:14",
-            "wtnSingles": "-",
-            "championships": "2026: 2\n2025: 1",
-            "winLossCareer": "34:34"
-          }
-        },
-        {
+            "groups": [
+              "2016/2017 Boys"
+            ]
+          },
           "draws": [
             {
-              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=41bfa2c1-41d5-4893-a3ed-b0d42b4d8bf1&event=1",
-              "drawName": "BS U10 JDS (Green Ball)"
+              "drawName": "BS U10 JDS (Green Ball)",
+              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=41bfa2c1-41d5-4893-a3ed-b0d42b4d8bf1&event=1"
             }
-          ],
+          ]
+        },
+        {
           "player": {
             "id": "1774884959036",
-            "url": "https://tournaments.tennis.com.au/player-profile/9369488B-34D9-4DA1-91F9-487A7D12A317",
             "name": "Dylan Du",
+            "url": "https://tournaments.tennis.com.au/player-profile/9369488B-34D9-4DA1-91F9-487A7D12A317",
+            "source": "TA",
+            "utrSingles": "2",
+            "wtnSingles": "-",
+            "winLossYTD": "5:24",
+            "winLossCareer": "5:24",
+            "championships": "-",
             "rank": "-",
             "points": "-",
-            "source": "TA",
             "sort_order": 28,
-            "utrSingles": "2",
-            "winLossYTD": "5:24",
+            "groups": [
+              "2016/2017 Boys"
+            ]
+          },
+          "draws": [
+            {
+              "drawName": "BS U10 JDS (Green Ball)",
+              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=41bfa2c1-41d5-4893-a3ed-b0d42b4d8bf1&event=1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "tournament": {
+        "link": "/sport/tournament?id=D29E08FD-1877-432C-AD13-48057B6CB31D",
+        "name": "2026 J125 Churchie Junior Championships",
+        "dates": "27/06/2026 to 30/06/2026",
+        "source": "AUS",
+        "players": [
+          "Ai, Arthur",
+          "Arias Lohrisch, Rafael",
+          "Arnold, Xavier",
+          "Beaver, Kash",
+          "Brown, Isaac",
+          "Chen, Tomson",
+          "Cossens, Ari",
+          "Cox, Jasper",
+          "Crouch, Liam",
+          "Dektereva - Plant, Anya",
+          "Freeman, Nelson",
+          "Gale, Samuel",
+          "Geertshuis, Keith",
+          "Graham, Cooper",
+          "Gulenc, Kubilay",
+          "Heanes, Oliver",
+          "Hsu, Jerrell",
+          "Jiang, Ada",
+          "Jones-Hall, Jack",
+          "K Sakthivelu, Akilan",
+          "Kong, Cooper",
+          "Krishna, Riya",
+          "Krishnaa, Bhavani",
+          "Krishnaa, Devi",
+          "Li, Adam",
+          "Li, Quinlan",
+          "Lindeberg, Daniel",
+          "Maddalena, Michael",
+          "Mardira, Maxwell",
+          "Mccooey, Freddie",
+          "Motuzas, Jonas",
+          "Prabhu Raj, Pranavath",
+          "Rojas, Juliet",
+          "Saha, Sebastian",
+          "Senaratne, Kian",
+          "Shah, Aanya",
+          "Singh, Ran",
+          "Stamenovic, Josh",
+          "Tomaszewski, Joshua",
+          "Waugh, Marcus",
+          "Yamamoto, Alex"
+        ],
+        "ageGroup": "U10, U12",
+        "location": "David Turbayne Tennis Centre | Brisbane",
+        "mapsLink": "https://www.google.com/maps/search/?api=1&query=David%20Turbayne%20Tennis%20Centre%20%7C%20Brisbane%2C%20Australia",
+        "closingDeadline": "17/6/2026"
+      },
+      "joinedPlayers": [
+        {
+          "player": {
+            "id": "17808294138597b3x7n",
+            "name": "Quinlan Li",
+            "url": "https://tournaments.tennis.com.au/player-profile/16F37C68-4DE1-40F6-82B0-E617EA35ECF4",
+            "source": "TA",
+            "utrSingles": "5.0",
             "wtnSingles": "-",
-            "championships": "-",
-            "winLossCareer": "5:24"
-          }
+            "winLossYTD": "10:8",
+            "winLossCareer": "127:172",
+            "championships": "2026: 2\n2025: 3\n2024: 3\n2023: 5",
+            "rank": "-",
+            "points": "246.00",
+            "sort_order": 70,
+            "groups": [
+              "Voyager"
+            ]
+          },
+          "draws": [
+            {
+              "drawName": "BD U12 JS",
+              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=d29e08fd-1877-432c-ad13-48057b6cb31d&event=3"
+            },
+            {
+              "drawName": "BS U12 JS",
+              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=d29e08fd-1877-432c-ad13-48057b6cb31d&event=1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "tournament": {
+        "link": "/sport/tournament?id=B665D2FA-9A33-47D6-A221-9AFAD954E4BB",
+        "name": "2026 J250 J125 CBC Green Rod Laver Lead-In Junior Championships",
+        "dates": "2/07/2026 to 6/07/2026",
+        "source": "AUS",
+        "players": [
+          "Ahmed, Yasmin",
+          "Bates, Cleo",
+          "Bates, India",
+          "Bottele, Ethan",
+          "Bradford, Darby",
+          "Burns, Joshua",
+          "Cao, Lucas",
+          "Chan, Noah James",
+          "Chen, Doris",
+          "Chiang, Benjamin",
+          "Cossens, Ari",
+          "Dai, Rongbin",
+          "Dektereva - Plant, Anya",
+          "Deshmukh, Vansh",
+          "Domingos, Meliah",
+          "Ehya, Samyar",
+          "Ewart, Casey",
+          "Fan, Justin",
+          "Fei, Liam",
+          "Fleming, Beatrix",
+          "Fletcher, Harrison",
+          "Fowler, Justin",
+          "Freeman, Nelson",
+          "Gale, Samuel",
+          "Gao, Xanthus",
+          "Gilmartin Dotta, Jax",
+          "Griffin, Thomas",
+          "Gulenc, Kubilay",
+          "Han, Eddie",
+          "Hassan, Ayla",
+          "Headrick, Indy",
+          "Heaton, Oliver",
+          "Heaton, Sebastian",
+          "Hsu, Jerrell",
+          "Jackson, William",
+          "Jones, Noah",
+          "K Sakthivelu, Akilan",
+          "Karabiyikoglu, Sarp",
+          "Kim, Seungyu (Steven)",
+          "Kumar, Avyukt",
+          "Lee, Patrick",
+          "Leite, Nicolas",
+          "Li, Quinlan",
+          "Lokuge, Jiya",
+          "Loo, Caleb",
+          "Lu, Matthew",
+          "Luo, Christopher",
+          "Maddalena, Michael",
+          "Mccooey, Freddie",
+          "Mcculloch, Hugo",
+          "Mcdonough-Smith, James",
+          "Moya, Pablo",
+          "Nazarov, Aleksandr",
+          "Newton, Lexie",
+          "Newton, Sophie",
+          "Nguyen, Evelyn",
+          "Nguyen, Lucas",
+          "Nguyen, Victoria",
+          "Nikolakopoulos, Mia",
+          "Ning, Eric",
+          "Ning, Ethan",
+          "Rao, Inika",
+          "Rao, Tristan",
+          "Revie, Darika",
+          "Rondonuwu, Ethan",
+          "Saha, Sebastian",
+          "Scutt, Ivy",
+          "Senaratne, Kian",
+          "Shi, Xiaoyu (Rainie)",
+          "Shi, Xiaoyun (Claudia)",
+          "Singh, Ran",
+          "So, Lachlan",
+          "Sowman, Max",
+          "Stamenovic, Josh",
+          "Tang, Thea",
+          "Tanhe, Declan",
+          "Taylor, Aria",
+          "Taylor, Chad",
+          "Toby, Leo",
+          "Van Der Heide, Zach",
+          "Vankayalapati, Audhya",
+          "Vankayalapati, Ayaan",
+          "Walk, Tyson",
+          "Wang, Peter",
+          "Wang, Sunny",
+          "Wang, Ziqi",
+          "Warbrooke, Sahara-Grace",
+          "Watts, Piper",
+          "Waugh, Marcus",
+          "Wei, Eddie",
+          "West, Alisha",
+          "Wheeler, Aiden",
+          "Wooldridge, Blaise",
+          "Wright, George",
+          "Wu, James",
+          "Xu, Tony",
+          "Yan, Raymond",
+          "Yang, Emily",
+          "Yang, Jessica Z",
+          "Yang, Ryan Z",
+          "Yozu, Lisa",
+          "Yuan, Nicole",
+          "Zhang, Calvin",
+          "Zhang, Gabriel",
+          "Zhang, Margaret",
+          "Zhao, Jeffery",
+          "Zhou, Ziqiao"
+        ],
+        "ageGroup": "U10, U12",
+        "location": "Tennis Queensland | Brisbane",
+        "mapsLink": "https://www.google.com/maps/search/?api=1&query=Tennis%20Queensland%20%7C%20Brisbane%2C%20Australia",
+        "closingDeadline": "22/6/2026"
+      },
+      "joinedPlayers": [
+        {
+          "player": {
+            "id": "17808294138597b3x7n",
+            "name": "Quinlan Li",
+            "url": "https://tournaments.tennis.com.au/player-profile/16F37C68-4DE1-40F6-82B0-E617EA35ECF4",
+            "source": "TA",
+            "utrSingles": "5.0",
+            "wtnSingles": "-",
+            "winLossYTD": "10:8",
+            "winLossCareer": "127:172",
+            "championships": "2026: 2\n2025: 3\n2024: 3\n2023: 5",
+            "rank": "-",
+            "points": "246.00",
+            "sort_order": 70,
+            "groups": [
+              "Voyager"
+            ]
+          },
+          "draws": [
+            {
+              "drawName": "BD U12 PS",
+              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=b665d2fa-9a33-47d6-a221-9afad954e4bb&event=3"
+            },
+            {
+              "drawName": "BS U12 PS",
+              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=b665d2fa-9a33-47d6-a221-9afad954e4bb&event=1"
+            }
+          ]
         }
       ]
     },
@@ -895,48 +1189,250 @@
         "name": "2026 J125 NSW Country Closed Championships Junior",
         "dates": "6/07/2026 to 10/07/2026",
         "source": "AUS",
+        "players": [
+          "Allen, Henry",
+          "Allen, Indiana",
+          "Amit, Gali",
+          "Amit, Teo",
+          "Amit, Yali",
+          "Astillo, Mirkha Vienne",
+          "Balding, Baden",
+          "Barber, Georgie",
+          "Barber, Rosie",
+          "Barton, Pippa",
+          "Becchio, Louie",
+          "Becchio, Ollie",
+          "Benigno, Maria",
+          "Bischoff, Heath",
+          "Byrne-Smith, Sienna",
+          "Cant, Ezarlia",
+          "Chalmers, Gus",
+          "Chalmers, Sid",
+          "Chendooran, Adriel",
+          "Cheney, Jackson",
+          "Cheney, Olivia",
+          "Cheung, Christopher",
+          "Cheung, Kingsley",
+          "Craig, Maya",
+          "De Frenza, Theodore",
+          "Delhaise-Cawood, Gabriel",
+          "Dorrian, Trista",
+          "Duffey, Jack",
+          "Duncan, Lucas",
+          "Ensor, Malia",
+          "Ensor, Talei",
+          "Ferris, William",
+          "Finnerty, Lachlan",
+          "Fleming, Annie",
+          "Fleming, Beatrix",
+          "Fraser, Alexander",
+          "Frawley, Andy",
+          "Graham, Emmett",
+          "Graham, Macy",
+          "Grewcock, Zac",
+          "Grover, Bonnie",
+          "Grover, Indya -Rose",
+          "Gwenossis, Aiden",
+          "Hegde, Smyan",
+          "Ho, Michael",
+          "Holder, Ethan",
+          "Hole, Bindi",
+          "Hole, Elijah",
+          "Hole, Matilda",
+          "Hole, Raphael",
+          "Hole, Samson",
+          "Holt, Lachlan",
+          "Hosking, Gabriella",
+          "Howard, Gabrielle",
+          "Hutchings, Sofia",
+          "Jordan, Tyler-James",
+          "Kanis Macrae, Lucius",
+          "Kanis Macrae, Tiberius",
+          "Karanfilovski, Aleksandra",
+          "Karanfilovski, Gabrijela",
+          "Karanfilovski, Kleopatra",
+          "Kobeleff, Mila",
+          "Langlands, Fynlay",
+          "Langlands, Shaniya",
+          "Lewis, Logan",
+          "Lim, Cara",
+          "Liu, Justin",
+          "Longford, Scarlett",
+          "Longford, Winter",
+          "Mcconville, Madilyn",
+          "Mcconville, Sofia",
+          "Mccraw, Holly",
+          "Mccraw, Jake",
+          "Mcleod, Brydan",
+          "Mcleod, Dustin",
+          "Meagher, Evie",
+          "Meagher, Jake",
+          "Meagher, Lara",
+          "Merchant, Zain",
+          "Miranda, Thomas",
+          "Mitchell, Katharyn",
+          "Morschel, Ben",
+          "Morschel, Sienna",
+          "Mutch, Mackenzie",
+          "Newton, Jane",
+          "Newton, Wiliam",
+          "Oakley, Brandon",
+          "Olivier, Abby",
+          "Ostojic, Alessandra",
+          "Parkinson, Curtis",
+          "Parkinson, Zac",
+          "Parmenter, Archie",
+          "Patel, Krishi",
+          "Pearce, Gabriel",
+          "Pearce, Jackson",
+          "Perea, Harriet",
+          "Pickering, Blake",
+          "Pickering, Olivia",
+          "Pirie, Lachlan",
+          "Ponce-De-Leon, Marcus",
+          "Prior, Francesca",
+          "Profke, Ella",
+          "Profke, Joshua",
+          "Profke, Mia",
+          "Purcell, Chelsea",
+          "Purcell, Coco",
+          "Rae, Harrison",
+          "Robinson, Violet",
+          "Saeedi, Darya",
+          "Saunders, Duncan",
+          "Scott, Charli",
+          "Scott, Zahra",
+          "Sheraton, Blake",
+          "Shivaji, Tanish",
+          "Singh, Alisha",
+          "Skein, Hannah",
+          "Skein, Will",
+          "Skinner, Clara",
+          "Skinner, Esther",
+          "Skinner, Ivy",
+          "Sleigh, Hayden",
+          "Slomka, Kira",
+          "Smith, Evie",
+          "Soulos, Savannah",
+          "Stanford-Lucas, Victoria",
+          "Stewart, Lila",
+          "Tenyaev, Artemy",
+          "Tenyaev, Leonid",
+          "Thivijananth, Chankeerth",
+          "Thompson, Charlie",
+          "Thompson, Harry",
+          "Thompson, Jack",
+          "Thorneycroft, Lennox",
+          "Thorneycroft, Parker",
+          "Thorneycroft, Sonny",
+          "Thorneycroft, Winslow",
+          "Threlfo, Genevieve",
+          "Tudgey, Harry",
+          "Weal, Brooke",
+          "White, Macalister",
+          "Wotton, Joshua",
+          "Zheng, Bruce",
+          "Zhu, Kimi Yiheng"
+        ],
         "ageGroup": "U10, U12",
         "location": "NSW Country Tennis Association | Wagga Wagga",
-        "mapsLink": "https://www.google.com/maps/search/?api=1&query=NSW%20Country%20Tennis%20Association%20%7C%20Wagga%20Wagga%2C%20Australia"
+        "mapsLink": "https://www.google.com/maps/search/?api=1&query=NSW%20Country%20Tennis%20Association%20%7C%20Wagga%20Wagga%2C%20Australia",
+        "closingDeadline": "26/6/2026"
       },
       "joinedPlayers": [
         {
-          "draws": [
-            {
-              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=8eb376f3-8531-489d-a283-4a7dd6815825&event=40",
-              "drawName": "1 POINT SLAM"
-            },
-            {
-              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=8eb376f3-8531-489d-a283-4a7dd6815825&event=18",
-              "drawName": "10U Boys Doubles (Green Ball) with Gabriel Delhaise-Cawood"
-            },
-            {
-              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=8eb376f3-8531-489d-a283-4a7dd6815825&event=16",
-              "drawName": "10U Boys Singles (Green Ball)"
-            },
-            {
-              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=8eb376f3-8531-489d-a283-4a7dd6815825&event=20",
-              "drawName": "10U Mixed Doubles (Green Ball)"
-            },
-            {
-              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=8eb376f3-8531-489d-a283-4a7dd6815825&event=22",
-              "drawName": "11U Boys Singles"
-            }
-          ],
           "player": {
             "id": "1774854770264",
-            "url": "https://tournaments.tennis.com.au/player-profile/F64661E0-4EDB-4CE3-922F-7B8835695268",
             "name": "Artemy Tenyaev",
+            "url": "https://tournaments.tennis.com.au/player-profile/F64661E0-4EDB-4CE3-922F-7B8835695268",
+            "source": "TA",
+            "utrSingles": "3.7",
+            "wtnSingles": "-",
+            "winLossYTD": "43:18",
+            "winLossCareer": "88:56",
+            "championships": "2026: 5\n2025: 5",
             "rank": "-",
             "points": "39.00",
-            "source": "TA",
             "sort_order": 17,
-            "utrSingles": "3.6",
-            "winLossYTD": "43:18",
+            "groups": [
+              "2016/2017 Boys"
+            ]
+          },
+          "draws": [
+            {
+              "drawName": "1 POINT SLAM",
+              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=8eb376f3-8531-489d-a283-4a7dd6815825&event=40"
+            },
+            {
+              "drawName": "10U Boys Doubles (Green Ball) with Gabriel Delhaise-Cawood",
+              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=8eb376f3-8531-489d-a283-4a7dd6815825&event=18"
+            },
+            {
+              "drawName": "10U Boys Singles (Green Ball)",
+              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=8eb376f3-8531-489d-a283-4a7dd6815825&event=16"
+            },
+            {
+              "drawName": "10U Mixed Doubles (Green Ball)",
+              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=8eb376f3-8531-489d-a283-4a7dd6815825&event=20"
+            },
+            {
+              "drawName": "11U Boys Singles",
+              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=8eb376f3-8531-489d-a283-4a7dd6815825&event=22"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "tournament": {
+        "link": "/sport/tournament?id=2CFC9893-BB41-497A-B1BD-138B3CB530D2",
+        "name": "2026 J125 Metro Sydney Hardcourt Closed Championships",
+        "dates": "7/07/2026 to 10/07/2026",
+        "source": "AUS",
+        "players": [
+          "Dellis, Tahlia",
+          "Krups, Eddie",
+          "Nawawi, Zaid",
+          "Perez-Crank, Charlie",
+          "Ramesh, Sai Hriday",
+          "Randhawa, Jeev",
+          "Rodriguez, Zoe",
+          "Shen, Jasper",
+          "Thattahalli Ganesha, Monish Krishna",
+          "Wang, Godfrey  Tian Rui",
+          "Yen, Nicole Ruohan",
+          "Yilmaz, Lezeta"
+        ],
+        "ageGroup": "U10, U12",
+        "location": "Tennis New South Wales | Leumeah",
+        "mapsLink": "https://www.google.com/maps/search/?api=1&query=Tennis%20New%20South%20Wales%20%7C%20Leumeah%2C%20Australia",
+        "closingDeadline": "26/6/2026"
+      },
+      "joinedPlayers": [
+        {
+          "player": {
+            "id": "1780829359967iebeta",
+            "name": "Nicole Ruohan Yen",
+            "url": "https://tournaments.tennis.com.au/player-profile/1D7CD8E0-377B-4007-91B8-18AADB746066",
+            "source": "TA",
+            "utrSingles": "-",
             "wtnSingles": "-",
-            "championships": "2026: 5\n2025: 5",
-            "winLossCareer": "88:56"
-          }
+            "winLossYTD": "6:1",
+            "winLossCareer": "6:1",
+            "championships": "2026: 1",
+            "rank": "-",
+            "points": "-",
+            "sort_order": 67,
+            "groups": [
+              "Voyager"
+            ]
+          },
+          "draws": [
+            {
+              "drawName": "GS U12 JS",
+              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=2cfc9893-bb41-497a-b1bd-138b3cb530d2&event=6"
+            }
+          ]
         }
       ]
     },
@@ -946,38 +1442,256 @@
         "name": "2026 J500 J125 CBC Green Rod Laver QLD Junior State Championships",
         "dates": "7/07/2026 to 11/07/2026",
         "source": "AUS",
+        "players": [
+          "Arnold, Xavier",
+          "Barrimore, Tia",
+          "Bates, Cleo",
+          "Bates, India",
+          "Bottele, Ethan",
+          "Boyd, Thomas",
+          "Bradford, Darby",
+          "Brown, Isaac",
+          "Burns, Joshua",
+          "Campbell, Chelsea",
+          "Cao, Lucas",
+          "Chan, Noah James",
+          "Dai, Rongbin",
+          "Dapiere, Thea",
+          "Davies, James",
+          "Dektereva - Plant, Anya",
+          "Duce, Joshua",
+          "Ehode Arimoto, Soli",
+          "Ewart, Casey",
+          "Fleming, Beatrix",
+          "Fletcher, Harrison",
+          "Fowler, Justin",
+          "Freeman, Nelson",
+          "Gale, Samuel",
+          "Gao, Xanthus",
+          "Garnes, Amy",
+          "Gilmartin Dotta, Jax",
+          "Gulenc, Kubilay",
+          "Han, Eddie",
+          "Hassan, Ayla",
+          "Heath, Grace",
+          "Hilton, Amelia",
+          "Holmen, Mia",
+          "Jackson, William",
+          "Jones, Mia",
+          "Jones, Noah",
+          "K Sakthivelu, Akilan",
+          "King, James",
+          "Krishnaa, Bhavani",
+          "Krishnaa, Tharun",
+          "Kumar, Avyukt",
+          "Lansom, Kobe",
+          "Lee, Patrick",
+          "Leite, Nicolas",
+          "Li, Leo",
+          "Li, Quinlan",
+          "Lindeberg, Daniel",
+          "Liu, Emma",
+          "Liu, Vera",
+          "Lokuge, Jiya",
+          "Lopez Naranjo, Martin",
+          "Ma, Polaris",
+          "Maddalena, Michael",
+          "Mammen, Isaiah",
+          "Mccooey, Freddie",
+          "Mcdonald, Gus",
+          "Mcdonough-Smith, Charles",
+          "Mcdonough-Smith, James",
+          "Modak, Vedant",
+          "Nazarov, Aleksandr",
+          "Newton, Lexie",
+          "Newton, Sophie",
+          "Nguyen, Lucas",
+          "Nguyen, Victoria",
+          "Ning, Eric",
+          "Osorio, Maria",
+          "Rashid, Ajwaad",
+          "Reisener, Spencer",
+          "Ritchie, Sam",
+          "Saha, Sebastian",
+          "Senaratne, Kian",
+          "Senaratne, Kiren",
+          "Shi, Xiaoyu (Rainie)",
+          "Shi, Xiaoyun (Claudia)",
+          "Shrestha, Roman",
+          "Sowman, Max",
+          "Speldewinde, Leo",
+          "Stamenovic, Josh",
+          "Tang, Thea",
+          "Tanhe, Declan",
+          "Taylor, Aria",
+          "Taylor, Chad",
+          "Toby, Leo",
+          "Van Der Heide, Zach",
+          "Vankayalapati, Audhya",
+          "Vankayalapati, Ayaan",
+          "Visedo, Alexander",
+          "Walk, Tyson",
+          "Warbrooke, Sahara-Grace",
+          "Wei, Eddie",
+          "West, Alisha",
+          "Woodhouse, Thea",
+          "Wooldridge, Blaise",
+          "Wu, James",
+          "Xu, Tony",
+          "Yamamoto, Alex",
+          "Yan, Raymond",
+          "Yang, Jessica Z",
+          "Yang, Ryan Z",
+          "Yang, Stacey",
+          "Yozu, Lisa",
+          "Yuan, Nicole",
+          "Zhang, Calvin",
+          "Zhang, Margaret",
+          "Zhang, Meiwei",
+          "Zhou, Ziqiao"
+        ],
         "ageGroup": "U10, U12",
         "location": "Tennis Queensland | Brisbane",
-        "mapsLink": "https://www.google.com/maps/search/?api=1&query=Tennis%20Queensland%20%7C%20Brisbane%2C%20Australia"
+        "mapsLink": "https://www.google.com/maps/search/?api=1&query=Tennis%20Queensland%20%7C%20Brisbane%2C%20Australia",
+        "closingDeadline": "27/6/2026"
       },
       "joinedPlayers": [
         {
-          "draws": [
-            {
-              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=0fc420ea-cf53-4599-b7bd-7bc88d8a7424&event=27",
-              "drawName": "BD U10 CS"
-            },
-            {
-              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=0fc420ea-cf53-4599-b7bd-7bc88d8a7424&event=25",
-              "drawName": "BS U10 CS"
-            }
-          ],
           "player": {
             "id": "1774855004722",
-            "url": "https://tournaments.tennis.com.au/player-profile/8443627D-BFF7-4DF1-A5AC-137C4996E788",
             "name": "Sam Ritchie",
-            "rank": "-",
-            "points": "26.00",
+            "url": "https://tournaments.tennis.com.au/player-profile/8443627D-BFF7-4DF1-A5AC-137C4996E788",
             "source": "TA",
-            "sort_order": 3,
             "utrSingles": "4.6",
-            "winLossYTD": "23:12",
             "wtnSingles": "-",
+            "winLossYTD": "24:13",
+            "winLossCareer": "144:61",
             "championships": "2026: 7\n2025: 10\n2024: 8",
-            "winLossCareer": "143:60"
-          }
+            "rank": "-",
+            "points": "46.00",
+            "sort_order": 3,
+            "groups": [
+              "2016/2017 Boys",
+              "2015/2016 Boys"
+            ]
+          },
+          "draws": [
+            {
+              "drawName": "BD U10 CS with Harry Griffith",
+              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=0fc420ea-cf53-4599-b7bd-7bc88d8a7424&event=27"
+            },
+            {
+              "drawName": "BS U10 CS",
+              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=0fc420ea-cf53-4599-b7bd-7bc88d8a7424&event=25"
+            }
+          ]
+        },
+        {
+          "player": {
+            "id": "17808294138597b3x7n",
+            "name": "Quinlan Li",
+            "url": "https://tournaments.tennis.com.au/player-profile/16F37C68-4DE1-40F6-82B0-E617EA35ECF4",
+            "source": "TA",
+            "utrSingles": "5.0",
+            "wtnSingles": "-",
+            "winLossYTD": "10:8",
+            "winLossCareer": "127:172",
+            "championships": "2026: 2\n2025: 3\n2024: 3\n2023: 5",
+            "rank": "-",
+            "points": "246.00",
+            "sort_order": 70,
+            "groups": [
+              "Voyager"
+            ]
+          },
+          "draws": [
+            {
+              "drawName": "BD U12 SS",
+              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=0fc420ea-cf53-4599-b7bd-7bc88d8a7424&event=3"
+            },
+            {
+              "drawName": "BS U12 SS",
+              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=0fc420ea-cf53-4599-b7bd-7bc88d8a7424&event=1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "tournament": {
+        "link": "/sport/tournament?id=5B2F0DF6-9A96-414C-B1C9-1615410E4582",
+        "name": "2026 JDS CBC Metro Panania Tennis 10u Green Ball #2",
+        "dates": "20/09/2026",
+        "source": "AUS",
+        "players": [
+          "Chen, Ryan",
+          "Chiu, Jordan",
+          "Gunasekera, Akain",
+          "Harish, Arush",
+          "Huxue, Edwin",
+          "Legrand, Noah",
+          "Mcclements, Emily Vesna",
+          "Zheng, Ryan Rui"
+        ],
+        "ageGroup": "U10",
+        "location": "Panania Tennis Centre | Sydney",
+        "mapsLink": "https://www.google.com/maps/search/?api=1&query=Panania%20Tennis%20Centre%20%7C%20Sydney%2C%20Australia",
+        "closingDeadline": "15/9/2026"
+      },
+      "joinedPlayers": [
+        {
+          "player": {
+            "id": "1774830531032",
+            "name": "Jordan Chiu",
+            "url": "https://tournaments.tennis.com.au/player-profile/D8C9AB7B-18A8-4631-B8DE-4EDBF1D543A1",
+            "source": "TA",
+            "utrSingles": "4",
+            "wtnSingles": "-",
+            "winLossYTD": "34:12",
+            "winLossCareer": "90:31",
+            "championships": "2026: 2\n2025: 6\n2024: 1",
+            "rank": "-",
+            "points": "-",
+            "sort_order": 5,
+            "groups": [
+              "2016/2017 Boys",
+              "2015/2016 Boys"
+            ]
+          },
+          "draws": [
+            {
+              "drawName": "BS U10 JDS",
+              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=5b2f0df6-9a96-414c-b1c9-1615410e4582&event=1"
+            }
+          ]
+        },
+        {
+          "player": {
+            "id": "1774852594184",
+            "name": "Edwin Huxue",
+            "url": "https://tournaments.tennis.com.au/player-profile/00948A3B-A264-417B-9CF4-18FAEAE5915D",
+            "source": "TA",
+            "utrSingles": "3",
+            "wtnSingles": "-",
+            "winLossYTD": "26:17",
+            "winLossCareer": "58:33",
+            "championships": "2026: 1\n2025: 3",
+            "rank": "-",
+            "points": "-",
+            "sort_order": 15,
+            "groups": [
+              "2016/2017 Boys"
+            ]
+          },
+          "draws": [
+            {
+              "drawName": "BS U10 JDS",
+              "drawLink": "https://tournaments.tennis.com.au/sport/event.aspx?id=5b2f0df6-9a96-414c-b1c9-1615410e4582&event=1"
+            }
+          ]
         }
       ]
     }
-  ]
+  ],
+  "updatedAt": "2026-06-14T07:13:27.142Z"
 }
