@@ -562,22 +562,26 @@ async function startServer() {
     console.log("Cloud Scheduler triggered tournaments-only scrape...");
     isScraping = true;
     
-    try {
-      await wrappedRunScraper();
-      if (refreshTournamentsForPlayersCache) {
-        try {
-          await refreshTournamentsForPlayersCache();
-        } catch (e) {
-          console.error("Cloud Scheduler tournaments cache rebuild failed:", e);
+    // Kick off the scraping in background and handle results asynchronously
+    (async () => {
+      try {
+        await wrappedRunScraper();
+        if (refreshTournamentsForPlayersCache) {
+          try {
+            await refreshTournamentsForPlayersCache();
+          } catch (e) {
+            console.error("Cloud Scheduler tournaments cache rebuild failed in background:", e);
+          }
         }
+        console.log("Cloud Scheduler background tournaments-only scrape and cache rebuild completed successfully.");
+      } catch (err: any) {
+        console.error("Cloud Scheduler background tournaments-only scrape failed:", err);
+      } finally {
+        isScraping = false;
       }
-      res.json({ success: true, message: "Tournaments-only scrape and players cache rebuild completed successfully." });
-    } catch (err: any) {
-      console.error("Cloud Scheduler tournaments-only scrape failed:", err);
-      res.status(500).json({ error: "Scrape execution failed", details: err.message || String(err) });
-    } finally {
-      isScraping = false;
-    }
+    })().catch(console.error);
+
+    res.json({ success: true, message: "Tournaments-only scrape triggered in background" });
   };
 
   app.get("/api/cron/scrape-tournaments", requireCronSecret, handleScrapeTournaments);
@@ -591,13 +595,12 @@ async function startServer() {
     }
     console.log("Cloud Scheduler triggered player stats & draw checks update...");
     
-    try {
-      await runGlobalRefreshTask(false);
-      res.json({ success: true, message: "Global refresh task completed successfully." });
-    } catch (err: any) {
-      console.error("Cloud Scheduler global refresh task failed:", err);
-      res.status(500).json({ error: "Global refresh execution failed", details: err.message || String(err) });
-    }
+    // Trigger task in background without blocking response to avoid Scheduler/Run HTTP timeouts
+    runGlobalRefreshTask(false).catch((err) => {
+      console.error("Cloud Scheduler background global refresh task failed:", err);
+    });
+
+    res.json({ success: true, message: "Player stats & draw checks update triggered in background" });
   };
 
   app.get("/api/cron/global-refresh", requireCronSecret, handleGlobalRefresh);
@@ -718,67 +721,6 @@ async function startServer() {
       })
       .finally(() => { isScraping = false; });
     res.json({ message: "Scraping started in background" });
-  });
-
-  // Google Sheets Proxy Endpoint
-  app.post("/api/save-google-sheet", requireAuth, async (req, res) => {
-    try {
-      const { sheetName, data } = req.body;
-      
-      // Sanitise input payload so that null/undefined values do not cause Apps Script script execution errors (500)
-      const sanitizedData = Array.isArray(data)
-        ? data.map((item: any) => {
-            const cleaned: any = {};
-            for (const key of Object.keys(item)) {
-              const val = item[key];
-              cleaned[key] = (val === undefined || val === null) ? "" : val;
-            }
-            return cleaned;
-          })
-        : data;
-
-      console.log(`[Google Sheets Proxy] Forwarding ${Array.isArray(sanitizedData) ? sanitizedData.length : 0} items to sheet "${sheetName}"`);
-
-      const response = await axios.post("https://script.google.com/macros/s/AKfycbxvoYQvw9S3ctCEuShwtHyZL19IZnu2HeXK7ZQp-HYs5cReS0mvNZL_vid8wifj88vyDg/exec", {
-        sheetName,
-        data: sanitizedData
-      }, {
-        headers: {
-          "Content-Type": "application/json"
-        },
-        timeout: 20000,
-        maxRedirects: 0,
-        validateStatus: (status) => status >= 200 && status < 400
-      });
-
-      if (response.status === 301 || response.status === 302 || response.status === 307 || response.status === 308) {
-        const redirectUrl = response.headers.location;
-        if (redirectUrl) {
-          console.log("[Google Sheets Proxy] Following direct redirect to:", redirectUrl);
-          const redirectResponse = await axios.get(redirectUrl, {
-            timeout: 20000,
-            headers: {
-              "User-Agent": "Mozilla/5.0"
-            }
-          });
-          return res.json({ success: true, response: redirectResponse.data });
-        }
-      }
-
-      res.json({ success: true, response: response.data });
-    } catch (err: any) {
-      console.error("Error proxying to Google Sheets:", err.message);
-      if (err.response) {
-        console.error("Google Sheets proxy error response status:", err.response.status);
-        console.error("Google Sheets proxy error response headers:", err.response.headers);
-        console.error("Google Sheets proxy error response data:", typeof err.response.data === "object" ? JSON.stringify(err.response.data) : err.response.data);
-      }
-      res.status(500).json({ 
-        error: "Failed to save to Google Sheets via proxy", 
-        details: err.message,
-        googleResponse: err.response ? err.response.data : null 
-      });
-    }
   });
 
   // API route to get player names for autofill
@@ -1651,7 +1593,7 @@ async function startServer() {
         if (!t.dates) return false;
         const parts = t.dates.split(' to ');
         
-        // End date parsing to ensure it's not in the past
+        // End date parsing to ensure it's not in the past unless in the current year
         const endDateParts = parts[parts.length - 1].trim().split('/');
         if (endDateParts.length < 3) return false;
         const endDate = new Date(parseInt(endDateParts[2]), parseInt(endDateParts[1]) - 1, parseInt(endDateParts[0]));
@@ -1659,7 +1601,8 @@ async function startServer() {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         
-        if (endDate < today) return false;
+        const currentYear = today.getFullYear();
+        if (endDate < today && endDate.getFullYear() < currentYear) return false;
 
         // Start date parsing to limit search space to next 365 days
         const startDateParts = parts[0].trim().split('/');
@@ -1687,6 +1630,50 @@ async function startServer() {
 
         if (likelyPlayers.length === 0) continue;
 
+        // Determine if we already have the players array populated
+        const hasPlayersArray = Array.isArray(tournament.players) && tournament.players.length > 0;
+
+        // Perform name-matching completely offline (in-memory) first if players are cached
+        let matchesSavedPlayerOffline = false;
+        if (hasPlayersArray) {
+          matchesSavedPlayerOffline = likelyPlayers.some((player: any) => {
+            const queryParts = getQueryParts(player.name);
+            return tournament.players.some((tPlayerName: string) => isPlayerNameMatch(tPlayerName, queryParts));
+          });
+
+          // If players list is cached but NONE of our saved players are in it, skip this tournament entirely!
+          if (!matchesSavedPlayerOffline) {
+            continue;
+          }
+        }
+
+        // If the tournament has NO players array, check if it starts within our active window
+        if (!hasPlayersArray) {
+          let inActiveWindow = false;
+          if (tournament.dates) {
+            const parts = tournament.dates.split(' to ');
+            const startDateParts = parts[0].trim().split('/');
+            if (startDateParts.length >= 3) {
+              const startDate = new Date(parseInt(startDateParts[2]), parseInt(startDateParts[1]) - 1, parseInt(startDateParts[0]));
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              
+              // Starts within the next 35 days or started within the last 14 days
+              const minDate = new Date();
+              minDate.setDate(today.getDate() - 14);
+              const maxDate = new Date();
+              maxDate.setDate(today.getDate() + 35);
+              
+              inActiveWindow = startDate >= minDate && startDate <= maxDate;
+            }
+          }
+          
+          // If starting far in the future or past with no player list, skip it entirely!
+          if (!inActiveWindow) {
+            continue;
+          }
+        }
+
         searchTasks.push(
           limit(async () => {
             const domain = tournament.source === "HK" ? "hkta.tournamentsoftware.com" : "tournaments.tennis.com.au";
@@ -1706,6 +1693,17 @@ async function startServer() {
               const dataLower = response.data.toLowerCase().replace(/[,.]/g, '');
               const $ = cheerio.load(response.data);
               
+              const scrapedPlayers: string[] = [];
+              if (!hasPlayersArray) {
+                $("li.js-alphabet-list-item").each((i, el) => {
+                  const name = cleanPlayerName($(el).find(".media__title").text().trim());
+                  if (name) scrapedPlayers.push(name);
+                });
+                if (scrapedPlayers.length > 0) {
+                  tournament.players = scrapedPlayers;
+                }
+              }
+
               const joinedPlayers: any[] = [];
 
               for (const player of likelyPlayers) {
@@ -1745,12 +1743,10 @@ async function startServer() {
                       }
                     });
 
-                    if (draws.length > 0) {
-                      joinedPlayers.push({
-                        player,
-                        draws
-                      });
-                    }
+                    joinedPlayers.push({
+                      player,
+                      draws: draws.length > 0 ? draws : []
+                    });
                   }
                 }
               }
@@ -1769,6 +1765,14 @@ async function startServer() {
       }
 
       await Promise.all(searchTasks);
+
+      // Save any newly/progressively scraped player rosters to tournaments.json and Supabase
+      try {
+        await saveTournamentsData(tournaments);
+        console.log("Tournaments database successfully updated with newly scraped players lists.");
+      } catch (err: any) {
+        console.error("Failed to persist updated tournaments data during cache rebuild:", err.message);
+      }
       
       // Sort results by tournament date
       results.sort((a, b) => {
@@ -2426,15 +2430,16 @@ async function startServer() {
     }
 
     try {
-      let resolvedUrl = url;
+      const cleanUrl = url.split('#')[0];
+      let resolvedUrl = cleanUrl;
       let drawRes: any;
       let isPreFetched = false;
 
       // Auto-resolve event.aspx links in tournament software (which are container events, not draw pages)
-      if (url.includes('event.aspx')) {
+      if (cleanUrl.includes('event.aspx')) {
         try {
-          console.log(`[check-draw] Detected event.aspx container URL: ${url}. Fetching event page to check for direct players...`);
-          const eventPageRes = await axios.get(url, {
+          console.log(`[check-draw] Detected event.aspx container URL: ${cleanUrl}. Fetching event page to check for direct players...`);
+          const eventPageRes = await axios.get(cleanUrl, {
             headers: { "User-Agent": "Mozilla/5.0" },
             timeout: 10000
           });
@@ -2449,7 +2454,7 @@ async function startServer() {
             }).length;
 
           if (directPlayersCount > 0) {
-            console.log(`[check-draw] Found ${directPlayersCount} players directly on ${url}. Skipping resolution.`);
+            console.log(`[check-draw] Found ${directPlayersCount} players directly on ${cleanUrl}. Skipping resolution.`);
             drawRes = eventPageRes;
             isPreFetched = true;
           } else {
@@ -2466,7 +2471,7 @@ async function startServer() {
             });
             
             if (drawLink) {
-              const domain = url.includes("hkta") ? "hkta.tournamentsoftware.com" : "tournaments.tennis.com.au";
+              const domain = cleanUrl.includes("hkta") ? "hkta.tournamentsoftware.com" : "tournaments.tennis.com.au";
               if (!drawLink.startsWith('http')) {
                 if (drawLink.startsWith('/')) {
                   resolvedUrl = `https://${domain}${drawLink}`;
@@ -3694,14 +3699,15 @@ async function startServer() {
 
         console.log(`[Draw Watcher BACKGROUND] Refreshing draw "${draw.name}" (${draw.url})...`);
         try {
-          let resolvedUrl = draw.url;
+          const cleanUrl = draw.url.split('#')[0];
+          let resolvedUrl = cleanUrl;
           let drawRes: any;
           let isPreFetched = false;
 
           // 1. Resolve event.aspx container pages
-          if (draw.url.includes('event.aspx')) {
+          if (cleanUrl.includes('event.aspx')) {
             try {
-              const eventPageRes = await axios.get(draw.url, {
+              const eventPageRes = await axios.get(cleanUrl, {
                 headers: { "User-Agent": "Mozilla/5.0" },
                 timeout: 10000
               });
@@ -3727,7 +3733,7 @@ async function startServer() {
                 });
                 
                 if (drawLink) {
-                  const domain = draw.url.includes("hkta") ? "hkta.tournamentsoftware.com" : "tournaments.tennis.com.au";
+                  const domain = cleanUrl.includes("hkta") ? "hkta.tournamentsoftware.com" : "tournaments.tennis.com.au";
                   if (!drawLink.startsWith('http')) {
                     if (drawLink.startsWith('/')) {
                       resolvedUrl = `https://${domain}${drawLink}`;

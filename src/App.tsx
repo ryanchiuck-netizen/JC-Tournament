@@ -365,6 +365,10 @@ export default function App() {
     let intervalId: any = null;
 
     const monitorRefreshCompletion = async () => {
+      // ONLY check if tab is active (visible) to save significant Google Cloud billing overnight!
+      if (typeof document !== "undefined" && document.visibilityState !== "visible") {
+        return;
+      }
       try {
         const res = await fetch("/api/admin/refresh-status");
         if (res.ok) {
@@ -401,7 +405,21 @@ export default function App() {
     // Check periodically (every 15s) - extremely lightweight memory-only check, does NOT query database!
     intervalId = setInterval(monitorRefreshCompletion, 15000);
 
-    return () => clearInterval(intervalId);
+    const handleVisibilityChange = () => {
+      if (typeof document !== "undefined" && document.visibilityState === "visible") {
+        monitorRefreshCompletion();
+      }
+    };
+    if (typeof document !== "undefined") {
+      document.addEventListener("visibilitychange", handleVisibilityChange);
+    }
+
+    return () => {
+      clearInterval(intervalId);
+      if (typeof document !== "undefined") {
+        document.removeEventListener("visibilitychange", handleVisibilityChange);
+      }
+    };
   }, []);
 
   // Setup real-time cross-device notifications via Server-Sent Events (SSE)
@@ -412,6 +430,10 @@ export default function App() {
     let reconnectTimeoutId: any = null;
 
     const connectSSE = () => {
+      // ONLY connect if tab is active (visible) to save severe Cloud Run billing overnight!
+      if (typeof document !== "undefined" && document.visibilityState !== "visible") {
+        return;
+      }
       console.log("[SSE Client] Connecting to real-time notification stream...");
       eventSource = new EventSource("/api/notifications/stream");
 
@@ -452,7 +474,7 @@ export default function App() {
               systemNotifObj.onclick = (e) => {
                 e.preventDefault();
                 window.focus();
-               const isHK = notif.source === 'HK' || notif.source === 'HKTA' || notif.url?.includes('hk') || notif.url?.includes('hkta') || notif.player_source === 'HKTA' || (notif.body && notif.body.toLowerCase().includes('hong kong')) || (notif.title && notif.title.toLowerCase().includes('hong kong'));
+                const isHK = notif.source === 'HK' || notif.source === 'HKTA' || notif.url?.includes('hk') || notif.url?.includes('hkta') || notif.player_source === 'HKTA' || (notif.body && notif.body.toLowerCase().includes('hong kong')) || (notif.title && notif.title.toLowerCase().includes('hong kong'));
                 const isDraw = notif.type === 'Draw_Watcher' || notif.type === 'Draw' || (notif.title && notif.title.includes('Draw'));
                 const isNSW = notif.type === 'NSW_Tournament' || notif.type === 'NSW' || (notif.title && notif.title.includes('NSW'));
                 const isHKTournament = notif.type === 'HK_Tournament' || (notif.title && notif.title.includes('HKTA Tournament')) || (notif.title && notif.title.includes('HK Tournament')) || (notif.title && notif.title.includes('New HKTA Tournament'));
@@ -504,9 +526,36 @@ export default function App() {
       };
     };
 
+    const handleVisibilityChange = () => {
+      if (typeof document !== "undefined") {
+        if (document.visibilityState === "visible") {
+          if (!eventSource) {
+            connectSSE();
+          }
+        } else {
+          console.log("[SSE Client] Tab inactive, closing SSE connection to save Cloud Run CPU billing...");
+          if (reconnectTimeoutId) {
+            clearTimeout(reconnectTimeoutId);
+            reconnectTimeoutId = null;
+          }
+          if (eventSource) {
+            eventSource.close();
+            eventSource = null;
+          }
+        }
+      }
+    };
+
+    if (typeof document !== "undefined") {
+      document.addEventListener("visibilitychange", handleVisibilityChange);
+    }
+
     connectSSE();
 
     return () => {
+      if (typeof document !== "undefined") {
+        document.removeEventListener("visibilitychange", handleVisibilityChange);
+      }
       if (reconnectTimeoutId) clearTimeout(reconnectTimeoutId);
       if (eventSource) {
         eventSource.close();
@@ -551,7 +600,7 @@ export default function App() {
   const currentYearValue = new Date().getFullYear();
   const [selectedMonth, setSelectedMonth] = useState<number | 'ALL'>(currentMonthIndex);
   const [selectedYear, setSelectedYear] = useState<number>(currentYearValue);
-  const [auState, setAuState] = useState<string>("NSW");
+  const [auState, setAuState] = useState<string>("ALL");
 
   const jordanJoinedUrls = useMemo(() => {
     const urls = new Set<string>();

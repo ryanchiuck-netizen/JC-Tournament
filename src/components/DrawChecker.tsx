@@ -31,7 +31,6 @@ import {
   useSortable
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { saveToGoogleSheets } from '../services/googleSheetsService';
 
 interface PlayerStats {
   id: string;
@@ -903,16 +902,7 @@ export function DrawChecker({ savedDraws: propSavedDraws, onSavedDrawsChanged }:
     });
   };
 
-  const activeCheckedPlayersSorted = useMemo(() => {
-    return getSortedPlayers(players);
-  }, [players, sortConfig]);
 
-  // Google Sheets Auto Sync for looked-up draws
-  useEffect(() => {
-    if (activeCheckedPlayersSorted.length > 0) {
-      saveToGoogleSheets('Draw Checker', activeCheckedPlayersSorted).catch(console.error);
-    }
-  }, [activeCheckedPlayersSorted]);
 
   const SortIcon = ({ column }: { column: keyof PlayerStats }) => {
     if (!sortConfig || sortConfig.key !== column) return null;

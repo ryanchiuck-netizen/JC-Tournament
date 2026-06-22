@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { User, Plus, X, Trophy, GripVertical, ArrowUp, ArrowDown, Clock, ArrowLeft, Calendar, RefreshCw, Search, ChevronDown, Tag } from 'lucide-react';
-import { saveToGoogleSheets } from '../services/googleSheetsService';
 import {
   DndContext,
   closestCenter,
@@ -51,9 +50,33 @@ function PlayerTournamentsModal({
     const matches: any[] = [];
     const queryParts = player.name.replace(/\[.*?\]|\(.*?\)/g, '').toLowerCase().split(/[\s,.-]+/).filter(Boolean);
 
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const isFutureOrActive = (datesStr: string) => {
+      if (!datesStr) return false;
+      try {
+        const parts = datesStr.split(' to ');
+        const endDateParts = parts[parts.length - 1].trim().split('/');
+        if (endDateParts.length < 3) return false;
+        
+        const endDay = parseInt(endDateParts[0], 10);
+        const endMonth = parseInt(endDateParts[1], 10) - 1;
+        const endYear = parseInt(endDateParts[2], 10);
+        
+        const endDate = new Date(endYear, endMonth, endDay);
+        // Compare with today where end date of tournament is today or in the future
+        endDate.setHours(23, 59, 59, 999);
+        return endDate >= today;
+      } catch (e) {
+        return true; // fallback to show if date format is unusual
+      }
+    };
+
     for (const t of (tournamentsCache || [])) {
       if (player.source === "HKTA" && t.tournament.source !== "HK") continue;
       if (player.source === "TA" && t.tournament.source !== "AUS") continue;
+      if (t.tournament && !isFutureOrActive(t.tournament.dates)) continue;
       
       const jPlayers = t.joinedPlayers || [];
       for (const jp of jPlayers) {
@@ -62,14 +85,25 @@ function PlayerTournamentsModal({
           candidateWords.some((word: string) => word === part)
         );
         if (isMatch) {
-          for (const draw of jp.draws || []) {
+          const pDraws = jp.draws || [];
+          if (pDraws.length === 0) {
             matches.push({
               tournamentName: t.tournament.name,
               tournamentLink: t.tournament.link.startsWith('http') ? t.tournament.link : `https://${t.tournament.source==='HK'?'hkta.tournamentsoftware.com':'tournaments.tennis.com.au'}${t.tournament.link}`,
               tournamentDates: t.tournament.dates,
-              drawName: draw.drawName,
-              drawLink: draw.drawLink
+              drawName: "No draws available yet",
+              drawLink: undefined
             });
+          } else {
+            for (const draw of pDraws) {
+              matches.push({
+                tournamentName: t.tournament.name,
+                tournamentLink: t.tournament.link.startsWith('http') ? t.tournament.link : `https://${t.tournament.source==='HK'?'hkta.tournamentsoftware.com':'tournaments.tennis.com.au'}${t.tournament.link}`,
+                tournamentDates: t.tournament.dates,
+                drawName: draw.drawName,
+                drawLink: draw.drawLink
+              });
+            }
           }
         }
       }
@@ -1561,11 +1595,7 @@ export function PlayerScreen({
     return sortedPlayers.filter(p => !p.groups || p.groups.length === 0);
   }, [sortedPlayers]);
 
-  useEffect(() => {
-    if (players.length > 0) {
-      saveToGoogleSheets('Player Screen', players).catch(console.error);
-    }
-  }, [players]);
+
 
   const SortableHeader = ({ field, label, align = 'center' }: { field: SortField, label: string, align?: 'left' | 'center' | 'right' }) => {
     const isActive = sortField === field;
