@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { User, Plus, X, Trophy, GripVertical, ArrowUp, ArrowDown, Clock, ArrowLeft, Calendar, RefreshCw, Search, ChevronDown, Tag } from 'lucide-react';
+import { User, Plus, X, Trophy, GripVertical, ArrowUp, ArrowDown, Clock, ArrowLeft, Calendar, RefreshCw, Search, ChevronDown, Tag, Sparkles, CalendarPlus, ExternalLink, MapPin } from 'lucide-react';
+import { AIAssistantModal } from './AIAssistantModal';
+import { getGoogleCalendarLink, parseAnyDateToDate, parseDrawAndTournamentName, cleanDisplayDrawName, isPlayerMatch } from '../services/tournamentService';
 import {
   DndContext,
   closestCenter,
@@ -44,124 +46,284 @@ function PlayerTournamentsModal({
   tournamentsCache: any[], 
   isTournamentsCacheLoading: boolean 
 }) {
-  const tournaments = useMemo(() => {
-    if (isTournamentsCacheLoading) return [];
-    
+  const [savedDraws, setSavedDraws] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<'upcoming' | 'past' | 'all'>('upcoming');
+
+  useEffect(() => {
+    fetch('/api/saved-draws')
+      .then(res => res.ok ? res.json() : { draws: [] })
+      .then(data => setSavedDraws(data.draws || []))
+      .catch(err => console.warn('Failed to load saved draws in player modal:', err));
+  }, []);
+
+  const allPlayerTournaments = useMemo(() => {
     const matches: any[] = [];
-    const queryParts = player.name.replace(/\[.*?\]|\(.*?\)/g, '').toLowerCase().split(/[\s,.-]+/).filter(Boolean);
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const isFutureOrActive = (datesStr: string) => {
-      if (!datesStr) return false;
-      try {
-        const parts = datesStr.split(' to ');
-        const endDateParts = parts[parts.length - 1].trim().split('/');
-        if (endDateParts.length < 3) return false;
-        
-        const endDay = parseInt(endDateParts[0], 10);
-        const endMonth = parseInt(endDateParts[1], 10) - 1;
-        const endYear = parseInt(endDateParts[2], 10);
-        
-        const endDate = new Date(endYear, endMonth, endDay);
-        // Compare with today where end date of tournament is today or in the future
-        endDate.setHours(23, 59, 59, 999);
-        return endDate >= today;
-      } catch (e) {
-        return true; // fallback to show if date format is unusual
-      }
-    };
-
+    // 1. Check tournaments cache
     for (const t of (tournamentsCache || [])) {
       if (player.source === "HKTA" && t.tournament.source !== "HK") continue;
       if (player.source === "TA" && t.tournament.source !== "AUS") continue;
-      if (t.tournament && !isFutureOrActive(t.tournament.dates)) continue;
       
       const jPlayers = t.joinedPlayers || [];
       for (const jp of jPlayers) {
-        const candidateWords = jp.player.name.replace(/\[.*?\]|\(.*?\)/g, '').toLowerCase().split(/[\s,.-]+/).filter(Boolean);
-        const isMatch = queryParts.every((part: string) => 
-          candidateWords.some((word: string) => word === part)
-        );
-        if (isMatch) {
+        if (isPlayerMatch(player, jp.player, t.tournament.source)) {
           const pDraws = jp.draws || [];
           if (pDraws.length === 0) {
             matches.push({
               tournamentName: t.tournament.name,
-              tournamentLink: t.tournament.link.startsWith('http') ? t.tournament.link : `https://${t.tournament.source==='HK'?'hkta.tournamentsoftware.com':'tournaments.tennis.com.au'}${t.tournament.link}`,
+              tournamentLink: t.tournament.link.startsWith('http') ? t.tournament.link : `https://${t.tournament.source==='HK'?'hkta.tournamentsoftware.com':'tournaments.tennis.com.au'}${t.tournament.link.startsWith('/')?'':'/'}${t.tournament.link}`,
               tournamentDates: t.tournament.dates,
-              drawName: "No draws available yet",
-              drawLink: undefined
+              drawName: "General Entry",
+              drawLink: undefined,
+              source: t.tournament.source,
+              location: t.tournament.location,
+              mapsLink: t.tournament.mapsLink
             });
           } else {
             for (const draw of pDraws) {
               matches.push({
                 tournamentName: t.tournament.name,
-                tournamentLink: t.tournament.link.startsWith('http') ? t.tournament.link : `https://${t.tournament.source==='HK'?'hkta.tournamentsoftware.com':'tournaments.tennis.com.au'}${t.tournament.link}`,
+                tournamentLink: t.tournament.link.startsWith('http') ? t.tournament.link : `https://${t.tournament.source==='HK'?'hkta.tournamentsoftware.com':'tournaments.tennis.com.au'}${t.tournament.link.startsWith('/')?'':'/'}${t.tournament.link}`,
                 tournamentDates: t.tournament.dates,
-                drawName: draw.drawName,
-                drawLink: draw.drawLink
+                drawName: cleanDisplayDrawName(draw.drawName, t.tournament.name),
+                drawLink: draw.drawLink,
+                source: t.tournament.source,
+                location: t.tournament.location,
+                mapsLink: t.tournament.mapsLink
               });
             }
           }
         }
       }
     }
-    
-    return matches;
-  }, [player.name, player.source, tournamentsCache, isTournamentsCacheLoading]);
+
+    // 2. Also check saved draws
+    for (const sd of savedDraws) {
+      if (!sd.players || !Array.isArray(sd.players)) continue;
+      const drawRegion = sd.region || (sd.url?.includes('hkta') ? 'HK' : 'AUS');
+      const foundInDraw = sd.players.some((dp: any) => isPlayerMatch(player, dp, drawRegion));
+      if (foundInDraw) {
+        // Extract date
+        const drawDateMatch = sd.url?.match(/#date=(.*)$/);
+        let rawDate = drawDateMatch ? decodeURIComponent(drawDateMatch[1]).trim() : '';
+        if (!rawDate) {
+          const nameMatch = sd.name?.match(/\b\d{1,2}(?:-\d{1,2})?\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b/i);
+          const ddMmYyyyMatch = sd.name?.match(/\b\d{1,2}\/\d{1,2}\/\d{4}\b/);
+          if (nameMatch) rawDate = nameMatch[0];
+          else if (ddMmYyyyMatch) rawDate = ddMmYyyyMatch[0];
+        }
+        if (!rawDate) rawDate = "20/09/2026";
+
+        const { tournamentName: sdTournName, eventName: sdEventName } = parseDrawAndTournamentName(sd.name || '');
+
+        // Check if already in matches
+        const alreadyExists = matches.some(m => 
+          (m.drawLink && sd.url && m.drawLink.split('#')[0].toLowerCase() === sd.url.split('#')[0].toLowerCase()) ||
+          (m.tournamentName && (
+            m.tournamentName.toLowerCase().includes(sdTournName.toLowerCase()) ||
+            sdTournName.toLowerCase().includes(m.tournamentName.toLowerCase()) ||
+            (sd.name && m.tournamentName.toLowerCase().includes(sd.name.toLowerCase()))
+          ))
+        );
+
+        if (!alreadyExists) {
+          matches.push({
+            tournamentName: sdTournName,
+            tournamentLink: sd.url,
+            tournamentDates: rawDate,
+            drawName: sdEventName,
+            drawLink: sd.url,
+            source: sd.region || "AUS",
+            location: sdTournName.includes("Panania") ? "Panania Tennis Club | Sydney" : (sdTournName.includes("Bulli") ? "Bulli Tennis Club | NSW" : undefined)
+          });
+        }
+      }
+    }
+
+    // Add status (upcoming vs past)
+    return matches.map(m => {
+      let isUpcoming = true;
+      if (m.tournamentDates) {
+        const parts = m.tournamentDates.split(' to ');
+        const endDate = parseAnyDateToDate(parts[parts.length - 1]);
+        if (endDate) {
+          endDate.setHours(23, 59, 59, 999);
+          isUpcoming = endDate >= today;
+        }
+      }
+      return { ...m, isUpcoming };
+    });
+  }, [player.name, player.id, player.url, player.source, tournamentsCache, savedDraws]);
+
+  const upcomingList = useMemo(() => allPlayerTournaments.filter(t => t.isUpcoming), [allPlayerTournaments]);
+  const pastList = useMemo(() => allPlayerTournaments.filter(t => !t.isUpcoming), [allPlayerTournaments]);
+
+  const displayedList = activeTab === 'upcoming' 
+    ? upcomingList 
+    : activeTab === 'past' 
+      ? pastList 
+      : allPlayerTournaments;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
-      <div className="bg-gray-900 border border-gray-800 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[80vh]" onClick={e => e.stopPropagation()}>
+      <div className="bg-gray-900 border border-gray-800 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh]" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between p-6 border-b border-gray-800">
           <div>
-            <h2 className="text-xl font-semibold text-white">{player.name}'s Future Tournaments</h2>
-            <p className="text-sm text-gray-400 mt-1">Tournaments they have joined</p>
+            <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+              <Trophy className="w-5 h-5 text-yellow-400" />
+              {player.name}'s Tournaments
+            </h2>
+            <p className="text-sm text-gray-400 mt-1">Tournaments and saved draws with this player</p>
           </div>
           <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors p-2 rounded-lg hover:bg-gray-800">
             <X className="w-5 h-5" />
           </button>
         </div>
-        <div className="p-6 overflow-y-auto flex-1">
-          {isTournamentsCacheLoading ? (
+
+        {/* Tab Filters */}
+        <div className="flex items-center gap-2 px-6 pt-4 border-b border-gray-800/80 bg-gray-900/50">
+          <button
+            onClick={() => setActiveTab('upcoming')}
+            className={`pb-3 text-sm font-medium transition-colors border-b-2 flex items-center gap-2 ${
+              activeTab === 'upcoming'
+                ? 'border-blue-500 text-blue-400 font-semibold'
+                : 'border-transparent text-gray-400 hover:text-gray-200'
+            }`}
+          >
+            <Calendar className="w-4 h-4" />
+            Upcoming ({upcomingList.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('past')}
+            className={`pb-3 text-sm font-medium transition-colors border-b-2 flex items-center gap-2 ${
+              activeTab === 'past'
+                ? 'border-blue-500 text-blue-400 font-semibold'
+                : 'border-transparent text-gray-400 hover:text-gray-200'
+            }`}
+          >
+            <Clock className="w-4 h-4" />
+            Past / Completed ({pastList.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('all')}
+            className={`pb-3 text-sm font-medium transition-colors border-b-2 flex items-center gap-2 ${
+              activeTab === 'all'
+                ? 'border-blue-500 text-blue-400 font-semibold'
+                : 'border-transparent text-gray-400 hover:text-gray-200'
+            }`}
+          >
+            All Tournaments ({allPlayerTournaments.length})
+          </button>
+        </div>
+
+        <div className="p-6 overflow-y-auto flex-1 space-y-4">
+          {isTournamentsCacheLoading && allPlayerTournaments.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 gap-3">
               <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
               <p className="text-gray-400 text-sm">Searching for tournaments...</p>
             </div>
-          ) : tournaments.length === 0 ? (
+          ) : displayedList.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 gap-3">
               <Trophy className="w-10 h-10 text-gray-700" />
-              <p className="text-gray-400 text-sm">No future tournaments found for this player.</p>
+              <p className="text-gray-400 text-sm font-medium">
+                {activeTab === 'upcoming' 
+                  ? 'No upcoming tournaments found for this player.' 
+                  : activeTab === 'past'
+                    ? 'No past tournaments recorded.'
+                    : 'No tournaments found for this player.'}
+              </p>
+              {activeTab === 'upcoming' && pastList.length > 0 && (
+                <button
+                  onClick={() => setActiveTab('past')}
+                  className="text-xs text-blue-400 hover:underline mt-1"
+                >
+                  View {pastList.length} completed tournaments
+                </button>
+              )}
             </div>
           ) : (
-            <div className="space-y-4">
-              {tournaments.map((t, i) => (
+            displayedList.map((t, i) => {
+              const calLink = getGoogleCalendarLink({
+                name: t.tournamentName,
+                dates: t.tournamentDates,
+                link: t.tournamentLink,
+                source: t.source || 'AUS',
+                mapsLink: t.mapsLink
+              });
+
+              return (
                 <div key={i} className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-4 hover:bg-gray-800 transition-colors">
                   <div className="flex justify-between items-start gap-4">
-                    <div>
-                      <a href={t.tournamentLink} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 hover:underline font-medium text-lg">
-                        {t.tournamentName}
+                    <div className="space-y-1.5 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
+                          t.source === 'HK' ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                        }`}>
+                          {t.source === 'HK' ? 'HKTA' : 'Tennis AUS'}
+                        </span>
+                        {t.isUpcoming ? (
+                          <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                            Upcoming
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-gray-700/40 text-gray-400 border border-gray-600/30">
+                            Completed
+                          </span>
+                        )}
+                      </div>
+                      <a 
+                        href={t.tournamentLink} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="text-blue-400 hover:text-blue-300 hover:underline font-semibold text-base flex items-center gap-1.5 group inline-flex"
+                      >
+                        <span>{t.tournamentName}</span>
+                        <ExternalLink className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100 transition-opacity" />
                       </a>
-                      <p className="text-sm text-gray-400 mt-1">{t.tournamentDates}</p>
-                    </div>
-                  </div>
-                  <div className="mt-3 pt-3 border-t border-gray-700/50">
-                    <p className="text-sm text-gray-300">
-                      <span className="text-gray-500 mr-2">Draw:</span>
-                      {t.drawLink ? (
-                        <a href={t.drawLink} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 hover:underline">
-                          {t.drawName}
-                        </a>
-                      ) : (
-                        t.drawName
+                      <p className="text-xs text-gray-300 flex items-center gap-1.5">
+                        <Calendar className="w-3.5 h-3.5 text-blue-400" />
+                        <span>Date: {t.tournamentDates}</span>
+                      </p>
+                      {t.location && (
+                        <p className="text-xs text-gray-400 flex items-center gap-1.5">
+                          <MapPin className="w-3.5 h-3.5 text-gray-500" />
+                          <span>{t.location}</span>
+                        </p>
                       )}
-                    </p>
+                    </div>
+                    
+                    <a
+                      href={calLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-2.5 py-1.5 rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-200 text-xs font-medium flex items-center gap-1.5 transition-colors border border-gray-600/50 flex-shrink-0"
+                      title="Add to Google Calendar"
+                    >
+                      <CalendarPlus className="w-3.5 h-3.5 text-blue-400" />
+                      <span className="hidden sm:inline">Calendar</span>
+                    </a>
                   </div>
+                  
+                  {t.drawName && (
+                    <div className="mt-3 pt-2.5 border-t border-gray-700/50 flex items-center justify-between text-xs text-gray-300">
+                      <div className="flex items-center gap-1.5 truncate">
+                        <span className="text-gray-500 font-medium">Draw:</span>
+                        {t.drawLink ? (
+                          <a href={t.drawLink} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 hover:underline truncate">
+                            {t.drawName}
+                          </a>
+                        ) : (
+                          <span className="truncate">{t.drawName}</span>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              ))}
-            </div>
+              );
+            })
           )}
         </div>
       </div>
@@ -203,7 +365,8 @@ function SortablePlayerRow({
   onViewHistory,
   previousPlayerData,
   onRefreshPlayer,
-  onTagPlayer
+  onTagPlayer,
+  onScoutAI
 }: { 
   player: SavedPlayer, 
   removePlayer: (id: string) => void | Promise<void>, 
@@ -214,7 +377,8 @@ function SortablePlayerRow({
   previousPlayerData?: any,
   key?: any,
   onRefreshPlayer?: (id: string) => void | Promise<void>,
-  onTagPlayer?: (player: SavedPlayer) => void
+  onTagPlayer?: (player: SavedPlayer) => void,
+  onScoutAI?: (player: SavedPlayer) => void
 }) {
   const {
     attributes,
@@ -373,6 +537,16 @@ function SortablePlayerRow({
 
               {/* Action Buttons */}
               <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
+                {onScoutAI && (
+                  <button
+                    onClick={() => onScoutAI(player)}
+                    className="flex items-center gap-1.5 text-xs text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10 px-2.5 py-1.5 rounded-lg border border-indigo-900/40 transition-colors"
+                    title="⚡ AI Scouting Report & Game Plan"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>AI Scout</span>
+                  </button>
+                )}
                 <button
                   onClick={() => onTagPlayer && onTagPlayer(player)}
                   className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-yellow-400 hover:bg-yellow-400/10 px-2.5 py-1.5 rounded-lg border border-gray-800 transition-colors"
@@ -474,6 +648,15 @@ function SortablePlayerRow({
         {renderStat(player.championships, previousPlayerData?.championships)}
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium animate-fade-in hidden sm:table-cell" onClick={(e) => e.stopPropagation()}>
+        {onScoutAI && (
+          <button
+            onClick={() => onScoutAI(player)}
+            className="text-indigo-400 hover:text-indigo-300 hover:bg-indigo-400/10 p-2 rounded-lg transition-colors mr-1 cursor-pointer"
+            title="⚡ AI Scouting Report & Game Plan"
+          >
+            <Sparkles className="w-4 h-4" />
+          </button>
+        )}
         <button
           onClick={() => onTagPlayer && onTagPlayer(player)}
           className="text-gray-500 hover:text-yellow-400 hover:bg-yellow-400/10 p-2 rounded-lg transition-colors mr-1"
@@ -1103,6 +1286,8 @@ export function PlayerScreen({
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
   const [renamingGroup, setRenamingGroup] = useState<string | null>(null);
   const [newGroupName, setNewGroupName] = useState("");
+  const [isAIModalOpen, setIsAIModalOpen] = useState(false);
+  const [selectedAIPlayer, setSelectedAIPlayer] = useState<SavedPlayer | null>(null);
 
   const handleRenameGroup = async (oldName: string, newName: string) => {
     if (!newName.trim() || newName === oldName) {
@@ -1751,6 +1936,10 @@ export function PlayerScreen({
                           setHistoryPlayerFilter(name);
                           setShowHistory(true);
                         }}
+                        onScoutAI={(p) => {
+                          setSelectedAIPlayer(p);
+                          setIsAIModalOpen(true);
+                        }}
                         previousPlayerData={
                           yesterdaySnapshot 
                             ? (activeTab === 'TA' ? yesterdaySnapshot.taPlayers : yesterdaySnapshot.hktaPlayers)?.find((p: any) => p.name === player.name) 
@@ -1972,6 +2161,15 @@ export function PlayerScreen({
           allGroups={allGroups}
           onClose={() => setTaggingPlayer(null)}
           onUpdateGroups={handleUpdateGroups}
+        />
+      )}
+
+      {isAIModalOpen && (
+        <AIAssistantModal
+          isOpen={isAIModalOpen}
+          onClose={() => setIsAIModalOpen(false)}
+          selectedPlayer={selectedAIPlayer}
+          initialTab="scout"
         />
       )}
     </div>

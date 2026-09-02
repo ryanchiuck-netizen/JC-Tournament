@@ -31,3 +31,26 @@ export interface StaticData {
   tournaments: Tournament[];
   isScraping?: boolean;
 }
+
+export interface PlayerScoutReport {
+  summary: string;
+  strengths: string[];
+  tactics: string[];
+  recentFormAnalysis: string;
+  keyMatchups?: string;
+}
+
+export interface DrawAnalysisReport {
+  bracketOverview: string;
+  potentialRoadmap: string[];
+  dangerousFloaters: string[];
+  tacticalAdvice: string[];
+}
+
+export interface ScheduleOptimizationReport {
+  optimalPlan: string[];
+  clashesDetected: { tournaments: string[]; reason: string }[];
+  deadlineAlerts: string[];
+  recommendations: string[];
+}
+

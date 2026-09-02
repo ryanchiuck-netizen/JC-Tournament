@@ -12,8 +12,10 @@ import {
   GripVertical, 
   Clock,
   Calendar,
-  ArrowUpDown
+  ArrowUpDown,
+  Sparkles
 } from 'lucide-react';
+import { AIAssistantModal } from './AIAssistantModal';
 import { 
   DndContext, 
   closestCenter,
@@ -67,6 +69,7 @@ interface SortableDrawItemProps {
   onRefresh: (draw: SavedDraw) => void;
   onDelete: (id: string) => void;
   renderPlayerTable: (players: PlayerStats[], drawId?: string) => React.ReactNode;
+  onAnalyzeAI?: (draw: SavedDraw) => void;
 }
 
 export const formatDateToDdMmYyyy = (dateStr: string): string => {
@@ -212,7 +215,8 @@ function SortableDrawItem({
   isRefreshing,
   onRefresh,
   onDelete,
-  renderPlayerTable
+  renderPlayerTable,
+  onAnalyzeAI
 }: SortableDrawItemProps) {
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
 
@@ -325,6 +329,15 @@ function SortableDrawItem({
         </div>
 
         <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+          {onAnalyzeAI && (
+            <button
+              onClick={() => onAnalyzeAI(draw)}
+              className="p-2 text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10 rounded-lg transition-colors cursor-pointer"
+              title="⚡ AI Draw Tactical Breakdown"
+            >
+              <Sparkles className="w-4 h-4" />
+            </button>
+          )}
           <button
             onClick={() => onRefresh(draw)}
             disabled={isRefreshing || showConfirmDelete}
@@ -549,6 +562,8 @@ export function DrawChecker({ savedDraws: propSavedDraws, onSavedDrawsChanged }:
   const [refreshingDraws, setRefreshingDraws] = useState<Set<string>>(new Set());
   const [savedDrawsLastUpdated, setSavedDrawsLastUpdated] = useState<string>('');
   const [isSaving, setIsSaving] = useState(false);
+  const [isAIModalOpen, setIsAIModalOpen] = useState(false);
+  const [selectedAIDraw, setSelectedAIDraw] = useState<any>(null);
 
   // Drag and Drop settings
   const sensors = useSensors(
@@ -1220,14 +1235,27 @@ export function DrawChecker({ savedDraws: propSavedDraws, onSavedDrawsChanged }:
                 placeholder="Name of this draw"
               />
             </div>
-            <button
-              onClick={handleSaveDraw}
-              disabled={isSaving}
-              className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white px-6 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition-all shadow-lg shadow-emerald-500/20 cursor-pointer"
-            >
-              {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trophy className="w-4 h-4" />}
-              Save Draw
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  setSelectedAIDraw({ name: drawName || "Checked Draw", players });
+                  setIsAIModalOpen(true);
+                }}
+                className="bg-indigo-600/30 hover:bg-indigo-600/50 border border-indigo-500/40 text-indigo-300 hover:text-white px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition-all shadow-lg shadow-indigo-500/10 cursor-pointer"
+                title="Run AI Draw Breakdown on this bracket"
+              >
+                <Sparkles className="w-4 h-4 text-indigo-400" />
+                ⚡ AI Breakdown
+              </button>
+              <button
+                onClick={handleSaveDraw}
+                disabled={isSaving}
+                className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white px-6 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition-all shadow-lg shadow-emerald-500/20 cursor-pointer"
+              >
+                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trophy className="w-4 h-4" />}
+                Save Draw
+              </button>
+            </div>
           </div>
           {renderPlayerTable(players)}
         </div>
@@ -1296,6 +1324,10 @@ export function DrawChecker({ savedDraws: propSavedDraws, onSavedDrawsChanged }:
                     onRefresh={handleRefreshDraw}
                     onDelete={handleDeleteDraw}
                     renderPlayerTable={renderPlayerTable}
+                    onAnalyzeAI={(d) => {
+                      setSelectedAIDraw(d);
+                      setIsAIModalOpen(true);
+                    }}
                   />
                 ))}
               </div>
@@ -1313,6 +1345,16 @@ export function DrawChecker({ savedDraws: propSavedDraws, onSavedDrawsChanged }:
           </div>
         )}
       </div>
+
+      {isAIModalOpen && (
+        <AIAssistantModal
+          isOpen={isAIModalOpen}
+          onClose={() => setIsAIModalOpen(false)}
+          selectedDraw={selectedAIDraw}
+          initialTab="draw"
+        />
+      )}
     </div>
   );
 }
+

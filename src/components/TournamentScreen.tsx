@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Trophy, Calendar, MapPin, Users, ChevronDown, ChevronUp, CalendarPlus, RefreshCw, Layers, Trash2, ExternalLink, Clock, ArrowUpDown } from 'lucide-react';
-import { getGoogleCalendarLink } from '../services/tournamentService';
+import { Trophy, Calendar, MapPin, Users, ChevronDown, ChevronUp, CalendarPlus, RefreshCw, Layers, Trash2, ExternalLink, Clock, ArrowUpDown, Sparkles, Search, X } from 'lucide-react';
+import { getGoogleCalendarLink, parseAnyDateToDate, getDeadlineDaysLeft, parseDrawAndTournamentName, cleanDisplayDrawName, isPlayerMatch } from '../services/tournamentService';
 import { Tournament } from '../types';
+import { AIAssistantModal } from './AIAssistantModal';
 
 function normalizeUrl(urlStr: string): string {
   if (!urlStr) return '';
@@ -490,7 +491,8 @@ interface TournamentWithPlayers {
     dates: string;
     link: string;
     ageGroup: string;
-    source: string;
+    source: 'HK' | 'AUS';
+    location?: string;
     distance?: string;
     mapsLink?: string;
     closingDeadline?: string;
@@ -528,10 +530,11 @@ function TournamentItem({
         if (d.drawLink) {
           const domainName = t.tournament.source === "HK" ? "hkta.tournamentsoftware.com" : "tournaments.tennis.com.au";
           const absoluteUrl = d.drawLink.startsWith('http') ? d.drawLink : `https://${domainName}${d.drawLink}`;
+          const cleanName = cleanDisplayDrawName(d.drawName, t.tournament.name);
           
           if (!list.some(item => normalizeUrl(item.url) === normalizeUrl(absoluteUrl))) {
             list.push({
-              name: d.drawName,
+              name: cleanName,
               url: absoluteUrl
             });
           }
@@ -539,7 +542,7 @@ function TournamentItem({
       });
     });
     return list;
-  }, [t.joinedPlayers, t.tournament.source]);
+  }, [t.joinedPlayers, t.tournament.source, t.tournament.name]);
 
   const matchedSavedDraws = useMemo(() => {
     const list = savedDraws.filter(sd => 
@@ -823,11 +826,23 @@ function TournamentItem({
               <Calendar className="w-4 h-4 text-gray-500" />
               {t.tournament.dates}
             </div>
-            {t.tournament.closingDeadline && (
-              <div className="flex items-center gap-1.5 text-orange-400/80">
-                <span className="font-medium">Closes:</span> {t.tournament.closingDeadline}
-              </div>
-            )}
+            {t.tournament.closingDeadline && (() => {
+              const diffDays = getDeadlineDaysLeft(t.tournament.closingDeadline);
+              return (
+                <div className="flex items-center gap-1.5 text-orange-400/80">
+                  <span className="font-medium">Closes:</span> {t.tournament.closingDeadline}
+                  {diffDays !== null && (
+                    <span className={`text-xs px-1.5 py-0.5 rounded font-semibold ${
+                      diffDays > 0 ? 'text-amber-400 bg-amber-950/40 border border-amber-800/40' :
+                      diffDays === 0 ? 'text-red-400 bg-red-950/40 border border-red-800/40' :
+                      'text-gray-500 bg-gray-800/50'
+                    }`}>
+                      {diffDays > 0 ? `${diffDays}d left` : diffDays === 0 ? 'Today' : 'Closed'}
+                    </span>
+                  )}
+                </div>
+              );
+            })()}
             <div className={`flex items-center gap-1.5 font-medium ${containsJordan ? 'text-yellow-400/90' : 'text-blue-400/80'}`}>
               <Users className="w-4 h-4" />
               {t.joinedPlayers.length} player{t.joinedPlayers.length !== 1 ? 's' : ''}
@@ -939,24 +954,27 @@ function TournamentItem({
                     </span>
                   </div>
                   <div className="space-y-1.5 pl-8">
-                    {jp.draws.map((draw, k) => (
-                      <div key={k} className="text-xs text-gray-400 flex items-center gap-1.5">
-                        <div className={`w-1 h-1 rounded-full shrink-0 ${isJordan ? 'bg-yellow-500' : 'bg-gray-600'}`} />
-                        {draw.drawLink ? (
-                          <a 
-                            href={draw.drawLink.startsWith('http') ? draw.drawLink : `https://${domain}${draw.drawLink}`} 
-                            target="_blank" 
-                            rel="noopener noreferrer" 
-                            className={`hover:underline truncate ${isJordan ? 'text-yellow-200/80 hover:text-yellow-400' : 'hover:text-blue-400'}`} 
-                            title={draw.drawName}
-                          >
-                            {draw.drawName}
-                          </a>
-                        ) : (
-                          <span className="truncate" title={draw.drawName}>{draw.drawName}</span>
-                        )}
-                      </div>
-                    ))}
+                    {jp.draws.map((draw, k) => {
+                      const displayDrawName = cleanDisplayDrawName(draw.drawName, t.tournament.name);
+                      return (
+                        <div key={k} className="text-xs text-gray-400 flex items-center gap-1.5">
+                          <div className={`w-1 h-1 rounded-full shrink-0 ${isJordan ? 'bg-yellow-500' : 'bg-gray-600'}`} />
+                          {draw.drawLink ? (
+                            <a 
+                              href={draw.drawLink.startsWith('http') ? draw.drawLink : `https://${domain}${draw.drawLink}`} 
+                              target="_blank" 
+                              rel="noopener noreferrer" 
+                              className={`hover:underline truncate ${isJordan ? 'text-yellow-200/80 hover:text-yellow-400' : 'hover:text-blue-400'}`} 
+                              title={displayDrawName}
+                            >
+                              {displayDrawName}
+                            </a>
+                          ) : (
+                            <span className="truncate" title={displayDrawName}>{displayDrawName}</span>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               );
@@ -1001,56 +1019,12 @@ function TournamentItem({
 }
 
 const parseDateRange = (dates: string): { start: Date; end: Date } | null => {
-  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  
-  const parseSingleDate = (dateStr: string): Date | null => {
-    const ddmmyyyyMatch = dateStr.match(/(\d{1,2})\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{4})/i);
-    if (ddmmyyyyMatch) {
-      const day = parseInt(ddmmyyyyMatch[1]);
-      const monthIdx = months.findIndex(m => m.toLowerCase() === ddmmyyyyMatch[2].toLowerCase());
-      const year = parseInt(ddmmyyyyMatch[3]);
-      return new Date(year, monthIdx, day);
-    }
-
-    const isoMatch = dateStr.match(/(\d{4})-(\d{2})-(\d{2})/);
-    if (isoMatch) return new Date(isoMatch[0]);
-
-    const revIsoMatch = dateStr.match(/(\d{2})-(\d{2})-(\d{4})/);
-    if (revIsoMatch) {
-      const [_, d, m, y] = revIsoMatch;
-      return new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
-    }
-
-    const mmmddyyyyMatch = dateStr.match(/(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{1,2}),\s+(\d{4})/i);
-    if (mmmddyyyyMatch) {
-      const monthIdx = months.findIndex(m => m.toLowerCase() === mmmddyyyyMatch[1].toLowerCase());
-      const day = parseInt(mmmddyyyyMatch[2]);
-      const year = parseInt(mmmddyyyyMatch[3]);
-      return new Date(year, monthIdx, day);
-    }
-
-    const slashMatch = dateStr.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-    if (slashMatch) {
-      const day = parseInt(slashMatch[1]);
-      const month = parseInt(slashMatch[2]);
-      const year = parseInt(slashMatch[3]);
-      return new Date(year, month - 1, day);
-    }
-
-    return null;
-  };
-
-  if (dates.includes(" to ")) {
-    const [startStr, endStr] = dates.split(" to ");
-    const start = parseSingleDate(startStr);
-    const end = parseSingleDate(endStr);
-    if (start && end) return { start, end };
-    if (start) return { start, end: start };
-  }
-
-  const single = parseSingleDate(dates);
-  if (single) return { start: single, end: single };
-
+  if (!dates) return null;
+  const parts = dates.split(" to ");
+  const start = parseAnyDateToDate(parts[0]);
+  const end = parts.length > 1 ? parseAnyDateToDate(parts[parts.length - 1]) : start;
+  if (start && end) return { start, end };
+  if (start) return { start, end: start };
   return null;
 };
 
@@ -1078,18 +1052,21 @@ export function TournamentScreen({
 }) {
   const [tournaments, setTournaments] = useState<TournamentWithPlayers[]>(tournamentsCache);
   const [savedDraws, setSavedDraws] = useState<any[]>([]);
+  const [savedPlayers, setSavedPlayers] = useState<any[]>([]);
   const [loading, setLoading] = useState(isTournamentsCacheLoading);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string | null>(tournamentsCacheLastUpdated || null);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'HK' | 'AUS'>('AUS');
+  const [searchQuery, setSearchQuery] = useState('');
   const [notJoinedFilter, setNotJoinedFilter] = useState(false);
   const [completedExpanded, setCompletedExpanded] = useState(false);
   const [isGlobalRefreshing, setIsGlobalRefreshing] = useState(false);
+  const [isAIModalOpen, setIsAIModalOpen] = useState(false);
 
   // Sync with parent cache
   useEffect(() => {
-    if (tournamentsCache) {
+    if (tournamentsCache && tournamentsCache.length > 0) {
       setTournaments(tournamentsCache);
     }
   }, [tournamentsCache]);
@@ -1122,15 +1099,18 @@ export function TournamentScreen({
     try {
       const url = force ? '/api/tournaments-for-players?refresh=true' : '/api/tournaments-for-players';
       
-      const [resTournaments, resSavedDraws] = await Promise.all([
+      const [resTournaments, resSavedDraws, resSavedPlayers] = await Promise.all([
         fetch(url),
-        fetch('/api/saved-draws')
+        fetch('/api/saved-draws'),
+        fetch('/api/saved-players')
       ]);
 
       if (resTournaments.ok) {
         try {
           const data = await resTournaments.json();
-          setTournaments(data.tournaments || []);
+          if (data.tournaments) {
+            setTournaments(data.tournaments);
+          }
           if (data.updatedAt) {
             setLastUpdated(data.updatedAt);
           }
@@ -1139,19 +1119,17 @@ export function TournamentScreen({
           }
         } catch (e) {
           console.error("Failed to parse /api/tournaments-for-players JSON:", e);
-          if (tournaments.length === 0) {
-            setError("Failed to fetch tournaments");
-          }
-        }
-      } else {
-        if (tournaments.length === 0) {
-          setError("Failed to fetch tournaments");
         }
       }
 
       if (resSavedDraws.ok) {
         const drawData = await resSavedDraws.json();
         setSavedDraws(drawData.draws || []);
+      }
+
+      if (resSavedPlayers.ok) {
+        const playersData = await resSavedPlayers.json();
+        setSavedPlayers(Array.isArray(playersData) ? playersData : []);
       }
     } catch (e) {
       console.error("Failed to fetch data", e);
@@ -1206,55 +1184,198 @@ export function TournamentScreen({
     fetchTournaments(false);
   }, []);
 
-  if (loading && tournaments.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-24 gap-4">
-        <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-        <p className="text-gray-400 font-medium">Scanning all future tournaments for saved players...</p>
-        <p className="text-gray-500 text-sm">This might take a minute.</p>
-      </div>
-    );
-  }
+  // Merge saved draws with joined players into tournaments list
+  const mergedTournaments = useMemo(() => {
+    const list: TournamentWithPlayers[] = (tournaments || []).map(t => {
+      const filteredJoined: JoinedPlayer[] = [];
+      for (const jp of (t.joinedPlayers || [])) {
+        // Find if this player matches one of our saved players
+        const matchedSaved = (savedPlayers || []).length === 0
+          ? jp.player
+          : (savedPlayers || []).find(sp => isPlayerMatch(sp, jp.player, t.tournament.source));
 
-  if (error) {
-    return (
-      <div className="flex flex-col items-center justify-center py-24 gap-4">
-        <p className="text-red-400 font-medium">{error}</p>
-      </div>
-    );
-  }
+        if (matchedSaved) {
+          const cleanDraws = (jp.draws || []).map(d => ({
+            ...d,
+            drawName: cleanDisplayDrawName(d.drawName, t.tournament.name)
+          }));
 
-  const filteredTournaments = notJoinedFilter 
-    ? tournaments.filter(t => {
+          const existingJp = filteredJoined.find(ej => 
+            isPlayerMatch(ej.player, matchedSaved, t.tournament.source)
+          );
+
+          if (existingJp) {
+            for (const cd of cleanDraws) {
+              if (!existingJp.draws.some(d => normalizeUrl(d.drawLink || '') === normalizeUrl(cd.drawLink || ''))) {
+                existingJp.draws.push(cd);
+              }
+            }
+          } else {
+            filteredJoined.push({
+              player: {
+                ...jp.player,
+                name: matchedSaved.name || jp.player.name,
+                id: matchedSaved.id || jp.player.id,
+                source: matchedSaved.source || jp.player.source
+              },
+              draws: cleanDraws
+            });
+          }
+        }
+      }
+
+      return {
+        tournament: { ...t.tournament },
+        joinedPlayers: filteredJoined
+      };
+    });
+
+    // Check savedDraws for any tournaments not in list or needing extra info
+    for (const draw of (savedDraws || [])) {
+      if (!draw.players || !Array.isArray(draw.players) || draw.players.length === 0) continue;
+
+      const { tournamentName, eventName } = parseDrawAndTournamentName(draw.name || '');
+      const drawContextRegion = draw.region || (draw.url?.includes('hkta') ? 'HK' : 'AUS');
+
+      // ONLY match saved players that belong to savedPlayers (Player Screen)
+      const matchedSavedPlayersInDraw: JoinedPlayer[] = [];
+      for (const sPlayer of (savedPlayers || [])) {
+        const foundInDraw = draw.players.find((dp: any) => 
+          isPlayerMatch(sPlayer, dp, drawContextRegion)
+        );
+
+        if (foundInDraw) {
+          matchedSavedPlayersInDraw.push({
+            player: {
+              id: sPlayer.id || foundInDraw.id || '',
+              name: sPlayer.name,
+              url: sPlayer.url || foundInDraw.url || foundInDraw.profileUrl,
+              source: sPlayer.source || (drawContextRegion === 'HK' ? 'HKTA' : 'TA')
+            },
+            draws: [{
+              drawName: eventName,
+              drawLink: draw.url
+            }]
+          });
+        }
+      }
+
+      // If no player in user's Player Screen is in this draw, do not add it!
+      if (matchedSavedPlayersInDraw.length === 0) continue;
+
+      const normDrawUrl = normalizeUrl(draw.url);
+      const existing = list.find(t => 
+        normalizeUrl(t.tournament.link) === normDrawUrl ||
+        (t.tournament.name && (
+          t.tournament.name.toLowerCase().includes(tournamentName.toLowerCase()) ||
+          tournamentName.toLowerCase().includes(t.tournament.name.toLowerCase()) ||
+          t.tournament.name.toLowerCase().includes(draw.name.toLowerCase()) ||
+          draw.name.toLowerCase().includes(t.tournament.name.toLowerCase())
+        ))
+      );
+
+      // Extract date
+      const drawDateMatch = draw.url?.match(/#date=(.*)$/);
+      let rawDate = drawDateMatch ? decodeURIComponent(drawDateMatch[1]).trim() : '';
+      if (!rawDate) {
+        const nameMatch = draw.name?.match(/\b\d{1,2}(?:-\d{1,2})?\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b/i);
+        const ddMmYyyyMatch = draw.name?.match(/\b\d{1,2}\/\d{1,2}\/\d{4}\b/);
+        if (nameMatch) rawDate = nameMatch[0];
+        else if (ddMmYyyyMatch) rawDate = ddMmYyyyMatch[0];
+      }
+      if (!rawDate) rawDate = "20/09/2026";
+      const formattedDate = formatDateToDdMmYyyy(rawDate) || rawDate;
+
+      if (existing) {
+        if (formattedDate && (!existing.tournament.dates || existing.tournament.dates === 'TBD')) {
+          existing.tournament.dates = formattedDate;
+        }
+        for (const jp of matchedSavedPlayersInDraw) {
+          const existingJp = existing.joinedPlayers.find(ej => 
+            isPlayerMatch(ej.player, jp.player, existing.tournament.source)
+          );
+          if (existingJp) {
+            for (const d of jp.draws) {
+              if (!existingJp.draws.some(ed => normalizeUrl(ed.drawLink || '') === normalizeUrl(d.drawLink || ''))) {
+                existingJp.draws.push(d);
+              }
+            }
+          } else {
+            existing.joinedPlayers.push(jp);
+          }
+        }
+      } else {
+        list.push({
+          tournament: {
+            name: tournamentName,
+            dates: formattedDate,
+            link: draw.url,
+            source: drawContextRegion === 'HK' ? 'HK' : 'AUS',
+            ageGroup: draw.name?.includes('10u') || draw.name?.includes('U10') ? 'U10' : (draw.name?.includes('12u') || draw.name?.includes('U12') ? 'U12' : 'All Ages'),
+            location: tournamentName.includes('Bulli') ? 'Bulli Tennis Club | NSW' : (tournamentName.includes('Panania') ? 'Canterbury Bankstown Tennis Association | Sydney' : (tournamentName || 'Australia'))
+          },
+          joinedPlayers: matchedSavedPlayersInDraw
+        });
+      }
+    }
+
+    return list;
+  }, [tournaments, savedDraws, savedPlayers]);
+
+  const filteredTournaments = useMemo(() => {
+    let result = mergedTournaments;
+
+    if (notJoinedFilter) {
+      result = result.filter(t => {
         return !t.joinedPlayers.some(jp => 
-          jp.player.name.includes("Jordan Chiu") || 
-          jp.player.name.includes("CHIU Jordan Chung Shing") ||
+          jp.player.name.toLowerCase().includes("jordan chiu") || 
+          jp.player.name.toLowerCase().includes("chiu jordan") ||
           jp.player.id === "66333972211" ||
           jp.player.id === "66419"
         );
-      })
-    : tournaments;
+      });
+    }
 
-  if (filteredTournaments.length === 0 && !notJoinedFilter) {
-    return (
-      <div className="flex flex-col items-center justify-center py-24 gap-4">
-        <Trophy className="w-16 h-16 text-gray-700" />
-        <p className="text-gray-400 font-medium text-lg">No future tournaments found</p>
-        <p className="text-gray-500 text-sm">None of your saved players have joined any upcoming tournaments.</p>
-      </div>
-    );
-  }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      result = result.filter(t => 
+        t.tournament.name.toLowerCase().includes(q) ||
+        (t.tournament.location && t.tournament.location.toLowerCase().includes(q)) ||
+        (t.tournament.ageGroup && t.tournament.ageGroup.toLowerCase().includes(q)) ||
+        (t.tournament.dates && t.tournament.dates.toLowerCase().includes(q)) ||
+        t.joinedPlayers.some(jp => jp.player.name.toLowerCase().includes(q))
+      );
+    }
+
+    return result;
+  }, [mergedTournaments, notJoinedFilter, searchQuery]);
 
   const ausTournaments = filteredTournaments.filter(t => t.tournament.source === 'AUS');
   const hkTournaments = filteredTournaments.filter(t => t.tournament.source === 'HK');
 
   const renderTournamentList = (list: TournamentWithPlayers[]) => {
-    if (list.length === 0) {
+    if (loading && list.length === 0) {
       return (
         <div className="flex flex-col items-center justify-center py-24 gap-4">
-          <Trophy className="w-16 h-16 text-gray-700" />
-          <p className="text-gray-400 font-medium text-lg">No future tournaments found</p>
-          <p className="text-gray-500 text-sm">None of your saved players have joined any upcoming tournaments here.</p>
+          <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+          <p className="text-gray-400 font-medium">Scanning all future tournaments for saved players...</p>
+          <p className="text-gray-500 text-sm">This might take a minute.</p>
+        </div>
+      );
+    }
+
+    if (list.length === 0) {
+      return (
+        <div className="flex flex-col items-center justify-center py-24 gap-4 border border-gray-800/40 rounded-2xl bg-gray-900/20">
+          <Trophy className="w-12 h-12 text-gray-700" />
+          <p className="text-gray-400 font-medium text-lg">No tournaments found</p>
+          <p className="text-gray-500 text-sm text-center max-w-md">
+            {searchQuery 
+              ? `No tournaments matching "${searchQuery}".`
+              : notJoinedFilter 
+                ? 'No tournaments found where saved players have not joined.' 
+                : 'Click "Rescan" or "Refresh All" above to load and update tournament rosters.'}
+          </p>
         </div>
       );
     }
@@ -1264,8 +1385,8 @@ export function TournamentScreen({
 
     if (activeList.length === 0 && completedList.length === 0) {
       return (
-        <div className="flex flex-col items-center justify-center py-24 gap-4">
-          <Trophy className="w-16 h-16 text-gray-700" />
+        <div className="flex flex-col items-center justify-center py-24 gap-4 border border-gray-800/40 rounded-2xl bg-gray-900/20">
+          <Trophy className="w-12 h-12 text-gray-700" />
           <p className="text-gray-400 font-medium text-lg">No tournaments found</p>
         </div>
       );
@@ -1277,7 +1398,7 @@ export function TournamentScreen({
           <div className="grid gap-6">
             {activeList.map((t, i) => (
               <TournamentItem 
-                key={`active-${i}`} 
+                key={`active-${i}-${t.tournament.name}`} 
                 t={t} 
                 savedDraws={savedDraws} 
                 onSavedDrawsChanged={fetchSavedDraws} 
@@ -1286,8 +1407,11 @@ export function TournamentScreen({
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-12 gap-2 border border-gray-800/40 rounded-2xl bg-gray-900/10 text-gray-400">
-            <Calendar className="w-8 h-8 text-gray-650" />
-            <p className="font-semibold text-sm">No ongoing or upcoming tournaments here.</p>
+            <Calendar className="w-8 h-8 text-gray-600" />
+            <p className="font-semibold text-sm">No ongoing or upcoming tournaments in this view.</p>
+            {completedList.length > 0 && (
+              <p className="text-xs text-gray-500">See completed tournaments below ({completedList.length}).</p>
+            )}
           </div>
         )}
 
@@ -1315,7 +1439,7 @@ export function TournamentScreen({
               <div className="grid gap-6 mt-4">
                 {completedList.map((t, i) => (
                   <TournamentItem 
-                    key={`completed-${i}`} 
+                    key={`completed-${i}-${t.tournament.name}`} 
                     t={t} 
                     savedDraws={savedDraws} 
                     onSavedDrawsChanged={fetchSavedDraws} 
@@ -1340,9 +1464,15 @@ export function TournamentScreen({
         </div>
       )}
 
+      {error && (
+        <div className="bg-red-950/30 border border-red-900/50 rounded-xl p-4 text-red-300 text-sm">
+          {error}
+        </div>
+      )}
+
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-          <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4 flex-wrap">
+          <div className="flex items-center gap-3 flex-wrap">
             <h2 className="text-xl font-semibold text-white flex items-center gap-2">
               <Calendar className="w-5 h-5 text-blue-400" />
               Upcoming Tournaments
@@ -1376,30 +1506,61 @@ export function TournamentScreen({
               title="Scrapes and refreshes all saved player profiles & latest tournaments"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isGlobalRefreshing ? 'animate-spin text-green-400' : ''}`} />
-              {isGlobalRefreshing ? 'Refreshing All...' : 'Refresh All (Profiles & Tournaments)'}
+              {isGlobalRefreshing ? 'Refreshing All...' : 'Refresh All'}
+            </button>
+            <button
+              onClick={() => setIsAIModalOpen(true)}
+              className="p-1.5 rounded-lg border border-indigo-700/60 bg-gradient-to-r from-blue-600/20 to-indigo-600/20 hover:from-blue-600/30 hover:to-indigo-600/30 text-blue-300 hover:text-white transition-all flex items-center gap-1.5 text-xs font-bold shadow-sm"
+              title="AI Schedule Optimizer & Tennis Copilot"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-blue-400" />
+              ⚡ AI Schedule Optimizer
             </button>
           </div>
-          <label className="flex items-center gap-2 cursor-pointer bg-gray-900/50 px-3 py-1.5 rounded-lg border border-gray-800 hover:bg-gray-800 transition-colors w-fit">
+
+          <div className="flex items-center gap-2 flex-wrap">
             <div className="relative">
-              <input 
-                type="checkbox" 
-                className="sr-only" 
-                checked={notJoinedFilter}
-                onChange={() => setNotJoinedFilter(!notJoinedFilter)}
+              <Search className="w-3.5 h-3.5 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Search tournament, player..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="bg-gray-900/60 border border-gray-800 rounded-lg pl-8 pr-8 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 w-44 sm:w-56"
               />
-              <div className={`block w-10 h-6 rounded-full transition-colors ${notJoinedFilter ? 'bg-blue-500' : 'bg-gray-700'}`}></div>
-              <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${notJoinedFilter ? 'transform translate-x-4' : ''}`}></div>
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
-            <span className="text-sm font-medium text-gray-300">Not Joined</span>
-          </label>
+
+            <label className="flex items-center gap-2 cursor-pointer bg-gray-900/50 px-3 py-1.5 rounded-lg border border-gray-800 hover:bg-gray-800 transition-colors w-fit">
+              <div className="relative">
+                <input 
+                  type="checkbox" 
+                  className="sr-only" 
+                  checked={notJoinedFilter}
+                  onChange={() => setNotJoinedFilter(!notJoinedFilter)}
+                />
+                <div className={`block w-10 h-6 rounded-full transition-colors ${notJoinedFilter ? 'bg-blue-500' : 'bg-gray-700'}`}></div>
+                <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${notJoinedFilter ? 'transform translate-x-4' : ''}`}></div>
+              </div>
+              <span className="text-xs font-medium text-gray-300">Not Joined</span>
+            </label>
+          </div>
         </div>
+
         <div className="flex items-center gap-3 text-sm text-gray-400">
           {lastUpdated && (
             <span className="text-xs text-gray-500 font-medium">
               Last Scraped: {new Date(lastUpdated).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })} HKT
             </span>
           )}
-          <div className="text-sm bg-gray-900/50 px-3 py-1.5 rounded-lg border border-gray-800 w-fit">
+          <div className="text-xs bg-gray-900/50 px-3 py-1.5 rounded-lg border border-gray-800 w-fit">
             Found {filteredTournaments.length} tournament{filteredTournaments.length !== 1 ? 's' : ''}
           </div>
         </div>
@@ -1438,6 +1599,16 @@ export function TournamentScreen({
 
       {activeTab === 'HK' && renderTournamentList(hkTournaments)}
       {activeTab === 'AUS' && renderTournamentList(ausTournaments)}
+
+      {isAIModalOpen && (
+        <AIAssistantModal
+          isOpen={isAIModalOpen}
+          onClose={() => setIsAIModalOpen(false)}
+          tournaments={tournaments.map(t => t.tournament)}
+          initialTab="optimizer"
+        />
+      )}
     </div>
   );
 }
+

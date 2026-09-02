@@ -52,31 +52,80 @@ export async function searchPlayer(name: string): Promise<PlayerWatchResult> {
     throw e;
   }
 }
+export function parseAnyDateToDate(dateStr: string): Date | null {
+  if (!dateStr) return null;
+  const clean = dateStr.trim();
+  if (!clean) return null;
+
+  const months: Record<string, number> = {
+    jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
+    jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11,
+    january: 0, february: 1, march: 2, april: 3, june: 5,
+    july: 6, august: 7, september: 8, october: 9, november: 10, december: 11
+  };
+
+  // DD/MM/YYYY
+  const slashMatch = clean.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (slashMatch) {
+    return new Date(parseInt(slashMatch[3]), parseInt(slashMatch[2]) - 1, parseInt(slashMatch[1]));
+  }
+
+  // YYYY-MM-DD
+  const isoMatch = clean.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (isoMatch) {
+    return new Date(parseInt(isoMatch[1]), parseInt(isoMatch[2]) - 1, parseInt(isoMatch[3]));
+  }
+
+  // DD-MM-YYYY
+  const dashMatch = clean.match(/^(\d{1,2})-(\d{1,2})-(\d{4})/);
+  if (dashMatch) {
+    return new Date(parseInt(dashMatch[3]), parseInt(dashMatch[2]) - 1, parseInt(dashMatch[1]));
+  }
+
+  // 20 Sep 2026
+  const wordMatch = clean.match(/^(\d{1,2})\s+([a-zA-Z]+)\s+(\d{4})/i);
+  if (wordMatch) {
+    const m = months[wordMatch[2].toLowerCase()];
+    if (m !== undefined) {
+      return new Date(parseInt(wordMatch[3]), m, parseInt(wordMatch[1]));
+    }
+  }
+
+  // Sep 20 2026
+  const mWordMatch = clean.match(/^([a-zA-Z]+)\s+(\d{1,2}),?\s+(\d{4})/i);
+  if (mWordMatch) {
+    const m = months[mWordMatch[1].toLowerCase()];
+    if (m !== undefined) {
+      return new Date(parseInt(mWordMatch[3]), m, parseInt(mWordMatch[2]));
+    }
+  }
+
+  const parsed = new Date(clean);
+  return isNaN(parsed.getTime()) ? null : parsed;
+}
+
 export function getGoogleCalendarLink(tournament: { name: string; dates: string; mapsLink?: string; link: string; source: "HK" | "AUS" }) {
   const { name, dates, mapsLink } = tournament;
   let startStr = "";
   let endStr = "";
   
-  const parts = dates.split(" to ");
-  if (parts.length === 2) {
-    const startMatch = parts[0].match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-    const endMatch = parts[1].match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-    
-    if (startMatch && endMatch) {
-      const start = `${startMatch[3]}${startMatch[2].padStart(2, '0')}${startMatch[1].padStart(2, '0')}`;
-      const endDate = new Date(parseInt(endMatch[3]), parseInt(endMatch[2]) - 1, parseInt(endMatch[1]) + 1);
-      const end = `${endDate.getFullYear()}${(endDate.getMonth() + 1).toString().padStart(2, '0')}${endDate.getDate().toString().padStart(2, '0')}`;
-      startStr = start;
-      endStr = end;
-    }
-  } else {
-    const match = dates.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-    if (match) {
-      const start = `${match[3]}${match[2].padStart(2, '0')}${match[1].padStart(2, '0')}`;
-      const endDate = new Date(parseInt(match[3]), parseInt(match[2]) - 1, parseInt(match[1]) + 1);
-      const end = `${endDate.getFullYear()}${(endDate.getMonth() + 1).toString().padStart(2, '0')}${endDate.getDate().toString().padStart(2, '0')}`;
-      startStr = start;
-      endStr = end;
+  if (dates) {
+    const parts = dates.split(" to ");
+    const startDate = parseAnyDateToDate(parts[0]);
+    const endDate = parts.length > 1 ? parseAnyDateToDate(parts[parts.length - 1]) : startDate;
+
+    if (startDate) {
+      const sYear = startDate.getFullYear();
+      const sMonth = (startDate.getMonth() + 1).toString().padStart(2, '0');
+      const sDay = startDate.getDate().toString().padStart(2, '0');
+      startStr = `${sYear}${sMonth}${sDay}`;
+
+      const finalEnd = endDate ? new Date(endDate) : new Date(startDate);
+      finalEnd.setDate(finalEnd.getDate() + 1);
+      const eYear = finalEnd.getFullYear();
+      const eMonth = (finalEnd.getMonth() + 1).toString().padStart(2, '0');
+      const eDay = finalEnd.getDate().toString().padStart(2, '0');
+      endStr = `${eYear}${eMonth}${eDay}`;
     }
   }
 
@@ -87,6 +136,157 @@ export function getGoogleCalendarLink(tournament: { name: string; dates: string;
   const detailsParam = `&details=${encodeURIComponent(details)}`;
   
   return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(name)}${datesParam}${locationParam}${detailsParam}`;
+}
+
+export function getDeadlineDaysLeft(closingDeadline?: string): number | null {
+  if (!closingDeadline) return null;
+  const parts = closingDeadline.split('/');
+  if (parts.length === 3) {
+    const deadline = new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10));
+    deadline.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const diffTime = deadline.getTime() - today.getTime();
+    return Math.round(diffTime / (1000 * 60 * 60 * 24));
+  }
+  return null;
+}
+
+export function parseDrawAndTournamentName(rawName: string): { tournamentName: string; eventName: string } {
+  if (!rawName) return { tournamentName: 'Saved Draw', eventName: 'Draw' };
+  const cleaned = rawName.trim();
+
+  // Split on hyphens / dashes: " - ", " – ", " — "
+  const parts = cleaned.split(/\s+[-–—]\s+/).map(p => p.trim()).filter(Boolean);
+
+  if (parts.length >= 2) {
+    // The last part is the specific draw / event name (e.g. "BS U10 JDS (Green Ball)", "BS 10", "10/U Boys Singles")
+    const eventName = parts[parts.length - 1];
+    // The preceding parts form the tournament name and venue
+    const tournamentName = parts.slice(0, parts.length - 1).join(' - ');
+    return { tournamentName, eventName };
+  }
+
+  // If there's no hyphen separator, check common event patterns at the end
+  const eventRegex = /\b(BS\s*\d+|GS\s*\d+|BD\s*\d+|GD\s*\d+|Boys\s+\d+|Girls\s+\d+|\d+\s*u\s*(?:Green|Orange|Yellow|Singles|Doubles)?|\d+\/U\s*(?:Boys|Girls|Singles|Doubles)?|Green\s+Ball|Orange\s+Ball|Singles|Doubles)\b/i;
+  const match = cleaned.match(eventRegex);
+  if (match && match.index && match.index > 0) {
+    const tournamentName = cleaned.slice(0, match.index).trim().replace(/[-–—\s]+$/, '');
+    const eventName = cleaned.slice(match.index).trim();
+    if (tournamentName && eventName) {
+      return { tournamentName, eventName };
+    }
+  }
+
+  return { tournamentName: cleaned, eventName: cleaned };
+}
+
+export function cleanDisplayDrawName(drawName?: string, tournamentName?: string): string {
+  if (!drawName) return '';
+  let cleaned = drawName.trim();
+
+  // If the drawName contains tournamentName at start, remove it
+  if (tournamentName) {
+    const tClean = tournamentName.trim().toLowerCase();
+    if (cleaned.toLowerCase().startsWith(tClean)) {
+      cleaned = cleaned.slice(tClean.length).replace(/^[\s\-–—:]+/, '').trim();
+    }
+  }
+
+  // If still contains hyphens and has multiple segments, take the last segment which is the event name
+  const parts = cleaned.split(/\s+[-–—]\s+/).map(p => p.trim()).filter(Boolean);
+  if (parts.length >= 2) {
+    return parts[parts.length - 1];
+  }
+
+  return cleaned || drawName;
+}
+
+export function isPlayerMatch(
+  savedPlayer: { id?: string; player_id?: string; name: string; url?: string; source?: string },
+  candidate: { id?: string; player_id?: string; name: string; url?: string; profileUrl?: string; source?: string },
+  contextRegion?: string
+): boolean {
+  if (!savedPlayer || !candidate) return false;
+
+  // 1. Direct ID match
+  const sId = savedPlayer.id || savedPlayer.player_id ? String(savedPlayer.id || savedPlayer.player_id).trim() : '';
+  const cId = candidate.id || candidate.player_id ? String(candidate.id || candidate.player_id).trim() : '';
+  if (sId && cId && sId === cId) return true;
+
+  // 2. Direct Profile URL match (Extract GUIDs or compare normalized URL paths)
+  const sUrl = (savedPlayer.url || '').toLowerCase().trim();
+  const cUrl = (candidate.url || candidate.profileUrl || '').toLowerCase().trim();
+  
+  if (sUrl && cUrl) {
+    const sGuid = sUrl.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i)?.[0]?.toLowerCase();
+    const cGuid = cUrl.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i)?.[0]?.toLowerCase();
+    if (sGuid && cGuid) {
+      if (sGuid === cGuid) return true;
+      // Different GUID on profile URL
+      return false;
+    }
+    const cleanS = sUrl.split('?')[0].split('#')[0].replace(/\/+$/, '');
+    const cleanC = cUrl.split('?')[0].split('#')[0].replace(/\/+$/, '');
+    if (cleanS === cleanC) return true;
+  }
+
+  // 3. Source / Region compatibility check
+  const sSource = (savedPlayer.source || (sUrl.includes('hkta') ? 'HKTA' : 'TA')).toUpperCase();
+  const cSource = (candidate.source || (contextRegion === 'HK' || (cUrl && cUrl.includes('hkta')) ? 'HKTA' : 'TA')).toUpperCase();
+
+  // If savedPlayer is explicitly HKTA and tournament/draw is TA, do not match (and vice versa)
+  if (sSource === 'HKTA' && (cSource === 'TA' || cSource === 'AUS' || (cUrl && cUrl.includes('tennis.com.au')) || contextRegion === 'AUS')) {
+    return false;
+  }
+  if ((sSource === 'TA' || sSource === 'AUS') && (cSource === 'HKTA' || cSource === 'HK' || (cUrl && cUrl.includes('hkta')) || contextRegion === 'HK')) {
+    return false;
+  }
+
+  // 4. Name Matching
+  const sName = (savedPlayer.name || '').trim();
+  const cName = (candidate.name || '').trim();
+  if (!sName || !cName) return false;
+
+  // Exact string match (case-insensitive)
+  if (sName.toLowerCase() === cName.toLowerCase()) return true;
+
+  // Extract variants from savedPlayer name, e.g. "Andy (Yuhao) Liu"
+  const getVariants = (name: string): string[][] => {
+    const clean = name.replace(/\[.*?\]/g, '').trim(); // strip seeds [1]
+    const parenMatch = clean.match(/\((.*?)\)/);
+    const variants: string[][] = [];
+
+    if (parenMatch) {
+      const alias = parenMatch[1].trim();
+      const withoutParen = clean.replace(/\(.*?\)/g, ' ').trim();
+      
+      const wordsMain = withoutParen.toLowerCase().split(/[\s,.-]+/).filter(Boolean);
+      const wordsAlias = (withoutParen.split(/[\s,.-]+/)[0] + ' ' + alias).toLowerCase().split(/[\s,.-]+/).filter(Boolean);
+      const wordsAll = clean.toLowerCase().split(/[\s,.-]+/).filter(Boolean);
+
+      if (wordsMain.length > 0) variants.push(wordsMain);
+      if (wordsAlias.length > 0) variants.push(wordsAlias);
+      if (wordsAll.length > 0) variants.push(wordsAll);
+    } else {
+      const words = clean.toLowerCase().split(/[\s,.-]+/).filter(Boolean);
+      if (words.length > 0) variants.push(words);
+    }
+    return variants;
+  };
+
+  const candClean = cName.replace(/\[.*?\]|\(.*?\)/g, '').toLowerCase().trim();
+  const candWords = candClean.split(/[\s,.-]+/).filter(Boolean);
+  if (candWords.length === 0) return false;
+
+  const savedVariants = getVariants(sName);
+
+  return savedVariants.some(variantWords => {
+    if (variantWords.length !== candWords.length) return false;
+    const sortedV = [...variantWords].sort().join(' ');
+    const sortedC = [...candWords].sort().join(' ');
+    return sortedV === sortedC;
+  });
 }
 
 export const getStateFromPostcode = (pc: string): string | null => {

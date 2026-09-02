@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { motion } from "motion/react";
 import { Tournament } from "../types";
-import { getFullLink, getGoogleCalendarLink, getTournamentState } from "../services/tournamentService";
+import { getFullLink, getGoogleCalendarLink, getTournamentState, getDeadlineDaysLeft } from "../services/tournamentService";
 
 function normalizeUrl(urlStr: string): string {
   if (!urlStr) return '';
@@ -29,23 +29,28 @@ export const TournamentCard: React.FC<TournamentCardProps> = ({ tournament, inde
   const [isProcessing, setIsProcessing] = useState(false);
   
   const getDeadlineInfo = () => {
-    if (!t.closingDeadline) return null;
-    const parts = t.closingDeadline.split('/');
-    if (parts.length === 3) {
-      const deadline = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
-      const today = new Date('2026-03-04T00:00:00');
-      const diffTime = deadline.getTime() - today.getTime();
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      
-      if (diffDays > 0) {
-        return <span className="text-amber-400 font-semibold bg-amber-900/20 px-2 py-0.5 rounded-md text-xs">({diffDays} days left)</span>;
-      } else if (diffDays === 0) {
-        return <span className="text-red-400 font-semibold bg-red-900/20 px-2 py-0.5 rounded-md text-xs">(Closes today)</span>;
-      } else {
-        return <span className="text-gray-500 font-semibold bg-gray-800 px-2 py-0.5 rounded-md text-xs">(Closed)</span>;
-      }
+    const diffDays = getDeadlineDaysLeft(t.closingDeadline);
+    if (diffDays === null) return null;
+    
+    if (diffDays > 0) {
+      return (
+        <span className="text-amber-400 font-semibold bg-amber-900/20 px-2 py-0.5 rounded-md text-xs">
+          ({diffDays} {diffDays === 1 ? 'day' : 'days'} left)
+        </span>
+      );
+    } else if (diffDays === 0) {
+      return (
+        <span className="text-red-400 font-semibold bg-red-900/20 px-2 py-0.5 rounded-md text-xs">
+          (Closes today)
+        </span>
+      );
+    } else {
+      return (
+        <span className="text-gray-500 font-semibold bg-gray-800 px-2 py-0.5 rounded-md text-xs">
+          (Closed)
+        </span>
+      );
     }
-    return null;
   };
 
   const fullLink = getFullLink(t.link, t.source);
