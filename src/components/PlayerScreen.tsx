@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { User, Plus, X, Trophy, GripVertical, ArrowUp, ArrowDown, Clock, ArrowLeft, Calendar, RefreshCw, Search, ChevronDown, Tag, Sparkles, CalendarPlus, ExternalLink, MapPin } from 'lucide-react';
-import { AIAssistantModal } from './AIAssistantModal';
+import { User, Plus, X, Trophy, GripVertical, ArrowUp, ArrowDown, Clock, ArrowLeft, Calendar, RefreshCw, Search, ChevronDown, Tag, CalendarPlus, ExternalLink, MapPin } from 'lucide-react';
 import { getGoogleCalendarLink, parseAnyDateToDate, parseDrawAndTournamentName, cleanDisplayDrawName, isPlayerMatch } from '../services/tournamentService';
 import {
   DndContext,
@@ -365,8 +364,7 @@ function SortablePlayerRow({
   onViewHistory,
   previousPlayerData,
   onRefreshPlayer,
-  onTagPlayer,
-  onScoutAI
+  onTagPlayer
 }: { 
   player: SavedPlayer, 
   removePlayer: (id: string) => void | Promise<void>, 
@@ -377,8 +375,7 @@ function SortablePlayerRow({
   previousPlayerData?: any,
   key?: any,
   onRefreshPlayer?: (id: string) => void | Promise<void>,
-  onTagPlayer?: (player: SavedPlayer) => void,
-  onScoutAI?: (player: SavedPlayer) => void
+  onTagPlayer?: (player: SavedPlayer) => void
 }) {
   const {
     attributes,
@@ -537,16 +534,6 @@ function SortablePlayerRow({
 
               {/* Action Buttons */}
               <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
-                {onScoutAI && (
-                  <button
-                    onClick={() => onScoutAI(player)}
-                    className="flex items-center gap-1.5 text-xs text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10 px-2.5 py-1.5 rounded-lg border border-indigo-900/40 transition-colors"
-                    title="⚡ AI Scouting Report & Game Plan"
-                  >
-                    <Sparkles className="w-3.5 h-3.5" />
-                    <span>AI Scout</span>
-                  </button>
-                )}
                 <button
                   onClick={() => onTagPlayer && onTagPlayer(player)}
                   className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-yellow-400 hover:bg-yellow-400/10 px-2.5 py-1.5 rounded-lg border border-gray-800 transition-colors"
@@ -648,15 +635,6 @@ function SortablePlayerRow({
         {renderStat(player.championships, previousPlayerData?.championships)}
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium animate-fade-in hidden sm:table-cell" onClick={(e) => e.stopPropagation()}>
-        {onScoutAI && (
-          <button
-            onClick={() => onScoutAI(player)}
-            className="text-indigo-400 hover:text-indigo-300 hover:bg-indigo-400/10 p-2 rounded-lg transition-colors mr-1 cursor-pointer"
-            title="⚡ AI Scouting Report & Game Plan"
-          >
-            <Sparkles className="w-4 h-4" />
-          </button>
-        )}
         <button
           onClick={() => onTagPlayer && onTagPlayer(player)}
           className="text-gray-500 hover:text-yellow-400 hover:bg-yellow-400/10 p-2 rounded-lg transition-colors mr-1"
@@ -1286,8 +1264,6 @@ export function PlayerScreen({
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
   const [renamingGroup, setRenamingGroup] = useState<string | null>(null);
   const [newGroupName, setNewGroupName] = useState("");
-  const [isAIModalOpen, setIsAIModalOpen] = useState(false);
-  const [selectedAIPlayer, setSelectedAIPlayer] = useState<SavedPlayer | null>(null);
 
   const handleRenameGroup = async (oldName: string, newName: string) => {
     if (!newName.trim() || newName === oldName) {
@@ -1936,10 +1912,6 @@ export function PlayerScreen({
                           setHistoryPlayerFilter(name);
                           setShowHistory(true);
                         }}
-                        onScoutAI={(p) => {
-                          setSelectedAIPlayer(p);
-                          setIsAIModalOpen(true);
-                        }}
                         previousPlayerData={
                           yesterdaySnapshot 
                             ? (activeTab === 'TA' ? yesterdaySnapshot.taPlayers : yesterdaySnapshot.hktaPlayers)?.find((p: any) => p.name === player.name) 
@@ -2161,15 +2133,6 @@ export function PlayerScreen({
           allGroups={allGroups}
           onClose={() => setTaggingPlayer(null)}
           onUpdateGroups={handleUpdateGroups}
-        />
-      )}
-
-      {isAIModalOpen && (
-        <AIAssistantModal
-          isOpen={isAIModalOpen}
-          onClose={() => setIsAIModalOpen(false)}
-          selectedPlayer={selectedAIPlayer}
-          initialTab="scout"
         />
       )}
     </div>

@@ -690,8 +690,8 @@ async function startServer() {
   app.get("/api/cron/scrape-tournaments", requireCronSecret, handleScrapeTournaments);
   app.post("/api/cron/scrape-tournaments", requireCronSecret, handleScrapeTournaments);
 
-  // 2. Player Stats & Draws Refresh (Target: 8 AM, 12 PM, 4 PM, 8 PM HKT daily)
-  // Cloud Scheduler Schedule: 0 8,12,16,20 * * * (Timezone: Asia/Hong_Kong)
+  // 2. Player Stats & Draws Refresh (Target: 4:30 PM HKT daily)
+  // Cloud Scheduler Schedule: 30 16 * * * (Timezone: Asia/Hong_Kong)
   const handleGlobalRefresh = async (req: any, res: any) => {
     if (isGlobalRefreshing) {
       return res.status(400).json({ error: "Global refresh already in progress" });

@@ -1,8 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Trophy, Calendar, MapPin, Users, ChevronDown, ChevronUp, CalendarPlus, RefreshCw, Layers, Trash2, ExternalLink, Clock, ArrowUpDown, Sparkles, Search, X } from 'lucide-react';
+import { Trophy, Calendar, MapPin, Users, ChevronDown, ChevronUp, CalendarPlus, RefreshCw, Layers, Trash2, ExternalLink, Clock, ArrowUpDown, Search, X } from 'lucide-react';
 import { getGoogleCalendarLink, parseAnyDateToDate, getDeadlineDaysLeft, parseDrawAndTournamentName, cleanDisplayDrawName, isPlayerMatch } from '../services/tournamentService';
 import { Tournament } from '../types';
-import { AIAssistantModal } from './AIAssistantModal';
 
 function normalizeUrl(urlStr: string): string {
   if (!urlStr) return '';
@@ -252,44 +251,44 @@ function TournamentSavedDrawItem({ draw, onRefresh, onDelete }: TournamentSavedD
     }`}>
       {/* Header */}
       <div 
-        className={`p-4 flex items-center justify-between cursor-pointer transition-colors ${
+        className={`p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer transition-colors ${
           hasJordan ? "hover:bg-yellow-500/10" : "hover:bg-gray-800/20"
         }`}
         onClick={() => setExpanded(!expanded)}
       >
-        <div className="flex items-center gap-3">
-          <div className="text-gray-400">
+        <div className="flex items-start sm:items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
+          <div className="text-gray-400 shrink-0 mt-0.5 sm:mt-0">
             {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </div>
-          <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <h4 className={`text-sm font-semibold ${hasJordan ? "text-yellow-400 font-bold" : "text-white"}`}>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+              <h4 className={`text-sm sm:text-base font-semibold break-words ${hasJordan ? "text-yellow-400 font-bold" : "text-white"}`}>
                 {draw.name}
               </h4>
               {drawDate && (
-                <span className="inline-flex items-center gap-1 text-[11px] font-semibold bg-gray-800 text-blue-300 border border-gray-700 px-2 py-0.5 rounded-lg whitespace-nowrap">
-                  <Calendar className="w-3 h-3 text-blue-400" />
+                <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-semibold bg-gray-800 text-blue-300 border border-gray-700 px-2 py-0.5 rounded-lg whitespace-nowrap">
+                  <Calendar className="w-3 h-3 text-blue-400 shrink-0" />
                   {drawDate}
                 </span>
               )}
               {hasJordan && (
-                <span className="inline-flex items-center gap-1 text-[9px] font-extrabold bg-yellow-500/25 text-yellow-400 border border-yellow-500/40 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-extrabold bg-yellow-500/25 text-yellow-400 border border-yellow-500/40 px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0">
                   JORDAN JOINED
                 </span>
               )}
             </div>
             
-            <div className="flex items-center gap-3 mt-1 text-xs">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-xs">
               <a 
                 href={displayUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-400 hover:underline inline-flex items-center gap-1 font-medium"
+                className="text-xs text-blue-400 hover:underline inline-flex items-center gap-1 font-medium shrink-0"
                 onClick={(e) => e.stopPropagation()}
               >
                 View Original Draw <ExternalLink className="w-3 h-3" />
               </a>
-              <span className="text-gray-500 flex items-center gap-1">
+              <span className="text-gray-500 flex items-center gap-1 text-[10px] font-medium shrink-0">
                 <Clock className="w-3.5 h-3.5" />
                 Updated: {new Date(draw.lastUpdated || draw.created_at || Date.now()).toLocaleDateString()}
               </span>
@@ -298,25 +297,29 @@ function TournamentSavedDrawItem({ draw, onRefresh, onDelete }: TournamentSavedD
         </div>
 
         {/* Header Actions */}
-        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+        <div 
+          className="flex items-center justify-end gap-1.5 sm:gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-800/60 shrink-0" 
+          onClick={(e) => e.stopPropagation()}
+        >
           <button
             onClick={handleRefresh}
             disabled={isRefreshing || showConfirmDelete}
-            className="p-1.5 text-gray-500 hover:text-blue-400 hover:bg-blue-400/10 rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
+            className="p-2 text-gray-400 hover:text-blue-400 bg-gray-850 hover:bg-blue-400/10 border border-gray-800 rounded-lg transition-colors disabled:opacity-50 cursor-pointer flex items-center gap-1 text-xs"
             title="Refresh draw data"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin text-blue-400" : ""}`} />
+            <span className="inline sm:hidden text-[11px] text-gray-400">Refresh</span>
           </button>
           
           {showConfirmDelete ? (
-            <div className="flex items-center gap-1 bg-gray-950 p-1 rounded border border-red-500/30">
+            <div className="flex items-center gap-1 bg-gray-950 p-1 rounded-lg border border-red-500/40 shadow-sm">
               <button
                 onClick={async (e) => {
                   e.stopPropagation();
                   await onDelete(draw.id);
                   setShowConfirmDelete(false);
                 }}
-                className="px-1.5 py-0.5 text-[9px] font-bold bg-red-600 hover:bg-red-500 text-white rounded transition-colors uppercase cursor-pointer"
+                className="px-2.5 py-1.5 text-[11px] font-bold bg-red-600 hover:bg-red-500 text-white rounded transition-colors uppercase cursor-pointer"
               >
                 Delete?
               </button>
@@ -325,7 +328,7 @@ function TournamentSavedDrawItem({ draw, onRefresh, onDelete }: TournamentSavedD
                   e.stopPropagation();
                   setShowConfirmDelete(false);
                 }}
-                className="px-1.5 py-0.5 text-[9px] font-medium text-gray-400 hover:text-gray-200 hover:bg-gray-800 rounded transition-all cursor-pointer"
+                className="px-2 py-1.5 text-[11px] font-medium text-gray-400 hover:text-gray-200 hover:bg-gray-800 rounded transition-all cursor-pointer"
               >
                 Cancel
               </button>
@@ -336,10 +339,11 @@ function TournamentSavedDrawItem({ draw, onRefresh, onDelete }: TournamentSavedD
                 e.stopPropagation();
                 setShowConfirmDelete(true);
               }}
-              className="p-1.5 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors cursor-pointer"
+              className="p-2 text-red-400/90 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-lg transition-colors cursor-pointer flex items-center gap-1 text-xs font-medium"
               title="Delete saved draw"
             >
               <Trash2 className="w-3.5 h-3.5" />
+              <span className="inline sm:hidden text-[11px]">Delete</span>
             </button>
           )}
         </div>
@@ -1062,7 +1066,6 @@ export function TournamentScreen({
   const [notJoinedFilter, setNotJoinedFilter] = useState(false);
   const [completedExpanded, setCompletedExpanded] = useState(false);
   const [isGlobalRefreshing, setIsGlobalRefreshing] = useState(false);
-  const [isAIModalOpen, setIsAIModalOpen] = useState(false);
 
   // Sync with parent cache
   useEffect(() => {
@@ -1508,14 +1511,6 @@ export function TournamentScreen({
               <RefreshCw className={`w-3.5 h-3.5 ${isGlobalRefreshing ? 'animate-spin text-green-400' : ''}`} />
               {isGlobalRefreshing ? 'Refreshing All...' : 'Refresh All'}
             </button>
-            <button
-              onClick={() => setIsAIModalOpen(true)}
-              className="p-1.5 rounded-lg border border-indigo-700/60 bg-gradient-to-r from-blue-600/20 to-indigo-600/20 hover:from-blue-600/30 hover:to-indigo-600/30 text-blue-300 hover:text-white transition-all flex items-center gap-1.5 text-xs font-bold shadow-sm"
-              title="AI Schedule Optimizer & Tennis Copilot"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-blue-400" />
-              ⚡ AI Schedule Optimizer
-            </button>
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
@@ -1599,15 +1594,6 @@ export function TournamentScreen({
 
       {activeTab === 'HK' && renderTournamentList(hkTournaments)}
       {activeTab === 'AUS' && renderTournamentList(ausTournaments)}
-
-      {isAIModalOpen && (
-        <AIAssistantModal
-          isOpen={isAIModalOpen}
-          onClose={() => setIsAIModalOpen(false)}
-          tournaments={tournaments.map(t => t.tournament)}
-          initialTab="optimizer"
-        />
-      )}
     </div>
   );
 }
