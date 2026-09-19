@@ -4410,9 +4410,13 @@ async function startServer() {
     });
   });
 
-  // ==========================================
-  // GEMINI AI INTEGRATION (gemini-3.7-flash)
-  // ==========================================
+  // =========================================================================
+  // GEMINI AI INTEGRATION (gemini-3.1-flash-lite: Ultra-Efficient & Low-Cost)
+  // =========================================================================
+  // gemini-3.1-flash-lite offers maximum speed, lowest token pricing, and
+  // eliminates reasoning token overhead when configured with ThinkingLevel.MINIMAL.
+  const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.1-flash-lite";
+
   let geminiClient: GoogleGenAI | null = null;
   function getGemini(): GoogleGenAI {
     if (!geminiClient) {
@@ -4428,33 +4432,85 @@ async function startServer() {
     return geminiClient;
   }
 
+  // In-Memory AI Cache: Eliminates duplicate API requests and cuts billing costs to 0 on repeats
+  interface AICacheItem {
+    data: any;
+    timestamp: number;
+  }
+  const aiMemoryCache = new Map<string, AICacheItem>();
+  const AI_CACHE_TTL_MS = 2 * 60 * 60 * 1000; // 2 hours
+
+  function getFromAICache(key: string): any | null {
+    const item = aiMemoryCache.get(key);
+    if (!item) return null;
+    if (Date.now() - item.timestamp > AI_CACHE_TTL_MS) {
+      aiMemoryCache.delete(key);
+      return null;
+    }
+    return item.data;
+  }
+
+  function saveToAICache(key: string, data: any) {
+    if (aiMemoryCache.size > 300) {
+      const oldest = aiMemoryCache.keys().next().value;
+      if (oldest) aiMemoryCache.delete(oldest);
+    }
+    aiMemoryCache.set(key, { data, timestamp: Date.now() });
+  }
+
   // 1. AI Player Scouting & Match Analysis
   app.post("/api/ai/scout-player", async (req, res) => {
     try {
-      const { playerName, playerDetails, opponentName, tournamentName } = req.body;
+      const { playerName, playerDetails, opponentName, tournamentName, forceRefresh } = req.body;
       if (!playerName) {
         return res.status(400).json({ error: "playerName is required" });
       }
 
-      const prompt = `You are an elite tennis performance coach & tactical analyst.
-Analyze the player "${playerName}" with the following data:
-Details/Stats: ${JSON.stringify(playerDetails || {})}
-${opponentName ? `Upcoming/Potential Opponent: ${opponentName}` : ''}
+      const pKey = (playerName || '').toLowerCase().trim();
+      const oKey = (opponentName || '').toLowerCase().trim();
+      const tKey = (tournamentName || '').toLowerCase().trim();
+      const cacheKey = `scout:${pKey}:${oKey}:${tKey}`;
+
+      if (!forceRefresh) {
+        const cached = getFromAICache(cacheKey);
+        if (cached) {
+          return res.json({ success: true, report: cached, cached: true });
+        }
+      }
+
+      // Compact payload: extract only essential stats to minimize input token cost
+      const compactStats: Record<string, any> = {
+        name: playerName,
+        rating: playerDetails?.singlesRating || playerDetails?.rating || playerDetails?.utr || 'N/A',
+        ageGroup: playerDetails?.ageGroup || playerDetails?.category || '',
+        source: playerDetails?.source || ''
+      };
+      if (Array.isArray(playerDetails?.recentMatches) && playerDetails.recentMatches.length > 0) {
+        compactStats.recentMatches = playerDetails.recentMatches.slice(0, 4).map((m: any) => ({
+          vs: m.opponentName || m.opponent || 'Opponent',
+          res: m.result || '',
+          score: m.score || ''
+        }));
+      }
+
+      const prompt = `You are an elite tennis coach. Provide a concise, high-efficiency scouting report for "${playerName}".
+Player Stats: ${JSON.stringify(compactStats)}
+${opponentName ? `Opponent: ${opponentName}` : ''}
 ${tournamentName ? `Tournament: ${tournamentName}` : ''}
 
-Provide a concise, high-efficiency scouting report with:
-1. summary: A crisp 2-3 sentence executive summary of the player's form, ranking/UTRs/level, and match tempo.
-2. strengths: Exactly 3 to 4 specific tactical/technical strengths (e.g. "Forehand crosscourt depth", "Second serve placement under pressure").
-3. tactics: Exactly 3 to 4 actionable game plan directives / match tactics.
-4. recentFormAnalysis: A focused breakdown of recent match momentum and win/loss patterns.
-5. keyMatchups: Specific head-to-head or stylistic keys (especially if opponent is provided).`;
+Output JSON with:
+1. summary: Crisp 2-sentence performance summary.
+2. strengths: Exactly 3 tactical strengths.
+3. tactics: Exactly 3 actionable game plan tactics.
+4. recentFormAnalysis: 1-2 sentences on recent match momentum.
+5. keyMatchups: 1 sentence on matchup keys.`;
 
       const ai = getGemini();
       const response = await ai.models.generateContent({
-        model: "gemini-3.7-flash",
+        model: GEMINI_MODEL,
         contents: prompt,
         config: {
-          thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
+          thinkingConfig: { thinkingLevel: ThinkingLevel.MINIMAL },
           responseMimeType: "application/json",
           responseSchema: {
             type: Type.OBJECT,
@@ -4471,10 +4527,10 @@ Provide a concise, high-efficiency scouting report with:
       });
 
       const parsed = JSON.parse(response.text?.trim() || "{}");
-      res.json({ success: true, report: parsed });
+      saveToAICache(cacheKey, parsed);
+      res.json({ success: true, report: parsed, cached: false });
     } catch (err: any) {
       console.error("[Gemini AI] scout-player error:", err.message || err);
-      // Graceful fallback response
       res.json({
         success: true,
         report: {
@@ -4483,7 +4539,8 @@ Provide a concise, high-efficiency scouting report with:
           tactics: ["Target high percentage crosscourt rally balls", "Attack early on short second serves", "Maintain depth to neutralize aggressive opponents"],
           recentFormAnalysis: "Consistent participation and match play across recent regional tournaments.",
           keyMatchups: "Focus on establishing rhythm early in the first set."
-        }
+        },
+        cached: false
       });
     }
   });
@@ -4491,25 +4548,45 @@ Provide a concise, high-efficiency scouting report with:
   // 2. AI Draw & Bracket Tactical Breakdown
   app.post("/api/ai/analyze-draw", async (req, res) => {
     try {
-      const { drawName, tournamentName, matches, playerName } = req.body;
-      
-      const prompt = `You are a Grand Slam caliber tennis draw analyst.
-Analyze the tournament draw "${drawName || 'Tournament Draw'}" for ${tournamentName || 'Tennis Event'}.
-${playerName ? `Focus Player: "${playerName}"` : ''}
-Bracket Data Summary: ${JSON.stringify((matches || []).slice(0, 30))}
+      const { drawName, tournamentName, matches, playerName, forceRefresh } = req.body;
+      const dKey = (drawName || '').toLowerCase().trim();
+      const tKey = (tournamentName || '').toLowerCase().trim();
+      const pKey = (playerName || '').toLowerCase().trim();
+      const cacheKey = `draw:${dKey}:${tKey}:${pKey}`;
 
-Provide an efficient, tactical draw breakdown:
-1. bracketOverview: Summary of draw strength, seed distribution, and overall path difficulty.
-2. potentialRoadmap: 3 to 4 sequential steps describing the projected route through the rounds.
-3. dangerousFloaters: 2 to 3 notable opponents or dangerous unseeded players in the draw.
-4. tacticalAdvice: 3 clear advice points for physical & mental match preparation.`;
+      if (!forceRefresh) {
+        const cached = getFromAICache(cacheKey);
+        if (cached) {
+          return res.json({ success: true, report: cached, cached: true });
+        }
+      }
+
+      // Compact match array: keep only name, seed, rating for up to 16 players
+      const compactBracket = (matches || []).slice(0, 16).map((m: any) => {
+        if (typeof m === 'string') return m;
+        return {
+          name: m.name || m.playerName || '',
+          seed: m.seed || undefined,
+          rating: m.rating || m.utr || undefined
+        };
+      });
+
+      const prompt = `You are a tennis draw analyst. Analyze draw "${drawName || 'Draw'}" for "${tournamentName || 'Event'}".
+${playerName ? `Focus Player: "${playerName}"` : ''}
+Key Bracket Players: ${JSON.stringify(compactBracket)}
+
+Output JSON:
+1. bracketOverview: Summary of draw strength and seed distribution (2 sentences).
+2. potentialRoadmap: Exactly 3 sequential round steps.
+3. dangerousFloaters: 2 unseeded or dangerous contenders.
+4. tacticalAdvice: Exactly 3 concise preparation points.`;
 
       const ai = getGemini();
       const response = await ai.models.generateContent({
-        model: "gemini-3.7-flash",
+        model: GEMINI_MODEL,
         contents: prompt,
         config: {
-          thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
+          thinkingConfig: { thinkingLevel: ThinkingLevel.MINIMAL },
           responseMimeType: "application/json",
           responseSchema: {
             type: Type.OBJECT,
@@ -4525,7 +4602,8 @@ Provide an efficient, tactical draw breakdown:
       });
 
       const parsed = JSON.parse(response.text?.trim() || "{}");
-      res.json({ success: true, report: parsed });
+      saveToAICache(cacheKey, parsed);
+      res.json({ success: true, report: parsed, cached: false });
     } catch (err: any) {
       console.error("[Gemini AI] analyze-draw error:", err.message || err);
       res.json({
@@ -4543,7 +4621,8 @@ Provide an efficient, tactical draw breakdown:
             "Focus on first serve percentage to prevent opponent break chances",
             "Control the center of the court with depth and variation"
           ]
-        }
+        },
+        cached: false
       });
     }
   });
@@ -4551,33 +4630,44 @@ Provide an efficient, tactical draw breakdown:
   // 3. AI Schedule Optimizer & Conflict Resolver
   app.post("/api/ai/optimize-schedule", async (req, res) => {
     try {
-      const { tournaments, preferences } = req.body;
-      const tList = (tournaments || []).slice(0, 40).map((t: any) => ({
+      const { tournaments, preferences, forceRefresh } = req.body;
+      const prefRegion = preferences?.preferredRegion || 'ALL';
+      const cacheKey = `opt:${(tournaments || []).slice(0, 10).map((t: any) => t.name).join('|')}:${prefRegion}`;
+
+      if (!forceRefresh) {
+        const cached = getFromAICache(cacheKey);
+        if (cached) {
+          return res.json({ success: true, report: cached, cached: true });
+        }
+      }
+
+      // Compact tournament list: only send up to 15 relevant tournaments with minimal fields
+      const tList = (tournaments || []).slice(0, 15).map((t: any) => ({
         name: t.name,
         dates: t.dates,
         location: t.location,
         source: t.source,
         ageGroup: t.ageGroup,
-        closingDeadline: t.closingDeadline
+        deadline: t.closingDeadline
       }));
 
-      const prompt = `You are a high-performance junior tennis calendar & scheduling director.
-Evaluate the following list of tournaments:
+      const prompt = `You are a junior tennis schedule coordinator.
+Evaluate tournaments:
 ${JSON.stringify(tList)}
-User Preferences: ${JSON.stringify(preferences || {})}
+Preferences: ${JSON.stringify(preferences || {})}
 
-Generate an optimized schedule recommendation:
-1. optimalPlan: List of 4-6 recommended tournaments to enter based on logical sequencing, minimal travel friction, and competitive level.
-2. clashesDetected: List of detected overlapping dates or tight multi-region travel clashes (e.g. HK vs AUS or back-to-back weekends).
-3. deadlineAlerts: Tournaments with upcoming entry deadlines that require immediate attention.
-4. recommendations: 3 strategic scheduling rules (e.g. tournament blocks, rest weeks, lead-up events).`;
+Output JSON:
+1. optimalPlan: 4 concise tournament recommendations.
+2. clashesDetected: List of objects with { tournaments: [string, string], reason: string } for overlapping dates.
+3. deadlineAlerts: 2-3 tournaments with urgent entry deadlines.
+4. recommendations: 3 scheduling rules.`;
 
       const ai = getGemini();
       const response = await ai.models.generateContent({
-        model: "gemini-3.7-flash",
+        model: GEMINI_MODEL,
         contents: prompt,
         config: {
-          thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
+          thinkingConfig: { thinkingLevel: ThinkingLevel.MINIMAL },
           responseMimeType: "application/json",
           responseSchema: {
             type: Type.OBJECT,
@@ -4603,7 +4693,8 @@ Generate an optimized schedule recommendation:
       });
 
       const parsed = JSON.parse(response.text?.trim() || "{}");
-      res.json({ success: true, report: parsed });
+      saveToAICache(cacheKey, parsed);
+      res.json({ success: true, report: parsed, cached: false });
     } catch (err: any) {
       console.error("[Gemini AI] optimize-schedule error:", err.message || err);
       res.json({
@@ -4617,7 +4708,8 @@ Generate an optimized schedule recommendation:
             "Schedule a dedicated recovery & technical training week following intense tournament blocks.",
             "Confirm court surface compatibility ahead of time."
           ]
-        }
+        },
+        cached: false
       });
     }
   });
@@ -4625,35 +4717,50 @@ Generate an optimized schedule recommendation:
   // 4. AI Tennis Assistant Natural Language Queries
   app.post("/api/ai/chat", async (req, res) => {
     try {
-      const { message, context } = req.body;
+      const { message, context, forceRefresh } = req.body;
       if (!message) {
         return res.status(400).json({ error: "message is required" });
       }
 
-      const prompt = `You are the intelligent tennis assistant for the JC Tournament Planner app (tracking junior tennis tournaments and players in Hong Kong and Australia).
+      const cacheKey = `chat:${message.toLowerCase().trim()}`;
+      if (!forceRefresh) {
+        const cached = getFromAICache(cacheKey);
+        if (cached) {
+          return res.json({ success: true, reply: cached, cached: true });
+        }
+      }
+
+      // Compact context to avoid large token payloads
+      const compactContext = {
+        tournamentsCount: context?.tournamentsCount || 0,
+        sampleTournaments: (context?.sampleTournaments || []).slice(0, 6)
+      };
+
+      const prompt = `You are the AI tennis assistant for JC Tournament Planner (junior tennis in HK and Australia).
 User Query: "${message}"
+Context: ${JSON.stringify(compactContext)}
 
-Current App Context Summary:
-${JSON.stringify(context || {})}
-
-Provide a concise, direct, helpful tennis response formatted with clear Markdown. Be specific, actionable, and friendly.`;
+Provide a direct, concise, friendly tennis response in Markdown (under 150 words).`;
 
       const ai = getGemini();
       const response = await ai.models.generateContent({
-        model: "gemini-3.7-flash",
+        model: GEMINI_MODEL,
         contents: prompt,
         config: {
-          thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
-          systemInstruction: "You are the smart AI assistant for JC Tournament Planner. Provide quick, accurate tennis scheduling, draw analysis, and player scouting answers."
+          thinkingConfig: { thinkingLevel: ThinkingLevel.MINIMAL },
+          systemInstruction: "You are the concise, high-speed tennis assistant for JC Tournament Planner. Answer accurately without unnecessary fluff."
         }
       });
 
-      res.json({ success: true, reply: response.text || "I am ready to help you plan tournaments, scout opponents, and analyze draw brackets." });
+      const reply = response.text || "I am ready to help you plan tournaments, scout opponents, and analyze draw brackets.";
+      saveToAICache(cacheKey, reply);
+      res.json({ success: true, reply, cached: false });
     } catch (err: any) {
       console.error("[Gemini AI] chat error:", err.message || err);
       res.json({
         success: true,
-        reply: "I am ready to help you plan tournaments, scout opponents, and analyze draw brackets. Ask me about upcoming tournament deadlines, player matchups, or schedule optimization!"
+        reply: "I am ready to help you plan tournaments, scout opponents, and analyze draw brackets. Ask me about upcoming tournament deadlines, player matchups, or schedule optimization!",
+        cached: false
       });
     }
   });

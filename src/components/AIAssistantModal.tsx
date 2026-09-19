@@ -15,7 +15,9 @@ import {
   Trophy,
   Flame,
   Lightbulb,
-  ArrowRight
+  ArrowRight,
+  RefreshCw,
+  Zap
 } from 'lucide-react';
 import { PlayerScoutReport, DrawAnalysisReport, ScheduleOptimizationReport, Tournament } from '../types';
 
@@ -42,7 +44,7 @@ export function AIAssistantModal({
   const [chatMessages, setChatMessages] = useState<Array<{ role: 'user' | 'assistant'; text: string; time: string }>>([
     {
       role: 'assistant',
-      text: 'Hello! I am your AI Tennis Assistant powered by Gemini 3.7. Ask me about upcoming tournaments, schedule planning, opponent scouting, or draw strategies!',
+      text: 'Hello! I am your AI Tennis Assistant powered by Gemini 3.1 Flash Lite. Ask me about upcoming tournaments, schedule planning, opponent scouting, or draw strategies!',
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
   ]);
@@ -52,39 +54,54 @@ export function AIAssistantModal({
   // Optimizer state
   const [optimizerReport, setOptimizerReport] = useState<ScheduleOptimizationReport | null>(null);
   const [isOptimizing, setIsOptimizing] = useState(false);
+  const [isOptimizerCached, setIsOptimizerCached] = useState(false);
 
   // Scout state
   const [scoutReport, setScoutReport] = useState<PlayerScoutReport | null>(null);
   const [isScouting, setIsScouting] = useState(false);
+  const [isScoutCached, setIsScoutCached] = useState(false);
   const [scoutPlayerName, setScoutPlayerName] = useState(selectedPlayer?.name || 'Jordan Chiu');
   const [scoutOpponent, setScoutOpponent] = useState('');
 
   // Draw analysis state
   const [drawReport, setDrawReport] = useState<DrawAnalysisReport | null>(null);
   const [isAnalyzingDraw, setIsAnalyzingDraw] = useState(false);
+  const [isDrawCached, setIsDrawCached] = useState(false);
   const [drawNameInput, setDrawNameInput] = useState(selectedDraw?.name || '');
 
   if (!isOpen) return null;
 
-  // Run Schedule Optimizer
-  const handleOptimizeSchedule = async () => {
+  // Run Schedule Optimizer with compacted payload to minimize token cost
+  const handleOptimizeSchedule = async (forceRefresh = false) => {
     setIsOptimizing(true);
     try {
+      // Send only the top 15 upcoming tournaments with essential scalar fields
+      const compactTournaments = tournaments.slice(0, 15).map(t => ({
+        name: t.name,
+        dates: t.dates,
+        location: t.location,
+        source: t.source,
+        closingDeadline: t.closingDeadline,
+        ageGroup: t.ageGroup
+      }));
+
       const res = await fetch('/api/ai/optimize-schedule', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          tournaments,
+          tournaments: compactTournaments,
           preferences: {
             preferredRegion: 'ALL',
             maxTournamentsPerMonth: 3,
             avoidClashes: true
-          }
+          },
+          forceRefresh
         })
       });
       const data = await res.json();
       if (data.report) {
         setOptimizerReport(data.report);
+        setIsOptimizerCached(!!data.cached);
       }
     } catch (err) {
       console.error('Failed to optimize schedule:', err);
@@ -93,22 +110,31 @@ export function AIAssistantModal({
     }
   };
 
-  // Run Player Scout
-  const handleScoutPlayer = async (playerName: string = scoutPlayerName, opponent: string = scoutOpponent) => {
+  // Run Player Scout with trimmed details
+  const handleScoutPlayer = async (playerName: string = scoutPlayerName, opponent: string = scoutOpponent, forceRefresh = false) => {
     setIsScouting(true);
     try {
+      const compactPlayerDetails = selectedPlayer ? {
+        name: selectedPlayer.name,
+        singlesRating: selectedPlayer.singlesRating || selectedPlayer.rating || selectedPlayer.utr,
+        ageGroup: selectedPlayer.ageGroup,
+        source: selectedPlayer.source
+      } : {};
+
       const res = await fetch('/api/ai/scout-player', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           playerName: playerName || 'Player',
-          playerDetails: selectedPlayer || {},
-          opponentName: opponent || undefined
+          playerDetails: compactPlayerDetails,
+          opponentName: opponent || undefined,
+          forceRefresh
         })
       });
       const data = await res.json();
       if (data.report) {
         setScoutReport(data.report);
+        setIsScoutCached(!!data.cached);
       }
     } catch (err) {
       console.error('Failed to scout player:', err);
@@ -117,22 +143,30 @@ export function AIAssistantModal({
     }
   };
 
-  // Run Draw Analysis
-  const handleAnalyzeDraw = async () => {
+  // Run Draw Analysis with compact bracket array
+  const handleAnalyzeDraw = async (forceRefresh = false) => {
     setIsAnalyzingDraw(true);
     try {
+      const compactMatches = (selectedDraw?.players || []).slice(0, 16).map((p: any) => ({
+        name: p.name || p.playerName || '',
+        seed: p.seed,
+        rating: p.rating || p.utr
+      }));
+
       const res = await fetch('/api/ai/analyze-draw', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           drawName: drawNameInput || selectedDraw?.name || 'Tournament Draw',
-          matches: selectedDraw?.players || [],
-          playerName: 'Jordan Chiu'
+          matches: compactMatches,
+          playerName: 'Jordan Chiu',
+          forceRefresh
         })
       });
       const data = await res.json();
       if (data.report) {
         setDrawReport(data.report);
+        setIsDrawCached(!!data.cached);
       }
     } catch (err) {
       console.error('Failed to analyze draw:', err);
@@ -141,7 +175,7 @@ export function AIAssistantModal({
     }
   };
 
-  // Run Chat
+  // Run Chat with concise context
   const handleSendMessage = async () => {
     const text = inputQuery.trim();
     if (!text || isChatLoading) return;
@@ -164,7 +198,7 @@ export function AIAssistantModal({
           message: text,
           context: {
             tournamentsCount: tournaments.length,
-            sampleTournaments: tournaments.slice(0, 15).map(t => ({ name: t.name, dates: t.dates, location: t.location, source: t.source }))
+            sampleTournaments: tournaments.slice(0, 6).map(t => ({ name: t.name, dates: t.dates, location: t.location, source: t.source }))
           }
         })
       });
@@ -206,12 +240,13 @@ export function AIAssistantModal({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-base font-bold text-white tracking-wide">Gemini 3.7 Tennis Intelligence</h3>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30">
-                  AI Engine
+                <h3 className="text-base font-bold text-white tracking-wide">Gemini 3.1 Flash Lite Tennis Intelligence</h3>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                  <Zap className="w-2.5 h-2.5 text-emerald-400" />
+                  Ultra Low Cost AI
                 </span>
               </div>
-              <p className="text-xs text-gray-400">High-efficiency scheduling optimizer, scouting reports, and tactical assistant</p>
+              <p className="text-xs text-gray-400">Ultra-efficient Gemini 3.1 Flash Lite engine with smart caching to minimize API costs</p>
             </div>
           </div>
           <button
@@ -286,7 +321,7 @@ export function AIAssistantModal({
                   </p>
                 </div>
                 <button
-                  onClick={handleOptimizeSchedule}
+                  onClick={() => handleOptimizeSchedule(false)}
                   disabled={isOptimizing}
                   className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-600/30 disabled:opacity-50 whitespace-nowrap"
                 >
@@ -306,6 +341,26 @@ export function AIAssistantModal({
 
               {optimizerReport && (
                 <div className="space-y-4 animate-fade-in">
+                  <div className="flex items-center justify-between px-1">
+                    <span className="text-xs text-gray-400 font-medium">Optimization Plan</span>
+                    <div className="flex items-center gap-2">
+                      {isOptimizerCached && (
+                        <span className="flex items-center gap-1 text-[10px] font-medium text-emerald-400 bg-emerald-950/50 border border-emerald-800/50 px-2.5 py-0.5 rounded-full">
+                          <Zap className="w-3 h-3 text-emerald-400" />
+                          Cached (0 API Cost)
+                        </span>
+                      )}
+                      <button
+                        onClick={() => handleOptimizeSchedule(true)}
+                        disabled={isOptimizing}
+                        className="flex items-center gap-1.5 text-[11px] text-gray-400 hover:text-white px-2.5 py-1 rounded-lg bg-gray-900 border border-gray-800 hover:bg-gray-800 transition-colors disabled:opacity-50"
+                        title="Re-run fresh AI plan"
+                      >
+                        <RefreshCw className={`w-3 h-3 ${isOptimizing ? 'animate-spin' : ''}`} />
+                        Re-analyze
+                      </button>
+                    </div>
+                  </div>
                   {/* Optimal Plan */}
                   <div className="bg-gray-950/60 border border-gray-800 rounded-xl p-5 space-y-3">
                     <h5 className="text-xs font-bold text-blue-400 uppercase tracking-wider flex items-center gap-2">
@@ -432,6 +487,26 @@ export function AIAssistantModal({
 
               {scoutReport && (
                 <div className="space-y-4 animate-fade-in">
+                  <div className="flex items-center justify-between px-1">
+                    <span className="text-xs text-gray-400 font-medium">Scouting Dossier: {scoutPlayerName}</span>
+                    <div className="flex items-center gap-2">
+                      {isScoutCached && (
+                        <span className="flex items-center gap-1 text-[10px] font-medium text-emerald-400 bg-emerald-950/50 border border-emerald-800/50 px-2.5 py-0.5 rounded-full">
+                          <Zap className="w-3 h-3 text-emerald-400" />
+                          Cached (0 API Cost)
+                        </span>
+                      )}
+                      <button
+                        onClick={() => handleScoutPlayer(scoutPlayerName, scoutOpponent, true)}
+                        disabled={isScouting}
+                        className="flex items-center gap-1.5 text-[11px] text-gray-400 hover:text-white px-2.5 py-1 rounded-lg bg-gray-900 border border-gray-800 hover:bg-gray-800 transition-colors disabled:opacity-50"
+                        title="Re-run fresh AI scouting report"
+                      >
+                        <RefreshCw className={`w-3 h-3 ${isScouting ? 'animate-spin' : ''}`} />
+                        Re-scout
+                      </button>
+                    </div>
+                  </div>
                   {/* Executive Summary */}
                   <div className="bg-gray-950/60 border border-gray-800 rounded-xl p-5 space-y-2">
                     <h5 className="text-xs font-bold text-blue-400 uppercase tracking-wider flex items-center gap-2">
@@ -504,7 +579,7 @@ export function AIAssistantModal({
                 </div>
                 <div className="flex justify-end">
                   <button
-                    onClick={handleAnalyzeDraw}
+                    onClick={() => handleAnalyzeDraw(false)}
                     disabled={isAnalyzingDraw}
                     className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all flex items-center gap-2 shadow-lg shadow-blue-600/30 disabled:opacity-50"
                   >
@@ -525,6 +600,26 @@ export function AIAssistantModal({
 
               {drawReport && (
                 <div className="space-y-4 animate-fade-in">
+                  <div className="flex items-center justify-between px-1">
+                    <span className="text-xs text-gray-400 font-medium">Draw Bracket Analysis</span>
+                    <div className="flex items-center gap-2">
+                      {isDrawCached && (
+                        <span className="flex items-center gap-1 text-[10px] font-medium text-emerald-400 bg-emerald-950/50 border border-emerald-800/50 px-2.5 py-0.5 rounded-full">
+                          <Zap className="w-3 h-3 text-emerald-400" />
+                          Cached (0 API Cost)
+                        </span>
+                      )}
+                      <button
+                        onClick={() => handleAnalyzeDraw(true)}
+                        disabled={isAnalyzingDraw}
+                        className="flex items-center gap-1.5 text-[11px] text-gray-400 hover:text-white px-2.5 py-1 rounded-lg bg-gray-900 border border-gray-800 hover:bg-gray-800 transition-colors disabled:opacity-50"
+                        title="Re-run fresh AI draw analysis"
+                      >
+                        <RefreshCw className={`w-3 h-3 ${isAnalyzingDraw ? 'animate-spin' : ''}`} />
+                        Re-analyze
+                      </button>
+                    </div>
+                  </div>
                   <div className="bg-gray-950/60 border border-gray-800 rounded-xl p-5 space-y-2">
                     <h5 className="text-xs font-bold text-blue-400 uppercase tracking-wider flex items-center gap-2">
                       <Trophy className="w-4 h-4 text-blue-400" />
