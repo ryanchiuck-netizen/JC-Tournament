@@ -143,16 +143,82 @@ async function startServer() {
   app.use(cookieParser());
   app.use(express.json());
 
-  // Initialize Supabase Client
+  // Initialize Supabase Client with error handling and request timeouts for large queries
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
-  const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
+  const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+    db: {
+      schema: "public",
+    },
+    global: {
+      headers: {
+        "x-application-name": "jc-tournament-planner",
+      },
+      fetch: (url, options = {}) => {
+        // Enforce 12s abort signal on individual Supabase HTTP requests so stalled queries don't exhaust connection pool or Disk IO
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 12000);
+        return fetch(url, { ...options, signal: controller.signal })
+          .finally(() => clearTimeout(timeoutId));
+      }
+    }
+  }) : null;
 
   if (supabase) {
-    console.log("Supabase client initialized successfully. Connected to:", supabaseUrl);
+    console.log("Supabase client initialized successfully with timeout and batch protection. Connected to:", supabaseUrl);
   } else {
     console.log("Supabase environment variables not found. Falling back to local saved-players.json format.");
   }
+
+  // --- Supabase Circuit Breaker & Disk IO Protection ---
+  let isSupabaseHealthy = true;
+  let supabaseCooldownUntil = 0;
+  const SUPABASE_FAILURE_COOLDOWN_MS = 3 * 60 * 1000; // 3 minutes cooldown after 521 or timeout
+
+  const formatSupabaseError = (err: any): string => {
+    if (!err) return "Unknown Supabase response";
+    if (err.name === "AbortError" || (err.message && err.message.toLowerCase().includes("abort"))) {
+      return "Supabase request timed out. Operating in local mode until database responds.";
+    }
+    const msg = (typeof err === "string" ? err : err.message || JSON.stringify(err)) || "";
+    if (msg.includes("<!DOCTYPE") || msg.includes("<html") || msg.includes("521") || msg.includes("cf-error") || msg.includes("Cloudflare")) {
+      return "Supabase service is unresponsive (Cloudflare 521 / Disk IO Budget Depleted). Local files active.";
+    }
+    return msg.length > 250 ? msg.substring(0, 250) + "..." : msg;
+  };
+
+  const recordSupabaseFailure = (err: any, context: string) => {
+    const safeMsg = formatSupabaseError(err);
+    if (isSupabaseHealthy) {
+      console.warn(`[Supabase Circuit Breaker] ${context} status: ${safeMsg}. Switching to high-speed local mode for 3 minutes.`);
+    }
+    isSupabaseHealthy = false;
+    supabaseCooldownUntil = Date.now() + SUPABASE_FAILURE_COOLDOWN_MS;
+  };
+
+  const isSupabaseActive = (): boolean => {
+    if (!supabase) return false;
+    if (!isSupabaseHealthy) {
+      if (Date.now() > supabaseCooldownUntil) {
+        // Cooldown passed, allow one trial request
+        return true;
+      }
+      return false;
+    }
+    return true;
+  };
+
+  const recordSupabaseSuccess = () => {
+    if (!isSupabaseHealthy) {
+      console.log("[Supabase Circuit Breaker] Connection restored. Resuming cloud database sync.");
+      isSupabaseHealthy = true;
+      supabaseCooldownUntil = 0;
+    }
+  };
 
   // Middleware to check auth (disabled)
   const requireAuth = (req: any, res: any, next: any) => {
@@ -179,10 +245,11 @@ async function startServer() {
   };
   
   const getTournamentsData = async (): Promise<any> => {
-    if (supabase) {
+    if (isSupabaseActive()) {
       try {
-        const { data, error } = await supabase.from("tournaments").select("data").eq("id", "latest");
+        const { data, error } = await supabase!.from("tournaments").select("data").eq("id", "latest");
         if (!error && data && data.length > 0 && data[0].data) {
+          recordSupabaseSuccess();
           const dbData = data[0].data;
           try {
             const resolvedPath = await getSafeDataPath("tournaments.json", dataPath);
@@ -205,11 +272,11 @@ async function startServer() {
               }
               if (mergedAny) {
                 console.log("[Tournament Cache Repair] Successfully merged pre-scraped player lists from local tournaments.json into Supabase tournaments list!");
-                supabase.from("tournaments").upsert({ id: "latest", data: dbData }).then(({ error: saveErr }) => {
-                  if (saveErr) console.warn("Failed to save repaired tournaments back to Supabase:", saveErr.message);
+                supabase!.from("tournaments").upsert({ id: "latest", data: dbData }).then(({ error: saveErr }) => {
+                  if (saveErr) console.warn("Failed to save repaired tournaments back to Supabase:", formatSupabaseError(saveErr));
                   else console.log("Successfully saved repaired database back to Supabase!");
                 }).catch(err => {
-                  console.warn("Exception saving repaired tournaments back to Supabase:", err.message);
+                  console.warn("Exception saving repaired tournaments back to Supabase:", formatSupabaseError(err));
                 });
               }
             }
@@ -219,14 +286,10 @@ async function startServer() {
           return dbData;
         }
         if (error) {
-          if (error.message?.includes("Could not find the table") || error.message?.includes("relation \"public.tournaments\" does not exist")) {
-            console.warn("Supabase 'tournaments' table not found. Please run supabase_setup.sql. Falling back to public/tournaments.json.");
-          } else {
-            console.warn("Supabase tournaments fetch failed, using local file fallback:", error.message);
-          }
+          recordSupabaseFailure(error, "getTournamentsData");
         }
       } catch (err: any) {
-        console.warn("Supabase exception in getTournamentsData:", err.message || err);
+        recordSupabaseFailure(err, "getTournamentsData");
       }
     }
     const resolvedPath = await getSafeDataPath("tournaments.json", dataPath);
@@ -265,49 +328,54 @@ async function startServer() {
 
   let vapidKeys: { publicKey: string; privateKey: string } = { publicKey: "", privateKey: "" };
 
-  // Phase 1: Retrieve VAPID Keys securely from Supabase table or local file system
-  if (supabase) {
-    try {
-      const { data: dbKeys, error: dbKeysErr } = await supabase.from("tournaments").select("data").eq("id", "vapid_keys");
-      if (!dbKeysErr && dbKeys && dbKeys.length > 0 && dbKeys[0].data) {
-        vapidKeys = dbKeys[0].data as { publicKey: string; privateKey: string };
-        console.log("[WebPush] Persistent VAPID keys successfully loaded from Supabase.");
+  // Phase 1: Retrieve VAPID Keys - check local storage first for instant zero-latency startup
+  try {
+    const keysData = await fs.readFile(vapidKeysPath, "utf-8");
+    const parsed = JSON.parse(keysData);
+    if (parsed && parsed.publicKey && parsed.privateKey) {
+      vapidKeys = parsed;
+      console.log("[WebPush] Persistent VAPID keys loaded from local storage.");
+    }
+  } catch {
+    // Local file does not exist yet
+  }
+
+  // If not found in local file, check Supabase
+  if (!vapidKeys.publicKey || !vapidKeys.privateKey) {
+    if (isSupabaseActive()) {
+      try {
+        const { data: dbKeys, error: dbKeysErr } = await supabase!.from("tournaments").select("data").eq("id", "vapid_keys");
+        if (!dbKeysErr && dbKeys && dbKeys.length > 0 && dbKeys[0].data) {
+          vapidKeys = dbKeys[0].data as { publicKey: string; privateKey: string };
+          recordSupabaseSuccess();
+          console.log("[WebPush] Persistent VAPID keys loaded from Supabase.");
+          try {
+            await fs.writeFile(vapidKeysPath, JSON.stringify(vapidKeys, null, 2));
+          } catch {}
+        } else if (dbKeysErr) {
+          recordSupabaseFailure(dbKeysErr, "vapidKeysLoad");
+        }
+      } catch (dbErr: any) {
+        recordSupabaseFailure(dbErr, "vapidKeysLoad");
       }
-    } catch (dbErr: any) {
-      console.warn("[WebPush] Database load of VAPID keys failed, attempting fallback:", dbErr.message);
     }
   }
 
+  // If still not available, generate fresh keys
   if (!vapidKeys.publicKey || !vapidKeys.privateKey) {
+    console.log("[WebPush] No persistent keys found. Generating new permanent VAPID keys...");
+    vapidKeys = webpush.generateVAPIDKeys();
+    
     try {
-      const keysData = await fs.readFile(vapidKeysPath, "utf-8");
-      vapidKeys = JSON.parse(keysData);
-      console.log("[WebPush] VAPID keys loaded from local file storage.");
-      
-      // Upload/Seed to Supabase for multi-replica/persistent safety if available
-      if (supabase) {
-        await supabase.from("tournaments").upsert({ id: "vapid_keys", data: vapidKeys }).catch(err => {
-          console.warn("[WebPush] Could not persist local VAPID keys to Supabase:", err.message);
-        });
-      }
-    } catch (err) {
-      console.log("[WebPush] No persistent keys found. Generating new permanent VAPID keys...");
-      vapidKeys = webpush.generateVAPIDKeys();
-      
-      try {
-        await fs.writeFile(vapidKeysPath, JSON.stringify(vapidKeys, null, 2));
-      } catch (saveErr) {
-        console.error("[WebPush] Failed to write generated keys to scratch storage:", saveErr);
-      }
-      
-      if (supabase) {
-        try {
-          await supabase.from("tournaments").upsert({ id: "vapid_keys", data: vapidKeys });
-          console.log("[WebPush] Saved newly generated VAPID keys to Supabase.");
-        } catch (dbSaveErr: any) {
-          console.error("[WebPush] Could not save generated keys to Supabase:", dbSaveErr.message);
-        }
-      }
+      await fs.writeFile(vapidKeysPath, JSON.stringify(vapidKeys, null, 2));
+    } catch (saveErr) {
+      console.warn("[WebPush] Notice: Unable to cache generated keys to scratch storage:", saveErr);
+    }
+    
+    if (isSupabaseActive()) {
+      supabase!.from("tournaments").upsert({ id: "vapid_keys", data: vapidKeys }).catch(err => {
+        recordSupabaseFailure(err, "vapidKeysSeed");
+      });
     }
   }
 
@@ -319,30 +387,40 @@ async function startServer() {
     );
     console.log("[WebPush] VAPID context defined successfully. Active public key:", vapidKeys.publicKey);
   } catch (configErr: any) {
-    console.error("[WebPush] Critical Error configuring WebPush context:", configErr.message || configErr);
+    console.warn("[WebPush] WebPush configuration notice:", configErr.message || configErr);
   }
 
-  // Phase 2: Create robust subscription sync helpers
+  // Phase 2: Create robust subscription sync helpers (local-first for instant responsiveness)
   const loadSubscriptions = async (): Promise<any[]> => {
     let subs: any[] = [];
-    if (supabase) {
-      try {
-        const { data: dbSubs, error: dbSubsErr } = await supabase.from("tournaments").select("data").eq("id", "notification_subscriptions");
-        if (!dbSubsErr && dbSubs && dbSubs.length > 0 && Array.isArray(dbSubs[0].data)) {
-          subs = dbSubs[0].data;
-          return subs;
-        }
-      } catch (dbErr: any) {
-        console.warn("[WebPush] Database read of subscriptions failed. Falling back to local:", dbErr.message);
-      }
-    }
-    
     try {
       const fileContent = await fs.readFile(subscriptionsPath, "utf-8");
       subs = JSON.parse(fileContent);
-    } catch (err) {
-      subs = [];
+      if (Array.isArray(subs) && subs.length > 0) {
+        return subs;
+      }
+    } catch {
+      // Local file not ready or empty
     }
+
+    if (isSupabaseActive()) {
+      try {
+        const { data: dbSubs, error: dbSubsErr } = await supabase!.from("tournaments").select("data").eq("id", "notification_subscriptions");
+        if (!dbSubsErr && dbSubs && dbSubs.length > 0 && Array.isArray(dbSubs[0].data)) {
+          recordSupabaseSuccess();
+          subs = dbSubs[0].data;
+          try {
+            await fs.writeFile(subscriptionsPath, JSON.stringify(subs, null, 2));
+          } catch {}
+          return subs;
+        } else if (dbSubsErr) {
+          recordSupabaseFailure(dbSubsErr, "loadSubscriptions");
+        }
+      } catch (dbErr: any) {
+        recordSupabaseFailure(dbErr, "loadSubscriptions");
+      }
+    }
+    
     return subs;
   };
 
@@ -355,14 +433,14 @@ async function startServer() {
     }
     
     // Write to Supabase table
-    if (supabase) {
+    if (isSupabaseActive()) {
       try {
-        const { error } = await supabase.from("tournaments").upsert({ id: "notification_subscriptions", data: subs });
+        const { error } = await supabase!.from("tournaments").upsert({ id: "notification_subscriptions", data: subs });
         if (error) {
-          console.error("[WebPush] Error upserting subscriptions to Supabase:", error.message);
+          recordSupabaseFailure(error, "saveSubscriptions");
         }
       } catch (dbErr: any) {
-        console.error("[WebPush] Failed hard synching subscriptions to Supabase:", dbErr.message);
+        recordSupabaseFailure(dbErr, "saveSubscriptions");
       }
     }
   };
@@ -434,7 +512,7 @@ async function startServer() {
          await supabase.from("tournaments").upsert({ id: "latest", data: parsedNew });
          console.log("Successfully backed up scraped tournaments to Supabase!");
       } catch (err: any) {
-         console.error("Error saving tournaments to Supabase:", err.message);
+         console.warn("Could not backup tournaments to Supabase (using local files):", formatSupabaseError(err));
       }
     }
 
@@ -496,57 +574,42 @@ async function startServer() {
 
   // Automatic migration/sync on startup: Supabase -> Local for Tournaments
   const syncSupabaseToLocalTournaments = async () => {
-    if (!supabase) {
-        console.warn("Supabase not configured, skipping tournaments sync on startup.");
-        return;
+    if (!isSupabaseActive()) {
+      console.log("Supabase unavailable or offline. Operating with high-speed local tournament data.");
+      return;
     }
     try {
-      const { count, error: countErr } = await supabase.from("tournaments").select("id", { count: "exact", head: true });
+      const { count, error: countErr } = await supabase!.from("tournaments").select("id", { count: "exact", head: true });
       if (countErr) {
-        if (countErr.message?.includes("Could not find the table") || countErr.message?.includes("relation \"public.tournaments\" does not exist")) {
-          console.warn("Supabase 'tournaments' table not found on startup sync. Please run supabase_setup.sql in your Supabase dashboard.");
-        } else {
-          console.warn("Failed to check tournaments count from Supabase on startup sync:", countErr.message);
-        }
+        recordSupabaseFailure(countErr, "syncSupabaseToLocalTournaments");
         return;
       }
+      recordSupabaseSuccess();
       if (count === null || count === 0) {
          console.log("Supabase tournaments table empty. Seeding with local files...");
          try {
            const raw = await fs.readFile(dataPath, "utf-8");
            const parsed = JSON.parse(raw);
-           await supabase.from("tournaments").upsert({ id: "latest", data: parsed });
+           await supabase!.from("tournaments").upsert({ id: "latest", data: parsed });
            console.log("Successfully seeded local tournaments to Supabase!");
            
            try {
              const cacheContent = await fs.readFile(tournamentsPlayersCachePath, "utf-8");
              const cacheParsed = JSON.parse(cacheContent);
-             await supabase.from("tournaments").upsert({ id: "players_cache", data: cacheParsed });
+             await supabase!.from("tournaments").upsert({ id: "players_cache", data: cacheParsed });
              console.log("Successfully seeded local tournaments-for-players cache to Supabase!");
            } catch {
              console.log("No local custom players cache file found to seed.");
            }
          } catch (seedErr: any) {
-           console.warn("Failed to seed Supabase table on startup:", seedErr.message);
+           recordSupabaseFailure(seedErr, "seedTournaments");
          }
-         
-         // Trigger an automatic background adhoc scrape so they have completely updated data in Supabase immediately!
-         console.log("Triggering background adhoc tournaments scrape on startup to ensure fresh data...");
-         isScraping = true;
-         wrappedRunScraper()
-           .then(async () => {
-             if (refreshTournamentsForPlayersCache) {
-               await refreshTournamentsForPlayersCache().catch(console.error);
-             }
-           })
-           .catch(err => console.error("Adhoc startup scrape failed:", err))
-           .finally(() => { isScraping = false; });
          return;
       }
       
-      const { data, error } = await supabase.from("tournaments").select("data").eq("id", "latest");
+      const { data, error } = await supabase!.from("tournaments").select("data").eq("id", "latest");
       if (error) {
-        console.warn("Failed to fetch tournaments from supabase:", error.message);
+        recordSupabaseFailure(error, "fetchTournamentsLatest");
         return;
       }
       if (!data || data.length === 0) {
@@ -554,35 +617,25 @@ async function startServer() {
         try {
           const raw = await fs.readFile(dataPath, "utf-8");
           const parsed = JSON.parse(raw);
-          await supabase.from("tournaments").upsert({ id: "latest", data: parsed });
+          await supabase!.from("tournaments").upsert({ id: "latest", data: parsed });
           console.log("Successfully seeded 'latest' state to Supabase!");
         } catch(e: any) {
-          console.error("Seeding 'latest' failed:", e.message);
+          recordSupabaseFailure(e, "seedLatest");
         }
       } else if (data[0] && data[0].data) {
         await fs.writeFile(dataPath, JSON.stringify(data[0].data, null, 2));
         console.log("Successfully restored tournaments.json from Supabase!");
       }
 
-      const { data: cacheData, error: cacheErr } = await supabase.from("tournaments").select("data").eq("id", "players_cache");
+      const { data: cacheData, error: cacheErr } = await supabase!.from("tournaments").select("data").eq("id", "players_cache");
       if (!cacheErr && cacheData && cacheData.length > 0 && cacheData[0].data) {
          await fs.writeFile(tournamentsPlayersCachePath, JSON.stringify(cacheData[0].data, null, 2));
          console.log("Successfully restored tournaments-for-players.json from Supabase!");
-      } else if (!cacheErr && (!cacheData || cacheData.length === 0)) {
-         console.log("No custom players cache found in Supabase. Backing up local cache to Supabase...");
-         try {
-           const cacheContent = await fs.readFile(tournamentsPlayersCachePath, "utf-8");
-           const cacheParsed = JSON.parse(cacheContent);
-           await supabase.from("tournaments").upsert({ id: "players_cache", data: cacheParsed });
-           console.log("Successfully backed up local players cache to Supabase!");
-         } catch {
-           console.log("No local players cache file found to backup.");
-         }
       } else if (cacheErr) {
-         console.warn("Error checking custom players cache in Supabase:", cacheErr.message);
+         recordSupabaseFailure(cacheErr, "checkPlayersCache");
       }
     } catch(err: any) {
-      console.warn("Error restoring tournaments from supabase:", err.message);
+      recordSupabaseFailure(err, "syncSupabaseToLocalTournaments");
     }
   };
   
@@ -783,14 +836,17 @@ async function startServer() {
 
   app.get("/api/tournaments/metadata", requireAuth, async (req, res) => {
     try {
-      if (supabase) {
-        const { data, error } = await supabase.from("tournaments").select("data").eq("id", "latest");
+      if (isSupabaseActive()) {
+        const { data, error } = await supabase!.from("tournaments").select("data").eq("id", "latest");
         if (!error && data && data.length > 0 && data[0].data) {
+          recordSupabaseSuccess();
           const d = data[0].data;
           return res.json({
             lastUpdated: d.lastUpdated || null,
             count: d.tournaments ? d.tournaments.length : 0
           });
+        } else if (error) {
+          recordSupabaseFailure(error, "tournamentsMetadata");
         }
       }
       const raw = await fs.readFile(dataPath, "utf-8");
@@ -807,13 +863,16 @@ async function startServer() {
 
   app.get("/api/tournaments-for-players/metadata", requireAuth, async (req, res) => {
     try {
-      if (supabase) {
-        const { data, error } = await supabase.from("tournaments").select("data").eq("id", "players_cache");
+      if (isSupabaseActive()) {
+        const { data, error } = await supabase!.from("tournaments").select("data").eq("id", "players_cache");
         if (!error && data && data.length > 0 && data[0].data) {
+          recordSupabaseSuccess();
           return res.json({
             updatedAt: data[0].data.updatedAt || null,
             count: data[0].data.tournaments ? data[0].data.tournaments.length : 0
           });
+        } else if (error) {
+          recordSupabaseFailure(error, "tournamentsPlayersMetadata");
         }
       }
       const raw = await fs.readFile(tournamentsPlayersCachePath, "utf-8");
@@ -1028,20 +1087,17 @@ async function startServer() {
       }
 
       // Try reading directly from Supabase first
-      if (supabase) {
+      if (isSupabaseActive()) {
         try {
-          const { data: cacheRow, error: cacheErr } = await supabase.from("tournaments").select("data").eq("id", "players_cache");
+          const { data: cacheRow, error: cacheErr } = await supabase!.from("tournaments").select("data").eq("id", "players_cache");
           if (!cacheErr && cacheRow && cacheRow.length > 0 && cacheRow[0].data) {
+            recordSupabaseSuccess();
             return res.json(cacheRow[0].data);
           } else if (cacheErr) {
-            if (cacheErr.message?.includes("Could not find the table") || cacheErr.message?.includes("relation \"public.tournaments\" does not exist")) {
-              console.warn("Supabase 'tournaments' table not found, trying local file for player cache instead.");
-            } else {
-              console.warn("Failed to fetch tournaments-for-players from Supabase, trying local file:", cacheErr.message);
-            }
+            recordSupabaseFailure(cacheErr, "tournamentsForPlayersCache");
           }
         } catch (supabaseErr: any) {
-          console.warn("Supabase query failed in tournaments_for_players, trying local file:", supabaseErr.message || supabaseErr);
+          recordSupabaseFailure(supabaseErr, "tournamentsForPlayersCache");
         }
       }
 
@@ -1082,15 +1138,18 @@ async function startServer() {
         let snapshots: any[] = [];
         
         // 1. Try to retrieve from Supabase first
-        if (supabase) {
+        if (isSupabaseActive()) {
           try {
-            const { data, error } = await supabase.from("tournaments").select("data").eq("id", "player_snapshots");
+            const { data, error } = await supabase!.from("tournaments").select("data").eq("id", "player_snapshots");
             if (!error && data && data.length > 0 && Array.isArray(data[0].data)) {
+              recordSupabaseSuccess();
               snapshots = data[0].data;
               console.log("[PLAYER RECOVERY] Retrieved snapshots from Supabase:", snapshots.length, "entries.");
+            } else if (error) {
+              recordSupabaseFailure(error, "playerRecoverySnapshots");
             }
           } catch (sbErr: any) {
-            console.warn("[PLAYER RECOVERY] Failed to load snapshots from Supabase:", sbErr.message);
+            recordSupabaseFailure(sbErr, "playerRecoverySnapshots");
           }
         }
 
@@ -1132,14 +1191,20 @@ async function startServer() {
     // Attempt recovery first if local file was cleared
     await recoverLocalPlayersFromSnapshots();
     
-    if (!supabase) return;
+    if (!isSupabaseActive()) return;
     try {
       // 1. Sync saved players
-      const { count, error } = await supabase
+      const { count, error } = await supabase!
         .from("saved_players")
         .select("id", { count: "exact", head: true });
 
-      if (!error && (count === 0 || count === null)) {
+      if (error) {
+        recordSupabaseFailure(error, "syncLocalToSupabase");
+        return;
+      }
+      recordSupabaseSuccess();
+
+      if (count === 0 || count === null) {
         console.log("Supabase saved_players table is empty. Syncing local players...");
         try {
           const rawData = await fs.readFile(savedPlayersPath, "utf-8");
@@ -1160,12 +1225,12 @@ async function startServer() {
               sort_order: p.sort_order !== undefined ? p.sort_order : index,
             }));
 
-            const { error: upsertError } = await supabase
+            const { error: upsertError } = await supabase!
               .from("saved_players")
               .upsert(rows, { onConflict: "id" });
 
             if (upsertError) {
-              console.error("Failed to migrate local players to Supabase:", upsertError.message);
+              recordSupabaseFailure(upsertError, "migrateLocalPlayers");
             } else {
               console.log(`Successfully migrated ${localPlayers.length} players to Supabase!`);
             }
@@ -1177,7 +1242,7 @@ async function startServer() {
 
       // 2. Sync tournaments database rows (latest & players_cache)
       try {
-        const { data: existingTours, error: toursErr } = await supabase
+        const { data: existingTours, error: toursErr } = await supabase!
           .from("tournaments")
           .select("id");
 
@@ -1189,7 +1254,7 @@ async function startServer() {
             try {
               const rawTours = await fs.readFile(dataPath, "utf-8");
               const parsedTours = JSON.parse(rawTours);
-              await supabase.from("tournaments").insert({ id: "latest", data: parsedTours });
+              await supabase!.from("tournaments").insert({ id: "latest", data: parsedTours });
               console.log("Successfully seeded 'latest' tournaments to Supabase.");
             } catch (fsErr) {
               console.warn("Could not seed local tournaments.json:", fsErr);
@@ -1201,7 +1266,7 @@ async function startServer() {
             try {
               const rawCache = await fs.readFile(tournamentsPlayersCachePath, "utf-8");
               const parsedCache = JSON.parse(rawCache);
-              await supabase.from("tournaments").insert({ id: "players_cache", data: parsedCache });
+              await supabase!.from("tournaments").insert({ id: "players_cache", data: parsedCache });
               console.log("Successfully seeded 'players_cache' to Supabase.");
             } catch (fsErr) {
               console.warn("Could not seed local tournaments-players-cache.json:", fsErr);
@@ -1209,10 +1274,10 @@ async function startServer() {
           }
         }
       } catch (toursSetupErr: any) {
-        console.warn("Could not sync tournaments setup to Supabase:", toursSetupErr.message || toursSetupErr);
+        recordSupabaseFailure(toursSetupErr, "syncTournamentsSetup");
       }
     } catch (err: any) {
-      console.warn("Could not sync local data to Supabase (Ensure your saved_players table is configured in your Supabase SQL editor):", err.message || err);
+      recordSupabaseFailure(err, "syncLocalToSupabase");
     }
   };
 
@@ -1222,15 +1287,18 @@ async function startServer() {
 
   const getPlayerGroupsMap = async (): Promise<Record<string, string[]>> => {
     let groupsMap: Record<string, string[]> = {};
-    if (supabase) {
+    if (isSupabaseActive()) {
       try {
-        const { data, error } = await supabase.from("tournaments").select("data").eq("id", "player_groups");
+        const { data, error } = await supabase!.from("tournaments").select("data").eq("id", "player_groups");
         if (!error && data && data.length > 0 && data[0].data) {
+          recordSupabaseSuccess();
           groupsMap = data[0].data;
           return groupsMap;
+        } else if (error) {
+          recordSupabaseFailure(error, "getPlayerGroupsMap");
         }
       } catch (err: any) {
-        console.warn("Failed to load player groups from Supabase:", err.message);
+        recordSupabaseFailure(err, "getPlayerGroupsMap");
       }
     }
     try {
@@ -1248,11 +1316,11 @@ async function startServer() {
     } catch (e: any) {
       console.warn("Failed to save local player-groups.json:", e.message);
     }
-    if (supabase) {
+    if (isSupabaseActive()) {
       try {
-        await supabase.from("tournaments").upsert({ id: "player_groups", data: groupsMap });
+        await supabase!.from("tournaments").upsert({ id: "player_groups", data: groupsMap });
       } catch (err: any) {
-        console.warn("Failed to save player groups to Supabase:", err.message);
+        recordSupabaseFailure(err, "savePlayerGroupsMap");
       }
     }
   };
@@ -1261,15 +1329,18 @@ async function startServer() {
 
   const getPlayerGroupsOrderMap = async (): Promise<Record<string, string[]>> => {
     let orderMap: Record<string, string[]> = {};
-    if (supabase) {
+    if (isSupabaseActive()) {
       try {
-        const { data, error } = await supabase.from("tournaments").select("data").eq("id", "player_groups_order");
+        const { data, error } = await supabase!.from("tournaments").select("data").eq("id", "player_groups_order");
         if (!error && data && data.length > 0 && data[0].data) {
+          recordSupabaseSuccess();
           orderMap = data[0].data;
           return orderMap;
+        } else if (error) {
+          recordSupabaseFailure(error, "getPlayerGroupsOrderMap");
         }
       } catch (err: any) {
-        console.warn("Failed to load player groups order from Supabase:", err.message);
+        recordSupabaseFailure(err, "getPlayerGroupsOrderMap");
       }
     }
     try {
@@ -1287,35 +1358,54 @@ async function startServer() {
     } catch (e: any) {
       console.warn("Failed to save local player-groups-order.json:", e.message);
     }
-    if (supabase) {
+    if (isSupabaseActive()) {
       try {
-        await supabase.from("tournaments").upsert({ id: "player_groups_order", data: orderMap });
+        await supabase!.from("tournaments").upsert({ id: "player_groups_order", data: orderMap });
       } catch (err: any) {
-        console.warn("Failed to save player groups order to Supabase:", err.message);
+        recordSupabaseFailure(err, "savePlayerGroupsOrderMap");
       }
     }
   };
 
   const getSavedPlayers = async (req: any, res: any) => {
     let players: any[] = [];
-    if (supabase) {
+    if (isSupabaseActive()) {
       try {
-        const { data, error } = await supabase
-          .from("saved_players")
-          .select("*")
-          .order("sort_order", { ascending: true });
+        // Query Supabase using safe chunked range queries (batches of 50 rows)
+        // to prevent payload size limits and eliminate Disk IO spikes on large player sets
+        const BATCH_SIZE = 50;
+        let allRows: any[] = [];
+        let start = 0;
+        let hasMore = true;
 
-        if (error) {
-          if (error.message.includes("Could not find the table")) {
-            console.log("Supabase 'saved_players' table not found yet. Using local files fallback.");
-          } else {
-            console.log("Failed to get players from Supabase, falling back to local files:", error.message);
+        while (hasMore) {
+          const { data, error } = await supabase!
+            .from("saved_players")
+            .select("*")
+            .order("sort_order", { ascending: true })
+            .range(start, start + BATCH_SIZE - 1);
+
+          if (error) {
+            recordSupabaseFailure(error, "getSavedPlayers");
+            throw error;
           }
-          throw error;
+
+          if (data && data.length > 0) {
+            allRows = allRows.concat(data);
+            if (data.length < BATCH_SIZE) {
+              hasMore = false;
+            } else {
+              start += BATCH_SIZE;
+            }
+          } else {
+            hasMore = false;
+          }
         }
 
-        if (data && data.length > 0) {
-          players = data.map((row: any) => ({
+        recordSupabaseSuccess();
+
+        if (allRows && allRows.length > 0) {
+          players = allRows.map((row: any) => ({
             id: row.id,
             name: row.name,
             url: row.url || undefined,
@@ -1524,6 +1614,8 @@ async function startServer() {
     }
   };
 
+  let lastSnapshotSupabaseSyncTime = 0;
+
   const takePlayerSnapshot = async (playersList?: any[]) => {
     try {
       const players = playersList || await getSavedPlayers(null, null);
@@ -1561,47 +1653,25 @@ async function startServer() {
       const snapshotsPath = path.join(process.cwd(), "public", "player-snapshots.json");
       let snapshots: any[] = [];
 
-      // Try to load from Supabase first
-      if (supabase) {
-        try {
-          const { data, error } = await supabase.from("tournaments").select("data").eq("id", "player_snapshots");
-          if (!error && data && data.length > 0 && Array.isArray(data[0].data)) {
-            snapshots = data[0].data;
-            console.log("[Snapshot] Loaded snapshots from Supabase:", snapshots.length, "entries.");
-          }
-        } catch (sbErr: any) {
-          console.warn("[Snapshot] Failed to load snapshots from Supabase:", sbErr.message);
-        }
-      }
-
-      // Fallback/Bootstrap if needed
-      if (snapshots.length === 0) {
-        try {
-          const fileContent = await fs.readFile(snapshotsPath, "utf-8");
-          snapshots = JSON.parse(fileContent);
-        } catch (err) {
+      // Try reading local file first to save database IO
+      try {
+        const fileContent = await fs.readFile(snapshotsPath, "utf-8");
+        snapshots = JSON.parse(fileContent);
+      } catch (err) {
+        // Fallback to Supabase only if local file is missing
+        if (isSupabaseActive()) {
           try {
-            const resp = await axios.get('https://jc-tournament-planner-569341375821.us-west1.run.app/api/player-snapshots', { timeout: 4000 });
-            if (Array.isArray(resp.data)) {
-              snapshots = resp.data;
+            const { data, error } = await supabase!.from("tournaments").select("data").eq("id", "player_snapshots");
+            if (!error && data && data.length > 0 && Array.isArray(data[0].data)) {
+              snapshots = data[0].data;
+              recordSupabaseSuccess();
+              console.log("[Snapshot] Loaded snapshots from Supabase:", snapshots.length, "entries.");
+            } else if (error) {
+              recordSupabaseFailure(error, "loadPlayerSnapshots");
             }
-          } catch {
-            snapshots = [];
+          } catch (sbErr: any) {
+            recordSupabaseFailure(sbErr, "loadPlayerSnapshots");
           }
-        }
-      }
-
-      // Rebuild / self-heal snapshots from notification logs in Supabase if thin or empty
-      if (snapshots.length <= 1 && supabase) {
-        try {
-          console.log("[Snapshot] Thin or empty snapshot history found. Attempting to rebuild snap entries from notifications_history audits...");
-          const rebuilt = await rebuildPlayerSnapshotsFromHistory(players);
-          if (rebuilt && rebuilt.length > 0) {
-            snapshots = rebuilt;
-            console.log("[Snapshot] Successfully rebuilt historical snapshots! Total dates reconstructed:", snapshots.length);
-          }
-        } catch (healErr: any) {
-          console.warn("[Snapshot] Failed to rebuild snapshot array from notifications_history:", healErr.message);
         }
       }
 
@@ -1619,6 +1689,11 @@ async function startServer() {
         snapshots.unshift(newSnapshot);
       }
 
+      // Keep snapshot history trimmed to 30 days to keep file size small and prevent Disk IO exhaustion
+      if (snapshots.length > 30) {
+        snapshots = snapshots.slice(0, 30);
+      }
+
       // Write local backup file
       try {
         await fs.writeFile(snapshotsPath, JSON.stringify(snapshots, null, 2));
@@ -1626,13 +1701,16 @@ async function startServer() {
         console.error("[Snapshot] Failed to write to local backup:", fsErr.message);
       }
 
-      // Sync to Supabase
-      if (supabase) {
+      // Only sync snapshot to Supabase if 4 hours have elapsed to protect Supabase Disk IO Budget
+      const shouldSyncToSupabase = isSupabaseActive() && (Date.now() - lastSnapshotSupabaseSyncTime > 4 * 60 * 60 * 1000);
+      if (shouldSyncToSupabase) {
         try {
-          await supabase.from("tournaments").upsert({ id: "player_snapshots", data: snapshots });
-          console.log("[Snapshot] Saved snapshots history to Supabase successfully.");
+          await supabase!.from("tournaments").upsert({ id: "player_snapshots", data: snapshots });
+          lastSnapshotSupabaseSyncTime = Date.now();
+          recordSupabaseSuccess();
+          console.log("[Snapshot] Synced daily snapshots history to Supabase (Disk IO Budget protected).");
         } catch (sbErr: any) {
-          console.error("[Snapshot] Failed to save snapshots to Supabase:", sbErr.message);
+          recordSupabaseFailure(sbErr, "syncPlayerSnapshots");
         }
       }
 
@@ -1643,7 +1721,7 @@ async function startServer() {
   };
 
   const savePlayers = async (req: any, res: any, players: any[]) => {
-    // Save to local backup file as offline/failover secondary copy
+    // Save to local backup file as offline/failover primary copy
     try {
       await fs.writeFile(savedPlayersPath, JSON.stringify(players, null, 2));
     } catch (e: any) {
@@ -1663,7 +1741,7 @@ async function startServer() {
       console.error("Error saving player-groups map:", grpErr.message || String(grpErr));
     }
 
-    if (supabase) {
+    if (isSupabaseActive()) {
       try {
         const rows = players.map((p: any, index: number) => ({
           id: p.id,
@@ -1680,20 +1758,24 @@ async function startServer() {
           sort_order: p.sort_order !== undefined ? p.sort_order : index,
         }));
 
-        const { error } = await supabase
+        const { error } = await supabase!
           .from("saved_players")
           .upsert(rows, { onConflict: "id" });
 
         if (error) {
-          console.error("Error saving players to Supabase:", error.message);
+          recordSupabaseFailure(error, "savePlayers");
+        } else {
+          recordSupabaseSuccess();
         }
       } catch (err: any) {
-        console.error("Supabase write failed:", err.message || err);
+        recordSupabaseFailure(err, "savePlayers");
       }
     }
 
-    // Trigger taking a daily player snapshots history entry
-    takePlayerSnapshot(players).catch(() => {});
+    // Trigger snapshot only if at least 4 hours have passed to prevent Disk IO exhaustion on rapid player adds
+    if (Date.now() - lastSnapshotSupabaseSyncTime > 4 * 60 * 60 * 1000) {
+      takePlayerSnapshot(players).catch(() => {});
+    }
   };
 
   const formatDateToDdMmYyyyServer = (dateStr: string): string => {
@@ -2119,12 +2201,13 @@ async function startServer() {
       await fs.writeFile(tournamentsPlayersCachePath, JSON.stringify(outputData, null, 2));
       console.log("Cached tournaments-for-players list updated successfully.");
       
-      if (supabase) {
+      if (isSupabaseActive()) {
         try {
-          await supabase.from("tournaments").upsert({ id: "players_cache", data: outputData });
+          await supabase!.from("tournaments").upsert({ id: "players_cache", data: outputData });
+          recordSupabaseSuccess();
           console.log("Successfully backed up tournaments-for-players cache to Supabase.");
         } catch (e: any) {
-           console.error("Failed to backup players cache to Supabase:", e.message);
+          recordSupabaseFailure(e, "backupPlayersCache");
         }
       }
 
@@ -2140,13 +2223,19 @@ async function startServer() {
 
   // Sync saved draws from local file -> Supabase on startup
   const syncLocalDrawsToSupabase = async () => {
-    if (!supabase) return;
+    if (!isSupabaseActive()) return;
     try {
-      const { count, error } = await supabase
+      const { count, error } = await supabase!
         .from("saved_draws")
         .select("id", { count: "exact", head: true });
 
-      if (!error && (count === 0 || count === null)) {
+      if (error) {
+        recordSupabaseFailure(error, "syncLocalDrawsToSupabase");
+        return;
+      }
+      recordSupabaseSuccess();
+
+      if (count === 0 || count === null) {
         console.log("Supabase saved_draws table is empty. Syncing local draws...");
         try {
           const rawData = await fs.readFile(savedDrawsPath, "utf-8");
@@ -2161,12 +2250,12 @@ async function startServer() {
               sort_order: d.sort_order !== undefined ? d.sort_order : index,
             }));
 
-            const { error: upsertError } = await supabase
+            const { error: upsertError } = await supabase!
               .from("saved_draws")
               .upsert(rows, { onConflict: "id" });
 
             if (upsertError) {
-              console.error("Failed to migrate local draws to Supabase:", upsertError.message);
+              recordSupabaseFailure(upsertError, "migrateLocalDraws");
             } else {
               console.log(`Successfully migrated ${draws.length} draws to Supabase!`);
             }
@@ -2176,7 +2265,7 @@ async function startServer() {
         }
       }
     } catch (err: any) {
-      console.warn("Could not sync local draws to Supabase:", err.message || err);
+      recordSupabaseFailure(err, "syncLocalDrawsToSupabase");
     }
   };
 
@@ -2405,17 +2494,18 @@ async function startServer() {
       console.warn("Could not load tournaments data for metadata lookup", err);
     }
 
-    if (supabase) {
+    if (isSupabaseActive()) {
       try {
-        const { data, error } = await supabase
+        const { data, error } = await supabase!
           .from("saved_draws")
           .select("*")
           .order("sort_order", { ascending: true });
 
         if (error) {
-          console.warn("Failed to get draws from Supabase, falling back to local files:", error.message);
+          recordSupabaseFailure(error, "getSavedDraws");
           throw error;
         }
+        recordSupabaseSuccess();
 
         if (data && data.length > 0) {
           draws = data.map((row: any) => ({
@@ -2533,22 +2623,10 @@ async function startServer() {
     
     const finalDraws = Array.from(uniqueDrawsMap.values());
     
-    // If we changed names or backfilled dates, save the cleaned-up list!
+    // If we changed names or backfilled dates, save the cleaned-up list locally
     if (hasChanges || finalDraws.length !== draws.length) {
       try {
         await fs.writeFile(savedDrawsPath, JSON.stringify({ draws: finalDraws, updatedAt }, null, 2));
-        if (supabase) {
-          const rows = finalDraws.map((d: any, index: number) => ({
-            id: d.id,
-            name: d.name,
-            url: d.url,
-            region: d.region || "AUS",
-            players: d.players || [],
-            sort_order: d.sort_order !== undefined ? d.sort_order : index,
-            updated_at: updatedAt,
-          }));
-          await supabase.from("saved_draws").upsert(rows);
-        }
       } catch (e) {
         console.error("Failed to persist normalized draws on lookup:", e);
       }
@@ -2566,7 +2644,7 @@ async function startServer() {
       console.error("Error writing saved-draws local backup:", e.message || String(e));
     }
 
-    if (supabase) {
+    if (isSupabaseActive()) {
       try {
         const rows = draws.map((d: any, index: number) => ({
           id: d.id,
@@ -2577,15 +2655,17 @@ async function startServer() {
           sort_order: d.sort_order !== undefined ? d.sort_order : index,
         }));
 
-        const { error } = await supabase
+        const { error } = await supabase!
           .from("saved_draws")
           .upsert(rows, { onConflict: "id" });
 
         if (error) {
-          console.error("Error saving draws to Supabase:", error.message);
+          recordSupabaseFailure(error, "saveSavedDraws");
+        } else {
+          recordSupabaseSuccess();
         }
       } catch (err: any) {
-        console.error("Supabase draws write failed:", err.message || err);
+        recordSupabaseFailure(err, "saveSavedDraws");
       }
     }
   };
@@ -3133,21 +3213,19 @@ async function startServer() {
 
   const getNotificationsHistory = async (req: any, res: any) => {
     let notifications: any[] = [];
-    if (supabase) {
+    if (isSupabaseActive()) {
       try {
-        const { data, error } = await supabase
+        const { data, error } = await supabase!
           .from("notifications_history")
           .select("*")
-          .order("timestamp", { ascending: false });
+          .order("timestamp", { ascending: false })
+          .limit(200);
 
         if (error) {
-          if (error.message.includes("Could not find the table")) {
-            console.log("Supabase 'notifications_history' table not found yet. Using local files fallback.");
-          } else {
-            console.log("Failed to get notifications from Supabase, falling back to local files:", error.message);
-          }
+          recordSupabaseFailure(error, "getNotificationsHistory");
           throw error;
         }
+        recordSupabaseSuccess();
 
         if (data) {
           notifications = data.map((row: any) => ({
@@ -3237,15 +3315,19 @@ async function startServer() {
       });
     }
 
+    // Cap notifications to most recent 250 to keep files clean and light
+    const cappedNotifications = deduplicatedNotifications.slice(0, 250);
+
     try {
-      await fs.writeFile(notificationsHistoryPath, JSON.stringify(deduplicatedNotifications, null, 2));
+      await fs.writeFile(notificationsHistoryPath, JSON.stringify(cappedNotifications, null, 2));
     } catch (e: any) {
       console.log("Error writing notifications local backup:", e.message || String(e));
     }
 
-    if (supabase) {
+    // Only sync to Supabase if active, and only upsert the top 25 items to protect the Disk IO budget!
+    if (isSupabaseActive()) {
       try {
-        const rows = deduplicatedNotifications.map((n: any) => ({
+        const rows = cappedNotifications.slice(0, 25).map((n: any) => ({
           id: n.id,
           player: n.player,
           title: n.title,
@@ -3256,41 +3338,34 @@ async function startServer() {
           timestamp: n.timestamp,
         }));
 
-        const { error } = await supabase
+        const { error } = await supabase!
           .from("notifications_history")
           .upsert(rows, { onConflict: "id" });
 
         if (error) {
-          if (error.message.includes("Could not find the table")) {
-            console.log("Supabase 'notifications_history' table not found. Skipping Supabase backup (local save succeeded).");
-          } else if (error.code === '42501' || error.message.includes("row-level security")) {
-            console.log("Supabase RLS is blocking notifications insert. Please run 'alter table public.notifications_history disable row level security;' in your Supabase SQL editor. Local fallback used successfully.");
-          } else {
-            console.log("Supabase notifications write warning:", error.message);
-          }
+          recordSupabaseFailure(error, "saveNotificationsHistory");
+        } else {
+          recordSupabaseSuccess();
         }
       } catch (err: any) {
-        console.log("Supabase notifications write failed:", err.message || err);
+        recordSupabaseFailure(err, "saveNotificationsHistory");
       }
     }
   };
 
   // Sync notifications from local file -> Supabase on startup
   const syncLocalNotificationsToSupabase = async () => {
-    if (!supabase) return;
+    if (!isSupabaseActive()) return;
     try {
-      const { count, error } = await supabase
+      const { count, error } = await supabase!
         .from("notifications_history")
         .select("id", { count: "exact", head: true });
 
       if (error) {
-        if (error.message.includes("Could not find the table")) {
-          console.log("Supabase 'notifications_history' table is not available yet. Using local backup storage.");
-        } else {
-          console.log("Could not inspect notifications_history table in Supabase:", error.message);
-        }
+        recordSupabaseFailure(error, "syncLocalNotificationsToSupabase");
         return;
       }
+      recordSupabaseSuccess();
 
       if (count === 0 || count === null) {
         console.log("Supabase notifications_history table is empty. Syncing local notifications...");
@@ -3298,7 +3373,8 @@ async function startServer() {
           const rawData = await fs.readFile(notificationsHistoryPath, "utf-8");
           const localNotifications = JSON.parse(rawData);
           if (localNotifications && localNotifications.length > 0) {
-            const rows = localNotifications.map((n: any) => ({
+            // Only seed top 25 items to protect the database Disk IO budget
+            const rows = localNotifications.slice(0, 25).map((n: any) => ({
               id: n.id,
               player: n.player,
               title: n.title,
@@ -3309,18 +3385,14 @@ async function startServer() {
               timestamp: n.timestamp,
             }));
 
-            const { error: upsertError } = await supabase
+            const { error: upsertError } = await supabase!
               .from("notifications_history")
               .upsert(rows, { onConflict: "id" });
 
             if (upsertError) {
-              if (upsertError.code === '42501' || upsertError.message.includes("row-level security")) {
-                console.log("Supabase RLS is blocking migration. Please run 'alter table public.notifications_history disable row level security;' in your SQL editor.");
-              } else {
-                console.log("Failed to migrate local notifications to Supabase warning:", upsertError.message);
-              }
+              recordSupabaseFailure(upsertError, "migrateLocalNotifications");
             } else {
-              console.log(`Successfully migrated ${localNotifications.length} notifications to Supabase!`);
+              console.log(`Successfully migrated ${rows.length} notifications to Supabase!`);
             }
           }
         } catch (fsErr) {
@@ -3328,7 +3400,7 @@ async function startServer() {
         }
       }
     } catch (err: any) {
-      console.log("Could not sync local notifications to Supabase:", err.message || err);
+      recordSupabaseFailure(err, "syncLocalNotificationsToSupabase");
     }
   };
 
@@ -3341,7 +3413,38 @@ async function startServer() {
 
   app.get("/api/saved-players", requireAuth, async (req, res) => {
     const players = await getSavedPlayers(req, res);
-    res.json(players);
+
+    const page = req.query.page ? parseInt(req.query.page as string, 10) : null;
+    const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : null;
+    const source = req.query.source as string;
+    const search = (req.query.search as string || "").toLowerCase().trim();
+
+    let result = players;
+    if (source) {
+      result = result.filter((p: any) => p.source === source);
+    }
+    if (search) {
+      result = result.filter((p: any) => p.name && p.name.toLowerCase().includes(search));
+    }
+
+    // If explicit pagination requested, return pagination envelope
+    if (page && limit && page > 0 && limit > 0) {
+      const total = result.length;
+      const totalPages = Math.ceil(total / limit);
+      const startIndex = (page - 1) * limit;
+      const paginatedPlayers = result.slice(startIndex, startIndex + limit);
+      return res.json({
+        players: paginatedPlayers,
+        total,
+        page,
+        limit,
+        totalPages,
+        hasMore: page < totalPages
+      });
+    }
+
+    // Default: return the full array for seamless backwards compatibility
+    res.json(result);
   });
 
   app.get("/api/player-snapshots", requireAuth, async (req, res) => {
@@ -3527,11 +3630,12 @@ async function startServer() {
   app.delete("/api/saved-players/:id", requireAuth, async (req, res) => {
     const { id } = req.params;
     
-    if (supabase) {
+    if (isSupabaseActive()) {
       try {
-        await supabase.from("saved_players").delete().eq("id", id);
+        await supabase!.from("saved_players").delete().eq("id", id);
+        recordSupabaseSuccess();
       } catch (err: any) {
-        console.error("Error deleting from Supabase database:", err.message || err);
+        recordSupabaseFailure(err, "deleteSavedPlayer");
       }
     }
 
@@ -3688,15 +3792,16 @@ async function startServer() {
     const { draws } = await getSavedDraws(req, res);
     const drawToDelete = draws.find((d: any) => d.id === id);
 
-    if (supabase) {
+    if (isSupabaseActive()) {
       try {
-        await supabase.from("saved_draws").delete().eq("id", id);
+        await supabase!.from("saved_draws").delete().eq("id", id);
         if (drawToDelete) {
           // Also delete by URL to make sure we remove any other duplicates in Supabase
-          await supabase.from("saved_draws").delete().eq("url", drawToDelete.url);
+          await supabase!.from("saved_draws").delete().eq("url", drawToDelete.url);
         }
+        recordSupabaseSuccess();
       } catch (err: any) {
-        console.error("Error deleting from Supabase database:", err.message || err);
+        recordSupabaseFailure(err, "deleteSavedDraw");
       }
     }
 
@@ -3949,21 +4054,18 @@ async function startServer() {
     try {
       let notifications = await getNotificationsHistory(req, res);
       
-      if (supabase) {
+      if (isSupabaseActive()) {
         try {
           for (const item of items) {
-            await supabase
+            await supabase!
               .from("notifications_history")
               .delete()
               .eq("date", item.date)
               .eq("timestamp", item.timestamp);
           }
+          recordSupabaseSuccess();
         } catch (err: any) {
-          if (err.code === '42501' || (err.message && err.message.includes("row-level security"))) {
-            console.log("Supabase RLS is blocking deletion. Please disable RLS. Local fallback used.");
-          } else {
-            console.log("Supabase deletion warning:", err.message || err);
-          }
+          recordSupabaseFailure(err, "deleteNotifications");
         }
       }
 
@@ -4438,7 +4540,7 @@ async function startServer() {
     timestamp: number;
   }
   const aiMemoryCache = new Map<string, AICacheItem>();
-  const AI_CACHE_TTL_MS = 2 * 60 * 60 * 1000; // 2 hours
+  const AI_CACHE_TTL_MS = 12 * 60 * 60 * 1000; // 12 hours (Optimized for maximum cost savings on relatively static tennis data)
 
   function getFromAICache(key: string): any | null {
     const item = aiMemoryCache.get(key);
@@ -4771,7 +4873,7 @@ Provide a direct, concise, friendly tennis response in Markdown (under 150 words
     try {
       await syncSupabaseToLocalTournaments();
     } catch (syncErr: any) {
-      console.warn("[Startup] Sync Supabase to local tournaments failed:", syncErr.message || syncErr);
+      console.warn("[Startup] Sync Supabase to local tournaments notice:", formatSupabaseError(syncErr));
     }
 
     try {
@@ -4785,7 +4887,7 @@ Provide a direct, concise, friendly tennis response in Markdown (under 150 words
       }
       console.log(`[SSE] Preloaded ${sentNotificationIds.size} existing notification IDs for seen cache.`);
     } catch (preloadErr: any) {
-      console.warn("[SSE] Error preloading notifications on startup:", preloadErr.message || preloadErr);
+      console.warn("[SSE] Error preloading notifications on startup:", formatSupabaseError(preloadErr));
     }
   })();
 

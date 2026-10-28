@@ -9,7 +9,8 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 (async () => {
   const { data, error } = await supabase.from("saved_players").select("*");
   if (error) {
-    console.error("Error retrieving saved players:", error.message);
+    const msg = error.message.includes("<!DOCTYPE") ? "Supabase returned 521 (Cloudflare / Web server down / Disk IO Budget Depleted)" : error.message;
+    console.error("Error retrieving saved players:", msg);
   } else {
     console.log("Retrieved", data.length, "saved players.");
     const match = data.find(p => p.name.toLowerCase().includes("shawn") || p.name.toLowerCase().includes("lyu"));

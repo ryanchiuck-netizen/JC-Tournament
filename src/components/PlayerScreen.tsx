@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { User, Plus, X, Trophy, GripVertical, ArrowUp, ArrowDown, Clock, ArrowLeft, Calendar, RefreshCw, Search, ChevronDown, Tag, CalendarPlus, ExternalLink, MapPin } from 'lucide-react';
+import { User, Plus, X, Trophy, GripVertical, ArrowUp, ArrowDown, Clock, ArrowLeft, Calendar, RefreshCw, Search, ChevronDown, Tag, CalendarPlus, ExternalLink, MapPin, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getGoogleCalendarLink, parseAnyDateToDate, parseDrawAndTournamentName, cleanDisplayDrawName, isPlayerMatch } from '../services/tournamentService';
+import { fetchSavedPlayersBatched, formatSupabaseError } from '../lib/supabase';
 import {
   DndContext,
   closestCenter,
@@ -1265,6 +1266,11 @@ export function PlayerScreen({
   const [renamingGroup, setRenamingGroup] = useState<string | null>(null);
   const [newGroupName, setNewGroupName] = useState("");
 
+  // Client-side pagination and roster search state to prevent payload & DOM overload
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number | 'all'>(25);
+  const [rosterSearch, setRosterSearch] = useState<string>("");
+
   const handleRenameGroup = async (oldName: string, newName: string) => {
     if (!newName.trim() || newName === oldName) {
       setRenamingGroup(null);
@@ -1430,10 +1436,11 @@ export function PlayerScreen({
           } else {
             if (isRefreshingAll) {
               if (!justTriggeredRef.current) {
-                const resPlayers = await fetch('/api/saved-players');
-                if (resPlayers.ok) {
-                  const dataPlayers = await resPlayers.json();
+                try {
+                  const dataPlayers = await fetchSavedPlayersBatched();
                   setPlayers(dataPlayers);
+                } catch (e) {
+                  console.warn("Failed to reload players via batched query:", e);
                 }
                 if (reloadTournamentsCache) {
                   reloadTournamentsCache();
@@ -1497,18 +1504,12 @@ export function PlayerScreen({
   useEffect(() => {
     const fetchPlayers = async () => {
       try {
-        const res = await fetch('/api/saved-players');
-        if (res.ok) {
-          const resClone = res.clone();
-          try {
-            const data = await res.json();
-            setPlayers(data);
-          } catch (e) {
-            console.error("Failed to parse /api/saved-players JSON. Response text:", await resClone.text());
-          }
-        }
-      } catch (e) {
+        setLoading(true);
+        const data = await fetchSavedPlayersBatched();
+        setPlayers(data);
+      } catch (e: any) {
         console.error("Failed to fetch saved players", e);
+        setError(formatSupabaseError(e));
       } finally {
         setLoading(false);
       }
@@ -1752,9 +1753,115 @@ export function PlayerScreen({
     });
   }, [filteredPlayers, sortField, sortDirection]);
 
+  // Apply in-roster search query
+  const searchedPlayers = useMemo(() => {
+    if (!rosterSearch.trim()) return sortedPlayers;
+    const q = rosterSearch.toLowerCase().trim();
+    return sortedPlayers.filter(p => 
+      p.name.toLowerCase().includes(q) ||
+      (p.groups && p.groups.some(g => g.toLowerCase().includes(q)))
+    );
+  }, [sortedPlayers, rosterSearch]);
+
+  const totalFilteredCount = searchedPlayers.length;
+  const totalPages = pageSize === 'all' ? 1 : Math.max(1, Math.ceil(totalFilteredCount / (pageSize as number)));
+  const safeCurrentPage = Math.min(Math.max(1, currentPage), totalPages);
+
+  const paginatedPlayers = useMemo(() => {
+    if (pageSize === 'all') return searchedPlayers;
+    const start = (safeCurrentPage - 1) * (pageSize as number);
+    return searchedPlayers.slice(start, start + (pageSize as number));
+  }, [searchedPlayers, safeCurrentPage, pageSize]);
+
+  // Reset to page 1 whenever filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, showOnlyChanges, showAllPlayers, rosterSearch, pageSize]);
+
   const ungroupedPlayers = useMemo(() => {
-    return sortedPlayers.filter(p => !p.groups || p.groups.length === 0);
-  }, [sortedPlayers]);
+    return searchedPlayers.filter(p => !p.groups || p.groups.length === 0);
+  }, [searchedPlayers]);
+
+  const PaginationControls = () => {
+    if (totalFilteredCount === 0) return null;
+
+    const startItem = pageSize === 'all' ? 1 : (safeCurrentPage - 1) * (pageSize as number) + 1;
+    const endItem = pageSize === 'all' ? totalFilteredCount : Math.min(safeCurrentPage * (pageSize as number), totalFilteredCount);
+
+    return (
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-3.5 px-4 bg-gray-950 border border-gray-800 rounded-xl my-4 text-xs text-gray-300 shadow-inner">
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="text-gray-400">
+            Showing <span className="font-semibold text-white">{startItem}–{endItem}</span> of <span className="font-semibold text-white">{totalFilteredCount}</span> players
+          </span>
+          <div className="flex items-center gap-1.5 border-l border-gray-800 pl-3">
+            <span className="text-gray-500">Per page:</span>
+            <select
+              value={pageSize}
+              onChange={(e) => setPageSize(e.target.value === 'all' ? 'all' : parseInt(e.target.value, 10))}
+              aria-label="Players per page"
+              className="bg-gray-900 border border-gray-700/80 rounded-lg px-2 py-1 text-white text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+            >
+              <option value={20}>20</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+              <option value="all">All</option>
+            </select>
+          </div>
+        </div>
+
+        {pageSize !== 'all' && totalPages > 1 && (
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={safeCurrentPage === 1}
+              className="p-1.5 rounded-lg border border-gray-800 bg-gray-900 hover:bg-gray-800 text-gray-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              title="Previous Page"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <div className="flex items-center gap-1 px-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter(p => p === 1 || p === totalPages || Math.abs(p - safeCurrentPage) <= 1)
+                .reduce((acc: (number | string)[], p, idx, arr) => {
+                  if (idx > 0 && (p as number) - (arr[idx - 1] as number) > 1) {
+                    acc.push('...');
+                  }
+                  acc.push(p);
+                  return acc;
+                }, [])
+                .map((p, idx) => (
+                  typeof p === 'number' ? (
+                    <button
+                      key={p}
+                      onClick={() => setCurrentPage(p)}
+                      className={`min-w-[28px] h-7 px-2 rounded-lg text-xs font-medium transition-all ${
+                        p === safeCurrentPage
+                          ? 'bg-blue-600 text-white font-bold'
+                          : 'bg-gray-900 text-gray-400 hover:text-white hover:bg-gray-800 border border-gray-800'
+                      }`}
+                    >
+                      {p}
+                    </button>
+                  ) : (
+                    <span key={`ellipsis-${idx}`} className="px-1 text-gray-600 select-none">...</span>
+                  )
+                ))}
+            </div>
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={safeCurrentPage === totalPages}
+              className="p-1.5 rounded-lg border border-gray-800 bg-gray-900 hover:bg-gray-800 text-gray-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              title="Next Page"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  };
 
 
 
@@ -2018,7 +2125,29 @@ export function PlayerScreen({
             </button>
           </div>
 
-          <div className="flex overflow-x-auto pb-2 -mb-2 scrollbar-hide gap-3 items-center min-w-0">
+          <div className="flex flex-wrap items-center gap-3 min-w-0">
+            {/* Quick in-roster filter bar */}
+            <div className="relative min-w-[180px] sm:w-60">
+              <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-gray-500">
+                <Search className="w-3.5 h-3.5" />
+              </div>
+              <input
+                type="text"
+                value={rosterSearch}
+                onChange={(e) => setRosterSearch(e.target.value)}
+                placeholder="Filter roster by player or group..."
+                className="w-full bg-gray-950 border border-gray-700/80 rounded-lg pl-8 pr-7 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
+              {rosterSearch && (
+                <button
+                  onClick={() => setRosterSearch('')}
+                  className="absolute inset-y-0 right-0 pr-2 flex items-center text-gray-500 hover:text-white"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+
             <button
               onClick={() => setShowAllPlayers(!showAllPlayers)}
               className={`text-xs flex items-center gap-2.5 transition-all px-3 py-2 rounded-lg border shrink-0 ${
@@ -2082,39 +2211,46 @@ export function PlayerScreen({
         </div>
 
         {showAllPlayers || activeRegionGroups.length === 0 ? (
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            {renderPlayerTable(sortedPlayers)}
-          </DndContext>
+          <div>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              {renderPlayerTable(paginatedPlayers)}
+            </DndContext>
+            <PaginationControls />
+          </div>
         ) : (
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext items={activeRegionGroups.map(g => `group-${g}`)} strategy={verticalListSortingStrategy}>
-              <div className="space-y-6">
-                {activeRegionGroups.map(group => {
-                  const groupPlayers = sortedPlayers.filter(p => p.groups && p.groups.includes(group));
-                  return (
-                    <SortableGroup 
-                      key={`group-${group}`} 
-                      id={`group-${group}`} 
-                      groupName={group} 
-                      playersList={groupPlayers} 
-                      renderPlayerTable={renderPlayerTable} 
-                    />
-                  );
-                })}
-                {ungroupedPlayers.length > 0 && (
-                  renderPlayerTable(ungroupedPlayers, "Others", true, "Others")
-                )}
-              </div>
-            </SortableContext>
-          </DndContext>
+          <div>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext items={activeRegionGroups.map(g => `group-${g}`)} strategy={verticalListSortingStrategy}>
+                <div className="space-y-6">
+                  {activeRegionGroups.map(group => {
+                    const groupPlayers = searchedPlayers.filter(p => p.groups && p.groups.includes(group));
+                    if (groupPlayers.length === 0 && rosterSearch.trim()) return null;
+                    return (
+                      <SortableGroup 
+                        key={`group-${group}`} 
+                        id={`group-${group}`} 
+                        groupName={group} 
+                        playersList={groupPlayers} 
+                        renderPlayerTable={renderPlayerTable} 
+                      />
+                    );
+                  })}
+                  {ungroupedPlayers.length > 0 && (
+                    renderPlayerTable(ungroupedPlayers, "Others", true, "Others")
+                  )}
+                </div>
+              </SortableContext>
+            </DndContext>
+            <PaginationControls />
+          </div>
         )}
       </div>
       
